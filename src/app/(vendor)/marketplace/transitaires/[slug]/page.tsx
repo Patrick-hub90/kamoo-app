@@ -33,10 +33,10 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
         </Link>
       </div>
 
-      {/* HERO : bannière Facebook ratio 1.91/1 + logo overlay */}
+      {/* HERO : bannière compacte (h-44) + logo overlay */}
       <div className="relative">
         <div
-          className="aspect-[1.91/1] max-h-80 w-full overflow-hidden"
+          className="h-44 w-full overflow-hidden"
           style={!t.coverImageUrl ? { background: t.coverBg } : undefined}
         >
           {t.coverImageUrl && (
@@ -129,28 +129,15 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
               {t.about}
             </p>
 
-            {/* Politique de paiement (déplacée ici) */}
-            <div className="mt-4">
-              <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500">
-                Politique de paiement
-              </div>
-              <div
-                className={`mt-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-bold ${
-                  t.paymentPolicy === "upfront"
-                    ? "bg-kamoo-orange-50 text-kamoo-orange-700"
-                    : "bg-emerald-50 text-emerald-700"
-                }`}
-              >
-                <Wallet className="h-3.5 w-3.5" />
+            {/* Politique de paiement — discret, juste une info */}
+            <div className="mt-4 flex items-center gap-2 border-t border-line pt-3 text-[12.5px] text-ink-500">
+              <Wallet className="h-3.5 w-3.5 text-ink-400" />
+              <span>Politique de paiement :</span>
+              <span className="font-semibold text-ink-700">
                 {t.paymentPolicy === "upfront"
-                  ? "Paiement avant l'expédition"
-                  : "Paiement à l'arrivée"}
-              </div>
-              <p className="mt-2 text-[12px] leading-relaxed text-ink-500">
-                {t.paymentPolicy === "upfront"
-                  ? "Vous payez le devis avant que le colis ne quitte la Chine."
-                  : "Vous payez à l'arrivée du colis dans votre pays de destination."}
-              </p>
+                  ? "avant l'expédition"
+                  : "à l'arrivée"}
+              </span>
             </div>
           </section>
 
