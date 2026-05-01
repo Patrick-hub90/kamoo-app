@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  ChevronRight,
+  Check,
   MapPin,
   Plane,
   Ship,
@@ -38,59 +38,52 @@ function formatDateShort(iso: string): string {
  * Carte d'une expédition dans la liste.
  *
  * Disposition :
- *  • Gauche : bouton "Payer" (si à payer) OU emoji du produit
- *  • Centre : produit, position, paiement, transitaire, mode, créée, ETA
- *  • Droite : chevron
+ *  • Gauche : logo transitaire + code expédition
+ *  • Centre : produit, statuts, méta (transitaire / mode / créée / ETA)
+ *  • Droite haut : montant
+ *  • Droite bas : bouton Payer (si paiement requis) ou check vert "Payé"
  *
- * Toutes les infos clés visibles en 1 seconde, sans surcharge.
+ * Toutes les infos clés visibles en 1 seconde.
  */
 export function ShipmentCard({ expedition: e }: Props) {
   const TransportIcon = TRANSPORT_ICON[e.transportMode];
   const needsPayment =
     e.paymentStatus === "unpaid" && e.amountXof !== null;
+  const hasAmount = e.amountXof !== null;
 
   return (
     <Link
       href={`/expeditions/${e.id}`}
       className="group flex items-stretch gap-4 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300"
     >
-      {/* GAUCHE : bouton Payer OU vignette produit */}
-      {needsPayment ? (
-        <div className="flex w-32 shrink-0 flex-col items-center justify-center gap-1 rounded-xl bg-kamoo-orange-500 px-3 py-3 text-white transition group-hover:bg-kamoo-orange-600">
-          <Wallet className="h-4 w-4" />
-          <span className="text-[11px] font-bold uppercase tracking-wider">
-            Payer
-          </span>
-          <span className="font-display text-[15px] font-extrabold leading-none">
-            {formatXOF(e.amountXof!, false)}
-          </span>
-          <span className="text-[10px] font-semibold opacity-90">F CFA</span>
+      {/* GAUCHE : logo transitaire + code expédition */}
+      <div className="flex w-[88px] shrink-0 flex-col items-center justify-between gap-2">
+        <div
+          className="grid h-12 w-12 place-items-center rounded-xl text-sm font-extrabold text-white"
+          style={{ background: e.transitaire.avatarBg }}
+          title={e.transitaire.name}
+        >
+          {e.transitaire.avatar}
         </div>
-      ) : (
-        <div className="grid w-14 shrink-0 place-items-center self-stretch rounded-xl bg-paper-2 text-2xl">
-          {e.thumb.emoji}
-        </div>
-      )}
+        <span className="font-mono-kamoo text-[10.5px] font-bold text-ink-500">
+          #{e.publicCode.replace(/^KMO-/, "")}
+        </span>
+      </div>
 
       {/* CENTRE : infos */}
       <div className="min-w-0 flex-1">
-        {/* Ligne 1 — Produit + code */}
-        <div className="flex items-baseline gap-2.5">
-          <span className="truncate text-[15px] font-bold text-ink-900">
-            {e.productName}
-            {e.otherProductsCount > 0 && (
-              <span className="font-medium text-ink-500">
-                {" + "}
-                {e.otherProductsCount}
-              </span>
-            )}
-          </span>
-          <span className="font-mono-kamoo text-[11px] text-ink-400">
-            {e.publicCode}
-          </span>
+        {/* Ligne 1 — Produit */}
+        <div className="truncate text-[15px] font-bold text-ink-900">
+          {e.productName}
+          {e.otherProductsCount > 0 && (
+            <span className="font-medium text-ink-500">
+              {" + "}
+              {e.otherProductsCount}
+            </span>
+          )}
         </div>
 
-        {/* Ligne 2 — Position + paiement (les 2 statuts clés) */}
+        {/* Ligne 2 — Position + paiement */}
         <div className="mt-1.5 flex items-center gap-3 text-[12.5px]">
           <span className="inline-flex items-center gap-1.5 font-semibold text-ink-900">
             <PositionDot status={e.status} />
@@ -109,7 +102,7 @@ export function ShipmentCard({ expedition: e }: Props) {
           </span>
         </div>
 
-        {/* Ligne 3 — Meta : transitaire · mode · créée · ETA */}
+        {/* Ligne 3 — Meta complète */}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-500">
           <MetaItem label="Transitaire" value={e.transitaire.name} />
           <Sep />
@@ -129,12 +122,48 @@ export function ShipmentCard({ expedition: e }: Props) {
         </div>
       </div>
 
-      {/* DROITE : chevron */}
-      <div className="grid place-items-center self-center text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-ink-500">
-        {needsPayment ? (
-          <ArrowRight className="h-4 w-4" />
+      {/* DROITE : montant en haut + action en bas */}
+      <div className="flex w-32 shrink-0 flex-col items-end justify-between">
+        {hasAmount ? (
+          <div className="text-right">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+              Montant
+            </div>
+            <div
+              className={`font-display text-[16px] font-extrabold leading-tight ${
+                needsPayment
+                  ? "text-kamoo-orange-600"
+                  : "text-ink-900"
+              }`}
+            >
+              {formatXOF(e.amountXof!, false)}
+            </div>
+            <div className="text-[10px] font-bold text-ink-500">F CFA</div>
+          </div>
         ) : (
-          <ChevronRight className="h-4 w-4" />
+          <div className="text-right">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+              Devis
+            </div>
+            <div className="text-[12px] font-semibold text-ink-400">
+              à venir
+            </div>
+          </div>
+        )}
+
+        {needsPayment ? (
+          <div className="inline-flex items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-3 py-1.5 text-[12px] font-bold text-white transition group-hover:bg-kamoo-orange-600">
+            <Wallet className="h-3.5 w-3.5" />
+            Payer
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        ) : e.paymentStatus === "paid" ? (
+          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+            <Check className="h-3 w-3" />
+            Payé
+          </div>
+        ) : (
+          <span className="text-[11px] font-medium text-ink-400">—</span>
         )}
       </div>
     </Link>
