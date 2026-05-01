@@ -929,7 +929,7 @@ function TransportModeCard({
             {mode.unitCostFromXof.toLocaleString("fr-FR")}
           </div>
           <div className="text-[10px] font-semibold text-ink-500">
-            F CFA / {mode.unit === "kg" ? "kg" : "m³"}
+            F CFA / {mode.unit === "kg" ? "kg" : "CBM"}
           </div>
         </div>
       )}
@@ -1077,7 +1077,7 @@ function Step3Confirm({
                   {
                     label: "Volume (CBM)",
                     icon: Plane,
-                    placeholder: "— m³",
+                    placeholder: "— CBM",
                   },
                   {
                     label: "Cartons reçus",

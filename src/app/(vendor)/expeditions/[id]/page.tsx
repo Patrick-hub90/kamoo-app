@@ -373,11 +373,11 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                   {exp.quote.volumeCbm !== undefined && (
                     <DevisRow
                       label="Volume"
-                      value={`${exp.quote.volumeCbm} m³`}
+                      value={`${exp.quote.volumeCbm} CBM`}
                     />
                   )}
                   <DevisRow
-                    label={`Coût / ${exp.quote.unitCost.unit === "kg" ? "kg" : "m³"}`}
+                    label={`Coût / ${exp.quote.unitCost.unit === "kg" ? "kg" : "CBM"}`}
                     value={`${formatXOF(exp.quote.unitCost.amountXof, false)} F CFA`}
                   />
                 </div>
