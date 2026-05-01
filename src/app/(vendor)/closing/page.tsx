@@ -225,6 +225,11 @@ export default function ClosingPage() {
           <StatCard
             label="Taux de confirmation"
             value={`${stats.conversionRate}%`}
+            unit={
+              stats.closedCount > 0
+                ? `${stats.confirmedCount}/${stats.closedCount}`
+                : "—"
+            }
             icon={<TrendingUp className="h-4 w-4" />}
             tone={conversionTone(stats.conversionRate)}
             highlight={stats.conversionRate >= 70}

@@ -227,13 +227,14 @@ export function computeClosingStats(assignments: ClosingAssignment[]) {
   const total = assignments.length;
 
   // Taux de confirmation : confirmées / (confirmées + annulées + injoignables)
-  const confirmed = assignments.filter(
+  const confirmedCount = assignments.filter(
     (a) => a.status === "livraison_en_cours",
   ).length;
-  const closed = assignments.filter((a) =>
+  const closedCount = assignments.filter((a) =>
     ["livraison_en_cours", "annule", "injoignable"].includes(a.status),
   ).length;
-  const conversionRate = closed > 0 ? Math.round((confirmed / closed) * 100) : 0;
+  const conversionRate =
+    closedCount > 0 ? Math.round((confirmedCount / closedCount) * 100) : 0;
 
   // Temps moyen de traitement (en minutes) : durée entre création et dernière activité
   // pour les commandes "fermées"
@@ -259,6 +260,8 @@ export function computeClosingStats(assignments: ClosingAssignment[]) {
   return {
     total,
     conversionRate,
+    confirmedCount,
+    closedCount,
     avgProcessingMinutes,
     confirmedRevenue,
   };
