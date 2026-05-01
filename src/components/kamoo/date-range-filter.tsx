@@ -60,39 +60,59 @@ type Props = {
 /**
  * Filtre de plage de date :
  * - Trigger : bouton dropdown avec valeur courante
- * - Popover : 4 presets + calendrier range (visible si "Personnalisé")
+ * - Popover : presets à gauche + calendrier range à droite (si "Personnalisé")
+ * - Validation explicite : pas de fermeture automatique sur sélection
  */
 export function DateRangeFilter({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<DateFilterPreset>(
+    value.preset,
+  );
+  const [draftRange, setDraftRange] = useState<DateRange | undefined>(
+    value.range,
+  );
 
   const isActive = value.preset !== "all";
   const triggerLabel = formatTriggerLabel(value);
+  const showCalendar = selectedPreset === "custom";
+  const canValidate =
+    selectedPreset !== "custom" ||
+    (draftRange?.from !== undefined && draftRange?.to !== undefined);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      // Réinitialise le draft à la valeur actuelle quand on ouvre
+      setSelectedPreset(value.preset);
+      setDraftRange(value.range);
+    }
+    setOpen(next);
+  };
 
   const handleSelectPreset = (preset: DateFilterPreset) => {
-    if (preset === "custom") {
-      // Garde le range existant ou le réinitialise
-      onChange({ preset: "custom", range: value.range });
-    } else {
+    setSelectedPreset(preset);
+    if (preset !== "custom") {
+      // Validation immédiate pour les presets simples
       onChange({ preset });
       setOpen(false);
     }
   };
 
-  const handleRangeSelect = (range: DateRange | undefined) => {
-    onChange({ preset: "custom", range });
-    if (range?.from && range?.to) {
-      // Ferme automatiquement quand la plage est complète
-      setTimeout(() => setOpen(false), 200);
+  const handleValidate = () => {
+    if (selectedPreset === "custom") {
+      onChange({ preset: "custom", range: draftRange });
     }
+    setOpen(false);
   };
 
   const handleClear = () => {
     onChange({ preset: "all" });
+    setSelectedPreset("all");
+    setDraftRange(undefined);
     setOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         className={cn(
           "inline-flex h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[13px] font-semibold text-ink-900 hover:border-ink-300",
@@ -106,59 +126,80 @@ export function DateRangeFilter({ value, onChange }: Props) {
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-auto rounded-xl border border-line bg-white p-2 shadow-[var(--shadow-kamoo-lg)]"
         align="start"
+        className={cn(
+          "rounded-xl border border-line bg-white p-0 shadow-[var(--shadow-kamoo-lg)]",
+          showCalendar ? "w-auto" : "w-56",
+        )}
       >
-        {/* Presets */}
-        <div className="flex flex-col gap-0.5">
-          {PRESETS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => handleSelectPreset(p.id)}
-              className={cn(
-                "flex items-center justify-between rounded-md px-2.5 py-1.5 text-[13px] hover:bg-paper-2",
-                value.preset === p.id
-                  ? "font-bold text-kamoo-blue-700"
-                  : "font-medium text-ink-700",
-              )}
-            >
-              {p.label}
-              {value.preset === p.id && (
-                <Check className="h-3.5 w-3.5 text-kamoo-blue-700" />
-              )}
-            </button>
-          ))}
-        </div>
+        <div className="flex">
+          {/* Presets — colonne gauche */}
+          <div className="flex w-44 shrink-0 flex-col gap-0.5 p-2">
+            {PRESETS.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => handleSelectPreset(p.id)}
+                className={cn(
+                  "flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px] hover:bg-paper-2",
+                  selectedPreset === p.id
+                    ? "bg-kamoo-blue-50 font-bold text-kamoo-blue-700"
+                    : "font-medium text-ink-700",
+                )}
+              >
+                {p.label}
+                {selectedPreset === p.id && (
+                  <Check className="h-3.5 w-3.5 text-kamoo-blue-700" />
+                )}
+              </button>
+            ))}
 
-        {/* Calendrier range — visible si Personnalisé */}
-        {value.preset === "custom" && (
-          <div className="mt-2 border-t border-line pt-2">
-            <Calendar
-              mode="range"
-              selected={value.range}
-              onSelect={handleRangeSelect}
-              numberOfMonths={1}
-              defaultMonth={value.range?.from ?? new Date()}
-              className="bg-transparent"
-            />
-            <div className="mt-1 px-1 text-[11px] text-ink-500">
-              Clique sur la date de début, puis sur la date de fin.
+            {isActive && (
+              <button
+                onClick={handleClear}
+                className="mt-1 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 hover:bg-kamoo-orange-50"
+              >
+                <X className="h-3 w-3" />
+                Effacer
+              </button>
+            )}
+          </div>
+
+          {/* Calendrier — colonne droite (visible si Personnalisé) */}
+          {showCalendar && (
+            <div className="flex flex-col border-l border-line">
+              <Calendar
+                mode="range"
+                selected={draftRange}
+                onSelect={setDraftRange}
+                numberOfMonths={1}
+                defaultMonth={draftRange?.from ?? new Date()}
+                className="bg-transparent p-2"
+              />
+              <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-3 py-2">
+                <div className="text-[11px] text-ink-500">
+                  {draftRange?.from && !draftRange?.to && "Choisis la date de fin"}
+                  {!draftRange?.from && "Choisis la date de début"}
+                  {draftRange?.from && draftRange?.to && (
+                    <>
+                      {formatDateShort(draftRange.from)} →{" "}
+                      {formatDateShort(draftRange.to)}
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={handleValidate}
+                  disabled={!canValidate}
+                  className={cn(
+                    "rounded-md bg-kamoo-orange-500 px-3 py-1.5 text-[12px] font-bold text-white hover:bg-kamoo-orange-600",
+                    !canValidate && "cursor-not-allowed opacity-40",
+                  )}
+                >
+                  Valider
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Footer effacer */}
-        {isActive && (
-          <div className="mt-1.5 border-t border-line pt-1.5">
-            <button
-              onClick={handleClear}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 hover:bg-kamoo-orange-50"
-            >
-              <X className="h-3 w-3" />
-              Effacer
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
