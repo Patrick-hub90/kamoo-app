@@ -33,21 +33,25 @@ type Props = {
 export function TransitaireCard({ transitaire: t }: Props) {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]">
-      {/* COVER (image si dispo, sinon gradient) */}
-      <div
-        className="relative h-28 w-full overflow-hidden"
-        style={!t.coverImageUrl ? { background: t.coverBg } : undefined}
-      >
-        {t.coverImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={t.coverImageUrl}
-            alt={`${t.name} - bannière`}
-            className="h-full w-full object-cover"
-          />
-        )}
-        {/* Badge unique : Nouveau OU Certifié Kamoo */}
-        <div className="absolute right-3 top-3">
+      {/* HEADER : bannière + logo overlay positionné absolument */}
+      <div className="relative">
+        {/* Bannière (en arrière-plan, image clippée) */}
+        <div
+          className="h-28 w-full overflow-hidden"
+          style={!t.coverImageUrl ? { background: t.coverBg } : undefined}
+        >
+          {t.coverImageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={t.coverImageUrl}
+              alt={`${t.name} - bannière`}
+              className="h-full w-full object-cover"
+            />
+          )}
+        </div>
+
+        {/* Badge dans le coin haut droit de la bannière */}
+        <div className="absolute right-3 top-3 z-10">
           {t.status === "new" ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-kamoo-blue-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
               <Sparkles className="h-2.5 w-2.5" />
@@ -60,26 +64,28 @@ export function TransitaireCard({ transitaire: t }: Props) {
             </span>
           )}
         </div>
+
+        {/* Logo absolument positionné AU-DESSUS de la bannière (z-10) */}
+        <div
+          className="absolute left-4 top-[80px] z-20 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl border-[3px] border-white bg-white text-base font-extrabold text-white shadow-md"
+          style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
+        >
+          {t.logoImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={t.logoImageUrl}
+              alt={`${t.name} - logo`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            t.avatar
+          )}
+        </div>
       </div>
 
-      <div className="px-4 pb-4">
-        {/* Logo : taille 64px, juste un quart sur la bannière */}
-        <div className="-mt-5 flex items-end justify-between">
-          <div
-            className="grid h-16 w-16 place-items-center overflow-hidden rounded-2xl border-[3px] border-white bg-white text-base font-extrabold text-white shadow-md"
-            style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
-          >
-            {t.logoImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={t.logoImageUrl}
-                alt={`${t.name} - logo`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              t.avatar
-            )}
-          </div>
+      <div className="px-4 pb-4 pt-4">
+        {/* Note alignée à droite (le logo est en absolute à gauche) */}
+        <div className="flex h-10 items-start justify-end">
           <div className="flex items-center gap-1 text-[12px]">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
             <span className="font-bold text-ink-900">{t.rating}</span>
