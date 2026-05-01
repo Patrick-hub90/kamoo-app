@@ -140,7 +140,7 @@ export function Sidebar() {
       <div className="px-3">
         <Link
           href="/expeditions/nouvelle"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-2.5 text-sm font-bold text-white shadow-[var(--shadow-glow-orange)] transition hover:bg-kamoo-orange-600"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-kamoo-orange-600"
         >
           <Plus className="h-4 w-4" />
           Nouvelle expédition

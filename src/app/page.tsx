@@ -38,7 +38,7 @@ export default function Home() {
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/dashboard"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-6 font-bold text-white shadow-[var(--shadow-glow-orange)] transition hover:bg-kamoo-orange-600 hover:-translate-y-0.5"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-6 font-bold text-white transition hover:bg-kamoo-orange-600"
           >
             Voir le tableau de bord →
           </Link>

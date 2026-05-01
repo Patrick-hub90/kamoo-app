@@ -23,7 +23,7 @@ export default function ExpeditionsListPage() {
         </div>
         <Link
           href="/expeditions/nouvelle"
-          className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-sm font-bold text-white shadow-[var(--shadow-glow-orange)] transition hover:bg-kamoo-orange-600 hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-kamoo-orange-600"
         >
           <Plus className="h-4 w-4" />
           Nouvelle expédition
