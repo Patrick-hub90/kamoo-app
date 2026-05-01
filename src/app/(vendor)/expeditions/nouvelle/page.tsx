@@ -250,12 +250,13 @@ export default function NewExpeditionPage() {
         </button>
 
         <div className="flex-1 text-center text-[12px] text-ink-500">
-          {step < 3 && canNext && "✓ Tout est rempli, tu peux continuer"}
-          {step < 3 && !canNext && "Complète les champs requis pour continuer"}
+          {step < 3 && canNext && "✓ Tout est rempli, vous pouvez continuer"}
+          {step < 3 && !canNext &&
+            "Complétez les champs requis pour continuer"}
           {step === 3 && canSubmit &&
-            "Une fois validée, ton colis sera réceptionné en Chine sous 5–10 jours"}
+            "Une fois validée, votre colis sera réceptionné en Chine sous 5–10 jours"}
           {step === 3 && !canSubmit &&
-            "Coche la case de responsabilité pour pouvoir valider"}
+            "Cochez la case de responsabilité pour pouvoir valider"}
         </div>
 
         {step < 3 ? (
@@ -357,11 +358,11 @@ function Step1Colis({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="font-display text-2xl font-extrabold text-ink-900">
-            Tes colis
+            Vos colis
           </h2>
           <p className="mt-1 text-[13px] text-ink-500">
-            Ajoute chaque produit avec une photo et son nom. Tu peux grouper
-            jusqu&apos;à 20 colis dans une expédition.
+            Ajoutez chaque produit avec une photo et son nom. Vous pouvez
+            grouper jusqu&apos;à 20 colis dans une expédition.
           </p>
         </div>
         <button
@@ -447,8 +448,8 @@ function ColisCard({
             {!isComplete ? (
               <span className="text-kamoo-orange-600">
                 {photoCount === 0
-                  ? "Ajoute au moins 1 photo"
-                  : "Nomme le produit"}
+                  ? "Ajoutez au moins 1 photo"
+                  : "Nommez le produit"}
               </span>
             ) : (
               <>
@@ -508,7 +509,7 @@ function ColisCard({
               <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-kamoo-blue-50 p-2.5">
                 <Camera className="mt-0.5 h-3.5 w-3.5 shrink-0 text-kamoo-blue-700" />
                 <p className="text-[11.5px] leading-relaxed text-kamoo-blue-700">
-                  Ajoute la <b>photo commerciale</b> du produit + la{" "}
+                  Ajoutez la <b>photo commerciale</b> du produit + la{" "}
                   <b>photo du carton</b> de la commande pour faciliter la
                   réception.
                 </p>
@@ -688,7 +689,7 @@ function Step2Transport({
         Mode de transport
       </h2>
       <p className="mt-1 text-[13px] text-ink-500">
-        Choisis comment ton colis voyagera depuis la Chine vers {countryName}.
+        Choisissez comment votre colis voyagera depuis la Chine vers {countryName}.
       </p>
 
       <div className="mt-6 grid grid-cols-[1fr_1.1fr] gap-6">
@@ -754,7 +755,7 @@ function Step2Transport({
                     {currentCat.label}
                   </span>
                   <span className="ml-1 text-[10px] font-semibold text-ink-500">
-                    · d&apos;après tes photos
+                    · d&apos;après vos photos
                   </span>
                 </div>
               </div>
@@ -811,7 +812,7 @@ function Step2Transport({
           </div>
 
           <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-ink-700">
-            Choisis ton mode
+            Choisissez votre mode
           </div>
 
           {TRANSPORT_MODES_DATA.map((m) => (
@@ -1049,12 +1050,10 @@ function Step3Confirm({
                 En attente de réception en Chine
               </div>
               <p className="mt-2 text-[13px] leading-relaxed text-ink-700">
-                Nous vous prions de vous préparer financièrement à la
-                réception de vos marchandises. Une fois ton colis arrivé
-                chez notre transitaire à <b>Guangzhou</b>, il sera{" "}
-                <b>pesé</b> et <b>photographié</b>, puis tu recevras le
-                devis exact (poids, volume si besoin, coût unitaire et
-                total).
+                Une fois votre colis arrivé chez notre transitaire à{" "}
+                <b>Guangzhou</b>, il sera <b>pesé</b> et{" "}
+                <b>photographié</b>, puis vous recevrez le devis exact
+                (poids, volume si besoin, coût unitaire et total).
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-2">
@@ -1113,9 +1112,8 @@ function Step3Confirm({
               <p className="mt-1 text-amber-800">
                 Si le transitaire reçoit un produit incompatible avec le mode
                 choisi (ex : cosmétiques liquides en avion), il refusera
-                l&apos;expédition. Tu devras alors fournir une adresse
+                l&apos;expédition. Vous devrez alors fournir une adresse
                 alternative en Chine et payer les frais de réacheminement.
-                Kamoo ne détruit jamais ton colis.
               </p>
             </div>
           </div>
@@ -1192,7 +1190,7 @@ function ShippingMarkCard({
               Shipping mark
             </div>
             <div className="mt-1 text-[12px] opacity-85">
-              À copier-coller chez ton fournisseur
+              À copier-coller chez votre fournisseur
             </div>
           </div>
           <MapPin className="h-5 w-5" />
@@ -1237,7 +1235,7 @@ function ShippingMarkCard({
         </button>
 
         <p className="mt-3 text-center text-[11px] leading-relaxed opacity-70">
-          Communique ce code à ton fournisseur en Chine.
+          Communiquez ce code à votre fournisseur en Chine.
           <br />
           Il l&apos;inscrira sur chaque colis avant l&apos;envoi à
           l&apos;entrepôt.

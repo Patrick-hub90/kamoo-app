@@ -111,7 +111,7 @@ export default function ExpeditionsListPage() {
             Mes expéditions
           </h1>
           <p className="mt-1 text-sm text-ink-500">
-            Suis tes colis Chine → Sénégal en temps réel.
+            Suivez vos colis Chine → Sénégal en temps réel.
           </p>
         </div>
         <Link
@@ -247,7 +247,7 @@ export default function ExpeditionsListPage() {
           <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-white py-20 text-center">
             <div className="text-3xl">🔍</div>
             <p className="mt-3 text-sm font-semibold text-ink-700">
-              Aucune expédition ne correspond à tes filtres
+              Aucune expédition ne correspond à vos filtres
             </p>
             <button
               onClick={clearFilters}

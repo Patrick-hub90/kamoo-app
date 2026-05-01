@@ -53,7 +53,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     createdAt: "2025-10-12T14:32:00Z",
     amountXof: 245000,
     action: {
-      label: "Paie 245 000 F CFA pour libérer",
+      label: "Payez 245 000 F CFA pour libérer",
       href: "/expeditions/exp_01",
       urgent: true,
     },
@@ -112,7 +112,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     createdAt: "2025-10-02T10:12:00Z",
     amountXof: 178000,
     action: {
-      label: "Récupère ton colis · Mermoz, Dakar",
+      label: "Récupérez votre colis · Mermoz, Dakar",
       href: "/expeditions/exp_04",
       urgent: false,
     },

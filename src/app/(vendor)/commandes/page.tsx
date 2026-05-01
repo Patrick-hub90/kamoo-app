@@ -4,7 +4,7 @@ export default function CommandesPage() {
   return (
     <StubPage
       title="Commandes"
-      subtitle="Toutes les commandes reçues depuis tes boutiques (Shopify, WooCommerce, Excel)."
+      subtitle="Toutes les commandes reçues depuis vos boutiques (Shopify, WooCommerce, Excel)."
       emoji="🛍️"
     />
   );

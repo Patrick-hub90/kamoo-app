@@ -16,14 +16,14 @@ export default function Home() {
 
         {/* Tagline */}
         <p className="font-display mt-4 text-2xl font-bold text-ink-900 sm:text-3xl">
-          Vends. <span className="text-kamoo-orange-500">On s&apos;occupe du reste.</span>
+          Vendez. <span className="text-kamoo-orange-500">On s&apos;occupe du reste.</span>
         </p>
 
         {/* Sous-titre */}
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-500">
-          La plateforme qui gère ton import depuis la Chine, ton closing
-          téléphonique et ta livraison en Afrique de l&apos;Ouest. Concentre-toi
-          sur ton business, on fait le reste.
+          La plateforme qui gère votre import depuis la Chine, votre closing
+          téléphonique et votre livraison en Afrique de l&apos;Ouest.
+          Concentrez-vous sur votre business, on fait le reste.
         </p>
 
         {/* Pays */}

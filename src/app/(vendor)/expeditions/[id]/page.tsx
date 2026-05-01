@@ -100,7 +100,7 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
 
             <div className="relative">
               <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                Où en est ton colis ?
+                Où en est votre colis ?
               </div>
               <div className="mt-3 flex items-center gap-4">
                 <span className="text-5xl leading-none">
@@ -177,7 +177,7 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                   Action requise
                 </div>
                 <div className="mt-0.5 text-[17px] font-extrabold">
-                  Ton devis est prêt — paie pour libérer l&apos;expédition
+                  Votre devis est prêt — payez pour libérer l&apos;expédition
                 </div>
                 <div className="mt-1 text-xs opacity-90">
                   Le paiement déclenche le départ depuis Guangzhou.
@@ -392,18 +392,13 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                {exp.paymentStatus === "unpaid" && (
-                  <p className="mt-4 rounded-lg bg-white/8 p-3 text-[12px] leading-relaxed opacity-95">
-                    Nous vous prions de vous préparer financièrement à la
-                    réception de vos marchandises.
-                    {exp.transitaire.paymentPolicy === "on_arrival" && (
-                      <>
-                        {" "}
-                        <b>Le paiement se fait à l&apos;arrivée du colis.</b>
-                      </>
-                    )}
-                  </p>
-                )}
+                {exp.paymentStatus === "unpaid" &&
+                  exp.transitaire.paymentPolicy === "on_arrival" && (
+                    <p className="mt-4 rounded-lg bg-white/8 p-3 text-[12px] leading-relaxed opacity-95">
+                      <b>Le paiement se fait à l&apos;arrivée du colis</b>
+                      {" "}au pays de destination.
+                    </p>
+                  )}
 
                 {exp.paymentStatus === "unpaid" &&
                   exp.transitaire.paymentPolicy === "upfront" && (

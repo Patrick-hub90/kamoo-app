@@ -4,7 +4,7 @@ export default function ClosingPage() {
   return (
     <StubPage
       title="Closing"
-      subtitle="Validation téléphonique des commandes par tes closeuses."
+      subtitle="Validation téléphonique des commandes par vos closeuses."
       emoji="📞"
     />
   );

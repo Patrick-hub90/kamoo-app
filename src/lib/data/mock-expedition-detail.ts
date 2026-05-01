@@ -17,7 +17,7 @@ function buildDetail(id: string): ExpeditionDetail | null {
       ? {
           emoji: "📍",
           label: "Arrivé à Dakar",
-          sub: "Tu peux passer le récupérer à l'entrepôt local",
+          sub: "Vous pouvez passer le récupérer à l'entrepôt local",
         }
       : base.status === "received_china"
         ? {
@@ -28,7 +28,7 @@ function buildDetail(id: string): ExpeditionDetail | null {
         : {
             emoji: "⏳",
             label: "En attente de réception en Chine",
-            sub: "Le transitaire t'enverra un devis dès réception",
+            sub: "Le transitaire vous enverra un devis dès réception",
           };
 
   // Progress en 3 phases (au lieu de 4) : Soumis · Reçu Chine · Arrivé

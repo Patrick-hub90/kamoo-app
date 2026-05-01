@@ -5,8 +5,8 @@ export default function DashboardPage() {
         Tableau de bord
       </h1>
       <p className="mt-2 text-sm text-ink-500">
-        Vue d&apos;ensemble de ton activité Kamoo. (À designer plus tard, après
-        les autres modules.)
+        Vue d&apos;ensemble de votre activité Kamoo. (À designer plus tard,
+        après les autres modules.)
       </p>
 
       <div className="mt-10 rounded-2xl border border-dashed border-line bg-white p-10 text-center">
