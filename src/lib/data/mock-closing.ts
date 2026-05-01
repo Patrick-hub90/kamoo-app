@@ -158,20 +158,116 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
     createdAt: "2026-04-29T10:00:00Z",
     callAttempts: 5,
   },
+  {
+    id: "co_08",
+    publicCode: "ORD-SN-00112",
+    productName: "Lunettes solaires aviateur",
+    productEmoji: "🕶️",
+    productBg: "linear-gradient(135deg,#FEF3C7,#F59E0B)",
+    quantity: 2,
+    client: {
+      name: "Khady Niang",
+      phone: "+221 77 666 11 22",
+      whatsapp: "+221 77 666 11 22",
+      city: "Dakar · Plateau",
+      isReturning: false,
+    },
+    amountXof: 22000,
+    status: "livraison_en_cours",
+    scheduledDeliveryAt: "2026-04-28T15:00:00Z",
+    lastActivityAt: "2026-04-28T11:00:00Z",
+    createdAt: "2026-04-28T09:00:00Z",
+    callAttempts: 1,
+  },
+  {
+    id: "co_09",
+    publicCode: "ORD-SN-00108",
+    productName: "Sac à main cuir",
+    productEmoji: "👜",
+    productBg: "linear-gradient(135deg,#DBEAFE,#3B82F6)",
+    quantity: 1,
+    client: {
+      name: "Coumba Sarr",
+      phone: "+221 78 333 44 55",
+      city: "Mbour",
+      isReturning: false,
+    },
+    amountXof: 25000,
+    status: "annule",
+    cancellationReason: "wrong_number",
+    comment: "Numéro incorrect dès le départ",
+    lastActivityAt: "2026-04-27T14:00:00Z",
+    createdAt: "2026-04-27T10:00:00Z",
+    callAttempts: 3,
+  },
+  {
+    id: "co_10",
+    publicCode: "ORD-SN-00103",
+    productName: "Casquette brodée",
+    productEmoji: "🧢",
+    productBg: "linear-gradient(135deg,#FED7AA,#F97316)",
+    quantity: 4,
+    client: {
+      name: "Babacar Faye",
+      phone: "+221 70 555 88 99",
+      whatsapp: "+221 70 555 88 99",
+      city: "Saint-Louis",
+      isReturning: true,
+    },
+    amountXof: 28000,
+    status: "livraison_en_cours",
+    scheduledDeliveryAt: "2026-04-26T16:00:00Z",
+    lastActivityAt: "2026-04-26T08:00:00Z",
+    createdAt: "2026-04-25T16:00:00Z",
+    callAttempts: 2,
+  },
 ];
 
 export function computeClosingStats(assignments: ClosingAssignment[]) {
-  const today = new Date().toDateString();
+  const total = assignments.length;
+
+  // Taux de confirmation : confirmées / (confirmées + annulées + injoignables)
+  const confirmed = assignments.filter(
+    (a) => a.status === "livraison_en_cours",
+  ).length;
+  const closed = assignments.filter((a) =>
+    ["livraison_en_cours", "annule", "injoignable"].includes(a.status),
+  ).length;
+  const conversionRate = closed > 0 ? Math.round((confirmed / closed) * 100) : 0;
+
+  // Temps moyen de traitement (en minutes) : durée entre création et dernière activité
+  // pour les commandes "fermées"
+  const closedItems = assignments.filter((a) =>
+    ["livraison_en_cours", "annule"].includes(a.status),
+  );
+  const avgProcessingMinutes =
+    closedItems.length > 0
+      ? Math.round(
+          closedItems.reduce((sum, a) => {
+            const start = new Date(a.createdAt).getTime();
+            const end = new Date(a.lastActivityAt).getTime();
+            return sum + (end - start) / 60_000;
+          }, 0) / closedItems.length,
+        )
+      : 0;
+
+  // CA confirmé (en livraison)
+  const confirmedRevenue = assignments
+    .filter((a) => a.status === "livraison_en_cours")
+    .reduce((sum, a) => sum + a.amountXof, 0);
 
   return {
-    nouvelles: assignments.filter((a) => a.status === "nouvelle").length,
-    rappelees: assignments.filter((a) => a.status === "rappele").length,
-    enLivraison: assignments.filter((a) => a.status === "livraison_en_cours")
-      .length,
-    annuleesToday: assignments.filter(
-      (a) =>
-        a.status === "annule" &&
-        new Date(a.lastActivityAt).toDateString() === today,
-    ).length,
+    total,
+    conversionRate,
+    avgProcessingMinutes,
+    confirmedRevenue,
   };
+}
+
+/** Formate des minutes en "Xh Ymin" ou "Ymin" */
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
