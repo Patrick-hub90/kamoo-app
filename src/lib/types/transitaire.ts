@@ -7,7 +7,13 @@ export type ModeOffer = {
   /** Tarif maximum (contenu sensible / volumineux) */
   toXof: number;
   unit: "kg" | "cbm";
-  delay: string; // "35–45 jours"
+  delay: string;
+  /** Description courte du mode (visible quand l'accordéon est déplié) */
+  description?: string;
+  /** Catégories acceptées par CE transitaire pour CE mode */
+  accepted?: string[];
+  /** Catégories refusées par CE transitaire pour CE mode */
+  forbidden?: string[];
 };
 
 export type Review = {

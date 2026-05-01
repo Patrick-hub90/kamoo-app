@@ -90,9 +90,39 @@ export const MOCK_TRANSITAIRES: Transitaire[] = [
     refusedCategories: ["Cosmétiques liquides", "Batteries lithium"],
     specialties: ["Express Cameroun", "Mode", "Électronique"],
     modes: [
-      { mode: "air_express", fromXof: 8_500, toXof: 11_000, unit: "kg", delay: "2 jours (48h chrono)" },
-      { mode: "air_standard", fromXof: 5_800, toXof: 7_500, unit: "kg", delay: "8–10 jours" },
-      { mode: "sea", fromXof: 70_000, toXof: 100_000, unit: "cbm", delay: "32–40 jours" },
+      {
+        mode: "air_express",
+        fromXof: 8_500,
+        toXof: 11_000,
+        unit: "kg",
+        delay: "2 jours (48h chrono)",
+        description:
+          "Service express Chine → Cameroun en 48h chrono. Idéal pour les commandes urgentes et les produits à forte valeur.",
+        accepted: ["Mode & textile", "Électronique", "Accessoires", "Bijoux", "Petits équipements"],
+        forbidden: ["Cosmétiques liquides", "Batteries lithium", "Parfumerie", "Produits inflammables"],
+      },
+      {
+        mode: "air_standard",
+        fromXof: 5_800,
+        toXof: 7_500,
+        unit: "kg",
+        delay: "8–10 jours",
+        description:
+          "Aérien standard : meilleur rapport qualité/prix pour la plupart des envois. Vol commercial avec consolidation.",
+        accepted: ["Mode & textile", "Électronique", "Accessoires", "Maison & déco", "Jouets"],
+        forbidden: ["Cosmétiques liquides", "Batteries lithium", "Parfumerie"],
+      },
+      {
+        mode: "sea",
+        fromXof: 70_000,
+        toXof: 100_000,
+        unit: "cbm",
+        delay: "32–40 jours",
+        description:
+          "Maritime en conteneur partagé. Le plus économique pour gros volumes (>1 CBM). Acceptation très large des catégories.",
+        accepted: ["Toutes catégories non périssables"],
+        forbidden: ["Alimentaire frais", "Médicaments à conservation froide"],
+      },
     ],
     activeVendors: 73,
     partnerSince: 2024,

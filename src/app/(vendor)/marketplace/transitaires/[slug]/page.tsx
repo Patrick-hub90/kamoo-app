@@ -3,29 +3,13 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   BadgeCheck,
-  Ban,
   MessageCircle,
-  Plane,
-  Ship,
   Sparkles,
   Star,
-  Users,
   Wallet,
-  Zap,
 } from "lucide-react";
+import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import { getTransitaireBySlug } from "@/lib/data/mock-transitaires";
-import type { TransportMode } from "@/lib/types/expedition";
-import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
-
-const MODE_ICON: Record<TransportMode, typeof Ship> = {
-  sea: Ship,
-  air_standard: Plane,
-  air_express: Zap,
-};
-
-function fmtNumber(n: number): string {
-  return n.toLocaleString("fr-FR");
-}
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -38,8 +22,8 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col">
-      {/* HEADER : back link + breadcrumb */}
-      <div className="border-b border-line bg-white px-10 py-4">
+      {/* HEADER : back link */}
+      <div className="border-b border-line bg-white px-10 py-3">
         <Link
           href="/marketplace/transitaires"
           className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 hover:text-ink-700"
@@ -49,10 +33,10 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
         </Link>
       </div>
 
-      {/* HERO : bannière + logo overlay + nom + actions */}
+      {/* HERO : bannière Facebook ratio 1.91/1 + logo overlay */}
       <div className="relative">
         <div
-          className="h-44 w-full overflow-hidden"
+          className="aspect-[1.91/1] max-h-80 w-full overflow-hidden"
           style={!t.coverImageUrl ? { background: t.coverBg } : undefined}
         >
           {t.coverImageUrl && (
@@ -80,9 +64,9 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Logo absolute */}
+        {/* Logo overlay (bas-gauche, 80% sur banner / 20% dehors) */}
         <div
-          className="absolute left-10 top-[120px] z-20 grid h-24 w-24 place-items-center overflow-hidden rounded-full border-4 border-white bg-white text-2xl font-extrabold text-white shadow-lg"
+          className="absolute bottom-0 left-10 z-20 grid h-24 w-24 translate-y-8 place-items-center overflow-hidden rounded-full border-4 border-white bg-white text-2xl font-extrabold text-white shadow-lg"
           style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
         >
           {t.logoImageUrl ? (
@@ -99,25 +83,23 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
       </div>
 
       {/* IDENTITÉ + ACTIONS */}
-      <div className="border-b border-line bg-white px-10 pb-6 pt-4">
-        <div className="flex items-start justify-between gap-6 pl-32">
-          <div className="min-w-0 flex-1">
-            <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900">
+      <div className="border-b border-line bg-white px-10 pb-4 pt-12">
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0 flex-1 pl-32">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900">
               {t.name}
             </h1>
-            <div className="mt-1 flex items-center gap-3 text-[13px] text-ink-500">
+            <div className="mt-0.5 flex items-center gap-2 text-[13px] text-ink-500">
               <span>
                 {t.countryCode} {t.city}
               </span>
               <span className="text-ink-300">·</span>
               <span>Partenaire Kamoo depuis {t.partnerSince}</span>
             </div>
-            <div className="mt-2 flex items-center gap-1.5">
+            <div className="mt-1.5 flex items-center gap-1.5 text-[13px]">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-              <span className="text-base font-bold text-ink-900">
-                {t.rating}
-              </span>
-              <span className="text-[13px] text-ink-500">
+              <span className="font-bold text-ink-900">{t.rating}</span>
+              <span className="text-ink-500">
                 · {t.reviewsCount} avis · {t.activeVendors} vendeurs actifs
               </span>
             </div>
@@ -138,7 +120,7 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
       <div className="grid grid-cols-[1.6fr_1fr] gap-5 px-10 py-6">
         {/* ═══ COLONNE GAUCHE ═══ */}
         <div className="flex flex-col gap-4">
-          {/* À propos */}
+          {/* À propos + politique paiement */}
           <section className="rounded-2xl border border-line bg-white p-5">
             <h2 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
               À propos
@@ -146,64 +128,42 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
             <p className="mt-2 text-[14px] leading-relaxed text-ink-700">
               {t.about}
             </p>
-            {t.specialties.length > 0 && (
-              <div className="mt-4">
-                <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500">
-                  Spécialités
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {t.specialties.map((s) => (
-                    <span
-                      key={s}
-                      className="rounded-full bg-kamoo-blue-50 px-2.5 py-1 text-[11.5px] font-semibold text-kamoo-blue-700"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
+
+            {/* Politique de paiement (déplacée ici) */}
+            <div className="mt-4">
+              <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500">
+                Politique de paiement
               </div>
-            )}
+              <div
+                className={`mt-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-bold ${
+                  t.paymentPolicy === "upfront"
+                    ? "bg-kamoo-orange-50 text-kamoo-orange-700"
+                    : "bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                <Wallet className="h-3.5 w-3.5" />
+                {t.paymentPolicy === "upfront"
+                  ? "Paiement avant l'expédition"
+                  : "Paiement à l'arrivée"}
+              </div>
+              <p className="mt-2 text-[12px] leading-relaxed text-ink-500">
+                {t.paymentPolicy === "upfront"
+                  ? "Vous payez le devis avant que le colis ne quitte la Chine."
+                  : "Vous payez à l'arrivée du colis dans votre pays de destination."}
+              </p>
+            </div>
           </section>
 
-          {/* Tarifs détaillés */}
+          {/* Tarifs détaillés - accordéon par mode */}
           <section className="rounded-2xl border border-line bg-white p-5">
             <h2 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
               Tarifs détaillés par mode
             </h2>
             <p className="mt-1 text-[12px] text-ink-500">
-              Fourchette : tarif minimum (contenu standard) → maximum (contenu
-              sensible / volumineux).
+              Cliquez sur un mode pour voir les produits acceptés et refusés.
             </p>
-            <div className="mt-4 flex flex-col gap-2.5">
-              {t.modes.map((m) => {
-                const Icon = MODE_ICON[m.mode];
-                return (
-                  <div
-                    key={m.mode}
-                    className="flex items-center gap-4 rounded-xl bg-paper-2 p-4"
-                  >
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-ink-700 shadow-sm">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[14px] font-bold text-ink-900">
-                        {TRANSPORT_MODE_LABELS[m.mode]}
-                      </div>
-                      <div className="text-[12px] text-ink-500">{m.delay}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-display text-[16px] font-extrabold leading-none text-ink-900">
-                        {fmtNumber(m.fromXof)}{" "}
-                        <span className="text-ink-300">–</span>{" "}
-                        {fmtNumber(m.toXof)}
-                      </div>
-                      <div className="mt-1 text-[10.5px] font-semibold text-ink-500">
-                        F CFA / {m.unit === "kg" ? "kg" : "CBM"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="mt-3">
+              <ModeAccordion modes={t.modes} />
             </div>
           </section>
 
@@ -263,129 +223,27 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
           </section>
         </div>
 
-        {/* ═══ COLONNE DROITE ═══ */}
+        {/* ═══ COLONNE DROITE — uniquement CTA ═══ */}
         <div className="flex flex-col gap-4">
-          {/* Politique de paiement */}
-          <section className="rounded-2xl border border-line bg-white p-5">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              Politique de paiement
-            </h2>
-            <div
-              className={`mt-3 flex items-center gap-3 rounded-xl p-3 ${
-                t.paymentPolicy === "upfront"
-                  ? "bg-kamoo-orange-50 text-kamoo-orange-700"
-                  : "bg-emerald-50 text-emerald-700"
-              }`}
-            >
-              <div
-                className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
-                  t.paymentPolicy === "upfront"
-                    ? "bg-kamoo-orange-500"
-                    : "bg-emerald-500"
-                } text-white`}
-              >
-                <Wallet className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-[13px] font-extrabold">
-                  {t.paymentPolicy === "upfront"
-                    ? "Paiement avant l'expédition"
-                    : "Paiement à l'arrivée"}
-                </div>
-                <div className="mt-0.5 text-[11px] opacity-90">
-                  {t.paymentPolicy === "upfront"
-                    ? "Vous payez le devis avant que le colis ne quitte la Chine."
-                    : "Vous payez à l'arrivée du colis dans votre pays."}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Catégories refusées */}
-          {t.refusedCategories.length > 0 && (
-            <section className="rounded-2xl border border-red-200 bg-red-50/50 p-5">
-              <h2 className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-700">
-                <Ban className="h-3 w-3" />
-                Catégories non acceptées
-              </h2>
-              <ul className="mt-2 flex flex-col gap-1">
-                {t.refusedCategories.map((c) => (
-                  <li
-                    key={c}
-                    className="flex items-center gap-1.5 text-[13px] text-ink-900"
-                  >
-                    <span className="h-1 w-1 rounded-full bg-red-500" />
-                    {c}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-[11px] leading-relaxed text-ink-500">
-                Si vous tentez d&apos;envoyer ces catégories, le transitaire
-                refusera la réception en Chine.
-              </p>
-            </section>
-          )}
-
-          {/* Stats clés */}
-          <section className="rounded-2xl border border-line bg-white p-5">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              Chiffres clés
-            </h2>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <Stat
-                icon={<Users className="h-4 w-4" />}
-                value={t.activeVendors.toString()}
-                label="Vendeurs actifs"
-              />
-              <Stat
-                icon={<Star className="h-4 w-4 fill-amber-400 text-amber-400" />}
-                value={t.rating.toString()}
-                label={`${t.reviewsCount} avis`}
-              />
-            </div>
-          </section>
-
-          {/* CTA final */}
-          <section className="rounded-2xl border border-line bg-gradient-to-br from-kamoo-blue-50 to-white p-5">
-            <h2 className="font-display text-[16px] font-extrabold text-ink-900">
+          <section className="sticky top-6 rounded-2xl border border-line bg-gradient-to-br from-kamoo-blue-50 to-white p-5">
+            <h2 className="font-display text-[18px] font-extrabold leading-tight text-ink-900">
               Prêt à travailler avec {t.name.split(" ")[0]} ?
             </h2>
-            <p className="mt-1 text-[12px] text-ink-500">
+            <p className="mt-2 text-[13px] leading-relaxed text-ink-500">
               Choisissez ce transitaire pour vos prochaines expéditions depuis
-              la Chine.
+              la Chine. Vous pourrez discuter avec lui directement après
+              sélection.
             </p>
-            <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[13px] font-bold text-white hover:bg-kamoo-orange-600">
+            <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white hover:bg-kamoo-orange-600">
               Choisir ce transitaire
             </button>
-            <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[12px] font-semibold text-ink-900 hover:bg-paper-2">
+            <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 hover:bg-paper-2">
               <MessageCircle className="h-3.5 w-3.5" />
               Discuter avant de décider
             </button>
           </section>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Stat({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div className="rounded-xl bg-paper-2 p-3">
-      <div className="grid h-7 w-7 place-items-center rounded-lg bg-white text-ink-700">
-        {icon}
-      </div>
-      <div className="mt-2 font-display text-xl font-extrabold text-ink-900">
-        {value}
-      </div>
-      <div className="text-[10.5px] font-semibold text-ink-500">{label}</div>
     </div>
   );
 }
