@@ -251,13 +251,13 @@ export function DateRangeFilter({ value, onChange }: Props) {
                 }}
                 modifiersClassNames={{
                   range_start:
-                    "bg-kamoo-blue-700 text-white rounded-l-md rounded-r-none hover:bg-kamoo-blue-700",
+                    "!rounded-full !bg-kamoo-blue-700 !text-white hover:!bg-kamoo-blue-700",
                   range_end:
-                    "bg-kamoo-blue-700 text-white rounded-r-md rounded-l-none hover:bg-kamoo-blue-700",
+                    "!rounded-full !bg-kamoo-blue-700 !text-white hover:!bg-kamoo-blue-700",
                   range_middle:
-                    "bg-kamoo-blue-50 text-kamoo-blue-700 rounded-none hover:bg-kamoo-blue-100",
+                    "!rounded-full !bg-kamoo-blue-700 !text-white hover:!bg-kamoo-blue-700",
                 }}
-                className="bg-transparent p-2"
+                className="bg-transparent p-2 [--cell-size:--spacing(9)] [--cell-radius:9999px]"
               />
               <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-3 py-2">
                 <div className="text-[12px] text-ink-700">
