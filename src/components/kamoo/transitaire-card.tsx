@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  CheckCircle2,
+  BadgeCheck,
   Plane,
   Ship,
   Sparkles,
@@ -35,7 +35,7 @@ export function TransitaireCard({ transitaire: t }: Props) {
     <div className="overflow-hidden rounded-2xl border border-line bg-white transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]">
       {/* COVER (image si dispo, sinon gradient) */}
       <div
-        className="relative h-24 w-full overflow-hidden"
+        className="relative h-28 w-full overflow-hidden"
         style={!t.coverImageUrl ? { background: t.coverBg } : undefined}
       >
         {t.coverImageUrl && (
@@ -46,28 +46,27 @@ export function TransitaireCard({ transitaire: t }: Props) {
             className="h-full w-full object-cover"
           />
         )}
-        {/* Badges */}
-        <div className="absolute right-3 top-3 flex gap-1.5">
-          {t.isTopChoice && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-kamoo-orange-700 backdrop-blur">
+        {/* Badge unique : Nouveau OU Certifié Kamoo */}
+        <div className="absolute right-3 top-3">
+          {t.status === "new" ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-kamoo-blue-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
               <Sparkles className="h-2.5 w-2.5" />
-              Top choix
+              Nouveau
             </span>
-          )}
-          {t.isVerified && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 backdrop-blur">
-              <CheckCircle2 className="h-2.5 w-2.5" />
-              Vérifié
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-kamoo-orange-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <BadgeCheck className="h-2.5 w-2.5" />
+              Certifié Kamoo
             </span>
           )}
         </div>
       </div>
 
       <div className="px-4 pb-4">
-        {/* Logo qui chevauche la cover */}
-        <div className="-mt-7 flex items-end justify-between">
+        {/* Logo overlay sur la bannière */}
+        <div className="-mt-9 flex items-end justify-between">
           <div
-            className="grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border-4 border-white text-base font-extrabold text-white"
+            className="grid h-16 w-16 place-items-center overflow-hidden rounded-2xl border-[3px] border-white bg-white text-lg font-extrabold text-white shadow-md"
             style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
           >
             {t.logoImageUrl ? (

@@ -28,8 +28,12 @@ export type Transitaire = {
   countryCode: string;
   rating: number;
   reviewsCount: number;
-  isVerified: boolean;
-  isTopChoice: boolean;
+  /**
+   * Statut Kamoo, exclusif :
+   *  - "new" : vient de rejoindre Kamoo
+   *  - "certified" : vérifié + a au moins 50 expéditions complétées sans incident
+   */
+  status: "new" | "certified";
   paymentPolicy: "upfront" | "on_arrival";
   refusedCategories: string[];
   specialties: string[];
