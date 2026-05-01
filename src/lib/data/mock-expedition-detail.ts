@@ -55,6 +55,13 @@ function buildDetail(id: string): ExpeditionDetail | null {
         name: base.productName,
         cartons: 2,
         weightDeclared: 0.4,
+        photosDeclared: [
+          { emoji: base.thumb.emoji, bg: base.thumb.bg },
+          {
+            emoji: "📦",
+            bg: "linear-gradient(135deg,#FEF3C7,#F59E0B)",
+          },
+        ],
       },
       ...(base.otherProductsCount > 0
         ? [
@@ -62,6 +69,12 @@ function buildDetail(id: string): ExpeditionDetail | null {
               name: "Sacs à main cuir",
               cartons: 1,
               weightDeclared: 0.6,
+              photosDeclared: [
+                {
+                  emoji: "👜",
+                  bg: "linear-gradient(135deg,#DBEAFE,#3B82F6)",
+                },
+              ],
             },
           ]
         : []),

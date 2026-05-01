@@ -9,6 +9,8 @@ export type Product = {
   name: string;
   cartons: number;
   weightDeclared: number; // kg, déclaré par le vendeur
+  /** Photos uploadées par le vendeur à la création */
+  photosDeclared: { emoji: string; bg: string }[];
 };
 
 export type Quote = {

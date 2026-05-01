@@ -251,7 +251,7 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                 >
                   <Wallet className="h-2.5 w-2.5" />
                   {exp.transitaire.paymentPolicy === "upfront"
-                    ? "Paiement à l'expédition"
+                    ? "Paiement avant l'expédition"
                     : "Paiement à l'arrivée"}
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* LE COLIS — liste simple, pas de photos */}
+          {/* LE COLIS — liste avec photos déclarées par le vendeur */}
           <div className="rounded-2xl border border-line bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
               <div>
@@ -297,23 +297,41 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                   {exp.products.reduce((s, p) => s + p.cartons, 0)} cartons
                 </div>
               </div>
+              <span className="text-[10.5px] font-semibold text-ink-400">
+                Photos déclarées à la création
+              </span>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {exp.products.map((p, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-xl bg-paper-2 px-3.5 py-2.5"
+                  className="flex items-center gap-3 rounded-xl bg-paper-2 px-3.5 py-3"
                 >
-                  <div className="text-[14px] font-semibold text-ink-900">
-                    {p.name}
+                  {/* Photos déclarées */}
+                  <div className="flex shrink-0 gap-1.5">
+                    {p.photosDeclared.map((ph, j) => (
+                      <div
+                        key={j}
+                        className="grid h-12 w-12 place-items-center rounded-lg text-2xl"
+                        style={{ background: ph.bg }}
+                      >
+                        {ph.emoji}
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-[11.5px] text-ink-500">
-                    {p.cartons} carton{p.cartons > 1 ? "s" : ""}
-                    {" · "}
-                    <span className="font-semibold text-ink-700">
-                      {p.weightDeclared} kg
-                    </span>{" "}
-                    déclaré
+                  {/* Nom + meta */}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-semibold text-ink-900">
+                      {p.name}
+                    </div>
+                    <div className="mt-0.5 text-[11.5px] text-ink-500">
+                      {p.cartons} carton{p.cartons > 1 ? "s" : ""}
+                      {" · "}
+                      <span className="font-semibold text-ink-700">
+                        {p.weightDeclared} kg
+                      </span>{" "}
+                      déclaré
+                    </div>
                   </div>
                 </div>
               ))}
