@@ -19,6 +19,7 @@ export type DateFilterValue = {
 };
 
 const PRESETS: { id: DateFilterPreset; label: string }[] = [
+  { id: "all", label: "Tout" },
   { id: "7j", label: "7 jours" },
   { id: "30j", label: "30 jours" },
   { id: "3m", label: "3 mois" },
@@ -63,25 +64,15 @@ function isSameDay(a: Date, b: Date): boolean {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
 
+function isSameMonth(a: Date, b: Date): boolean {
+  return a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+}
+
 type Props = {
   value: DateFilterValue;
   onChange: (next: DateFilterValue) => void;
 };
 
-/**
- * Filtre de plage de date.
- * - Trigger : bouton dropdown
- * - Popover : presets à gauche + calendrier range à droite (si "Personnalisé")
- * - Validation explicite (bouton "Valider")
- *
- * Règles de sélection custom :
- *  • 1er clic : définit la date de début
- *  • 2ème clic après début : définit la date de fin (si après début)
- *  • Clic avant début : la date devient nouveau début, fin à resaisir
- *  • Clic sur début déjà sélectionné : réinitialise tout
- *  • Plage 1 jour autorisée (début = fin)
- *  • Pas d'échange automatique
- */
 export function DateRangeFilter({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<DateFilterPreset>(
@@ -91,6 +82,9 @@ export function DateRangeFilter({ value, onChange }: Props) {
     value.range?.from,
   );
   const [draftTo, setDraftTo] = useState<Date | undefined>(value.range?.to);
+  const [displayedMonth, setDisplayedMonth] = useState<Date>(
+    value.range?.from ?? new Date(),
+  );
 
   const isActive = value.preset !== "all";
   const triggerLabel = formatTriggerLabel(value);
@@ -104,6 +98,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
       setSelectedPreset(value.preset);
       setDraftFrom(value.range?.from);
       setDraftTo(value.range?.to);
+      setDisplayedMonth(value.range?.from ?? new Date());
     }
     setOpen(next);
   };
@@ -117,34 +112,37 @@ export function DateRangeFilter({ value, onChange }: Props) {
   };
 
   /**
-   * Logique de clic sur un jour (règles custom du fondateur).
+   * Règles custom de sélection :
+   * - 1er clic : début
+   * - Click sur début déjà sélectionné : reset
+   * - Click avant début : nouveau début, fin à resaisir (pas de swap)
+   * - Click après début : fin (plage 1 jour autorisée)
+   * - Plage complète puis nouveau click : recommence
    */
   const handleDayClick = (day: Date) => {
     const d = startOfDay(day);
 
-    // Aucune sélection en cours OU plage complète → on commence une nouvelle
+    // Hors du mois affiché → ignore
+    if (!isSameMonth(d, displayedMonth)) return;
+
     if (!draftFrom || (draftFrom && draftTo)) {
       setDraftFrom(d);
       setDraftTo(undefined);
       return;
     }
 
-    // On a un from, pas de to encore
-    // 1. Click sur le from déjà sélectionné → reset
     if (isSameDay(d, draftFrom)) {
       setDraftFrom(undefined);
       setDraftTo(undefined);
       return;
     }
 
-    // 2. Click avant le from → ce jour devient le nouveau from, to à resaisir
     if (d < draftFrom) {
       setDraftFrom(d);
       setDraftTo(undefined);
       return;
     }
 
-    // 3. Click après le from → définit le to (plage 1 jour autorisée si égal)
     setDraftTo(d);
   };
 
@@ -167,12 +165,19 @@ export function DateRangeFilter({ value, onChange }: Props) {
     setOpen(false);
   };
 
-  // Modifiers pour styler la plage
+  // Modifiers
   const rangeMiddle = (date: Date): boolean => {
     if (!draftFrom || !draftTo) return false;
     const d = startOfDay(date).getTime();
-    return d > startOfDay(draftFrom).getTime() && d < startOfDay(draftTo).getTime();
+    return (
+      d > startOfDay(draftFrom).getTime() &&
+      d < startOfDay(draftTo).getTime()
+    );
   };
+
+  // Désactive les jours hors du mois affiché (visibles mais non cliquables)
+  const isOutsideMonth = (date: Date): boolean =>
+    !isSameMonth(date, displayedMonth);
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -192,20 +197,21 @@ export function DateRangeFilter({ value, onChange }: Props) {
         align="start"
         className={cn(
           "rounded-xl border border-line bg-white p-0 shadow-[var(--shadow-kamoo-lg)]",
-          showCalendar ? "w-auto" : "w-56",
+          showCalendar ? "w-auto" : "w-44",
         )}
       >
         <div className="flex">
-          {/* Presets */}
-          <div className="flex w-44 shrink-0 flex-col gap-0.5 p-2">
-            {PRESETS.map((p) => (
+          {/* Presets — séparateurs entre chaque ligne */}
+          <div className="flex w-44 shrink-0 flex-col p-1">
+            {PRESETS.map((p, i) => (
               <button
                 key={p.id}
                 onClick={() => handleSelectPreset(p.id)}
                 className={cn(
-                  "flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px] hover:bg-paper-2",
+                  "flex items-center justify-between px-2.5 py-2 text-left text-[13px] hover:bg-paper-2",
+                  i < PRESETS.length - 1 && "border-b border-line",
                   selectedPreset === p.id
-                    ? "bg-kamoo-blue-50 font-bold text-kamoo-blue-700"
+                    ? "font-bold text-kamoo-blue-700"
                     : "font-medium text-ink-700",
                 )}
               >
@@ -227,16 +233,17 @@ export function DateRangeFilter({ value, onChange }: Props) {
             )}
           </div>
 
-          {/* Calendrier — colonne droite */}
           {showCalendar && (
             <div className="flex flex-col border-l border-line">
               <Calendar
                 mode="single"
                 selected={draftFrom}
                 onDayClick={handleDayClick}
+                month={displayedMonth}
+                onMonthChange={setDisplayedMonth}
                 numberOfMonths={1}
-                defaultMonth={draftFrom ?? new Date()}
                 captionLayout="dropdown"
+                disabled={isOutsideMonth}
                 modifiers={{
                   range_start: draftFrom ? [draftFrom] : [],
                   range_end: draftTo ? [draftTo] : [],
@@ -250,9 +257,9 @@ export function DateRangeFilter({ value, onChange }: Props) {
                   range_middle:
                     "bg-kamoo-blue-50 text-kamoo-blue-700 rounded-none hover:bg-kamoo-blue-100",
                 }}
-                className="bg-transparent p-3"
+                className="bg-transparent p-2"
               />
-              <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-4 py-3">
+              <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-3 py-2">
                 <div className="text-[12px] text-ink-700">
                   {!draftFrom && (
                     <span className="text-ink-500">
@@ -262,9 +269,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
                   {draftFrom && !draftTo && (
                     <span>
                       <b>{formatDateShort(draftFrom)}</b>{" "}
-                      <span className="text-ink-500">
-                        → choisis la date de fin
-                      </span>
+                      <span className="text-ink-500">→ date de fin ?</span>
                     </span>
                   )}
                   {draftFrom && draftTo && (
@@ -278,7 +283,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
                   onClick={handleValidate}
                   disabled={!canValidate}
                   className={cn(
-                    "rounded-md bg-kamoo-orange-500 px-4 py-2 text-[12px] font-bold text-white hover:bg-kamoo-orange-600",
+                    "rounded-md bg-kamoo-orange-500 px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-kamoo-orange-600",
                     !canValidate && "cursor-not-allowed opacity-40",
                   )}
                 >
