@@ -1,0 +1,165 @@
+import type { ActiveCloseuse, ClosingAssignment } from "@/lib/types/closing";
+
+export const MOCK_ACTIVE_CLOSEUSE: ActiveCloseuse = {
+  id: "cl_aicha",
+  name: "Aïcha Diop",
+  phone: "+221 77 123 45 67",
+  avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
+  rating: 4.8,
+  reviewsCount: 47,
+  startedAt: "2024-09-15",
+};
+
+export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
+  {
+    id: "co_01",
+    publicCode: "ORD-SN-2026-00128",
+    productName: "Crème éclaircissante naturelle",
+    productEmoji: "🧴",
+    productBg: "linear-gradient(135deg,#FCE7F3,#F472B6)",
+    client: {
+      name: "Marième Sow",
+      phone: "+221 77 444 22 11",
+      city: "Dakar · Mermoz",
+      isReturning: false,
+    },
+    amountXof: 18000,
+    status: "to_call",
+    lastActivityAt: "2026-05-01T08:30:00Z",
+    createdAt: "2026-05-01T08:00:00Z",
+    callAttempts: 0,
+  },
+  {
+    id: "co_02",
+    publicCode: "ORD-SN-2026-00127",
+    productName: "Power Bank 10 000mAh × 2",
+    productEmoji: "🔋",
+    productBg: "linear-gradient(135deg,#DCFCE7,#22C55E)",
+    client: {
+      name: "Ousmane Ba",
+      phone: "+221 78 555 33 44",
+      city: "Pikine",
+      isReturning: true,
+    },
+    amountXof: 22000,
+    status: "to_call",
+    lastActivityAt: "2026-05-01T07:45:00Z",
+    createdAt: "2026-05-01T07:30:00Z",
+    callAttempts: 1,
+  },
+  {
+    id: "co_03",
+    publicCode: "ORD-SN-2026-00125",
+    productName: "Lunettes solaires aviateur",
+    productEmoji: "🕶️",
+    productBg: "linear-gradient(135deg,#FEF3C7,#F59E0B)",
+    client: {
+      name: "Fatou Ndiaye",
+      phone: "+221 76 999 88 77",
+      city: "Rufisque",
+      isReturning: false,
+    },
+    amountXof: 12500,
+    status: "callback_scheduled",
+    callbackAt: "2026-05-01T16:00:00Z",
+    lastActivityAt: "2026-05-01T10:15:00Z",
+    createdAt: "2026-04-30T18:00:00Z",
+    callAttempts: 2,
+  },
+  {
+    id: "co_04",
+    publicCode: "ORD-SN-2026-00122",
+    productName: "Sac à main cuir",
+    productEmoji: "👜",
+    productBg: "linear-gradient(135deg,#DBEAFE,#3B82F6)",
+    client: {
+      name: "Aminata Diallo",
+      phone: "+221 70 111 22 33",
+      city: "Dakar · Plateau",
+      isReturning: true,
+    },
+    amountXof: 25000,
+    status: "confirmed",
+    scheduledDeliveryAt: "2026-05-02T14:30:00Z",
+    lastActivityAt: "2026-05-01T11:30:00Z",
+    createdAt: "2026-04-30T16:20:00Z",
+    callAttempts: 1,
+  },
+  {
+    id: "co_05",
+    publicCode: "ORD-SN-2026-00120",
+    productName: "Casquette brodée × 3",
+    productEmoji: "🧢",
+    productBg: "linear-gradient(135deg,#FED7AA,#F97316)",
+    client: {
+      name: "Mamadou Sy",
+      phone: "+221 77 888 66 55",
+      city: "Guediawaye",
+      isReturning: false,
+    },
+    amountXof: 21000,
+    status: "confirmed",
+    scheduledDeliveryAt: "2026-05-01T17:00:00Z",
+    lastActivityAt: "2026-05-01T09:50:00Z",
+    createdAt: "2026-04-30T14:00:00Z",
+    callAttempts: 1,
+  },
+  {
+    id: "co_06",
+    publicCode: "ORD-SN-2026-00118",
+    productName: "Coque téléphone silicone",
+    productEmoji: "📱",
+    productBg: "linear-gradient(135deg,#E9D5FF,#A78BFA)",
+    client: {
+      name: "Khadija Mbaye",
+      phone: "+221 76 333 44 55",
+      city: "Thiès",
+      isReturning: false,
+    },
+    amountXof: 8500,
+    status: "cancelled",
+    cancellationReason: "no_money",
+    lastActivityAt: "2026-05-01T11:00:00Z",
+    createdAt: "2026-04-30T12:00:00Z",
+    callAttempts: 2,
+  },
+  {
+    id: "co_07",
+    publicCode: "ORD-SN-2026-00115",
+    productName: "Crème éclaircissante naturelle",
+    productEmoji: "🧴",
+    productBg: "linear-gradient(135deg,#FCE7F3,#F472B6)",
+    client: {
+      name: "Aïssatou Faye",
+      phone: "+221 78 222 11 99",
+      city: "Dakar · Almadies",
+      isReturning: true,
+    },
+    amountXof: 18000,
+    status: "delivered",
+    lastActivityAt: "2026-04-30T15:00:00Z",
+    createdAt: "2026-04-29T10:00:00Z",
+    callAttempts: 1,
+  },
+];
+
+export function computeClosingStats(assignments: ClosingAssignment[]) {
+  const today = new Date().toDateString();
+
+  return {
+    toCall: assignments.filter((a) => a.status === "to_call").length,
+    inProgress: assignments.filter(
+      (a) => a.status === "called" || a.status === "callback_scheduled",
+    ).length,
+    confirmedToday: assignments.filter(
+      (a) =>
+        a.status === "confirmed" &&
+        new Date(a.lastActivityAt).toDateString() === today,
+    ).length,
+    cancelledToday: assignments.filter(
+      (a) =>
+        a.status === "cancelled" &&
+        new Date(a.lastActivityAt).toDateString() === today,
+    ).length,
+  };
+}
