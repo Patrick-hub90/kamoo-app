@@ -28,7 +28,12 @@ import { cn } from "@/lib/utils";
 
 /* ─── État local du wizard ─────────────────────────────────────────── */
 
-type Photo = { emoji: string; bg: string };
+type Photo = {
+  /** Data URL ou URL distante de l'image uploadée */
+  url: string;
+  /** Nom du fichier source (pour information) */
+  fileName?: string;
+};
 
 type Colis = {
   id: number;
@@ -39,14 +44,6 @@ type Colis = {
 };
 
 const STEP_LABELS = ["Colis", "Transport", "Confirmation"] as const;
-
-const DUMMY_PHOTOS: Photo[] = [
-  { emoji: "👟", bg: "linear-gradient(135deg,#FFEDD5,#FB923C)" },
-  { emoji: "👜", bg: "linear-gradient(135deg,#DBEAFE,#3B82F6)" },
-  { emoji: "📱", bg: "linear-gradient(135deg,#F3F4F6,#9CA3AF)" },
-  { emoji: "⌚", bg: "linear-gradient(135deg,#FEF3C7,#F59E0B)" },
-  { emoji: "📦", bg: "linear-gradient(135deg,#E0E7FF,#6366F1)" },
-];
 
 const TRANSPORT_ICON: Record<TransportMode, typeof Ship> = {
   sea: Ship,
@@ -400,10 +397,15 @@ function ColisCard({
   const photoCount = colis.photos.filter(Boolean).length;
   const isComplete = colis.name && photoCount > 0;
 
-  const addPhoto = (slot: number) => {
-    const photos = [...colis.photos];
-    photos[slot] = DUMMY_PHOTOS[(index + slot) % DUMMY_PHOTOS.length];
-    onChange({ ...colis, photos });
+  const addPhoto = (slot: number, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      const photos = [...colis.photos];
+      photos[slot] = { url: reader.result, fileName: file.name };
+      onChange({ ...colis, photos });
+    };
+    reader.readAsDataURL(file);
   };
 
   const removePhoto = (slot: number) => {
@@ -480,8 +482,9 @@ function ColisCard({
                 {colis.photos.map((photo, i) => (
                   <PhotoSlot
                     key={i}
+                    slotKey={`colis-${colis.id}-photo-${i}`}
                     photo={photo}
-                    onAdd={() => addPhoto(i)}
+                    onSelect={(file) => addPhoto(i, file)}
                     onRemove={() => removePhoto(i)}
                     label={i === 0 ? "Produit" : i === 1 ? "Carton" : "Photo"}
                   />
@@ -576,42 +579,66 @@ function Field({
 }
 
 function PhotoSlot({
+  slotKey,
   photo,
-  onAdd,
+  onSelect,
   onRemove,
   label,
 }: {
+  slotKey: string;
   photo: Photo | null;
-  onAdd: () => void;
+  onSelect: (file: File) => void;
   onRemove: () => void;
   label: string;
 }) {
+  const inputId = `photo-input-${slotKey}`;
+
+  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    if (file) onSelect(file);
+    // Reset le input pour permettre re-sélection du même fichier
+    e.target.value = "";
+  };
+
   if (photo) {
     return (
-      <div
-        className="relative grid aspect-square place-items-center overflow-hidden rounded-xl text-3xl"
-        style={{ background: photo.bg }}
-      >
-        {photo.emoji}
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-ink-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo.url}
+          alt={photo.fileName ?? "Photo"}
+          className="h-full w-full object-cover"
+        />
         <button
           onClick={onRemove}
           className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+          type="button"
         >
           <X className="h-3 w-3" />
         </button>
       </div>
     );
   }
+
   return (
-    <button
-      onClick={onAdd}
-      className="grid aspect-square place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
-    >
-      <div className="flex flex-col items-center gap-1">
-        <Plus className="h-4 w-4" />
-        <span className="text-[10px] font-semibold">{label}</span>
-      </div>
-    </button>
+    <>
+      <label
+        htmlFor={inputId}
+        className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
+      >
+        <div className="flex flex-col items-center gap-1">
+          <Plus className="h-4 w-4" />
+          <span className="text-[10px] font-semibold">{label}</span>
+        </div>
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleChange}
+      />
+    </>
   );
 }
 
@@ -951,18 +978,23 @@ function Step3Confirm({
           <div className="flex flex-col gap-2.5">
             {colis.map((c, i) => {
               const photoCount = c.photos.filter(Boolean).length;
+              const firstPhoto = c.photos.find(Boolean);
               return (
                 <div
                   key={c.id}
                   className="flex items-center gap-3 rounded-xl bg-paper-2 px-3 py-2.5"
                 >
-                  <div
-                    className="grid h-10 w-10 place-items-center rounded-lg text-xl"
-                    style={{
-                      background: c.photos.find(Boolean)?.bg ?? "#E5E7EB",
-                    }}
-                  >
-                    {c.photos.find(Boolean)?.emoji ?? "📦"}
+                  <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-ink-100 text-xl">
+                    {firstPhoto ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={firstPhoto.url}
+                        alt={firstPhoto.fileName ?? c.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      "📦"
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] font-bold text-ink-900">
