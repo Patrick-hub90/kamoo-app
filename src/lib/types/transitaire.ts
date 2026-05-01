@@ -10,10 +10,24 @@ export type ModeOffer = {
   delay: string; // "35–45 jours"
 };
 
+export type Review = {
+  id: string;
+  vendorName: string;
+  vendorCity: string;
+  vendorCountryFlag: string;
+  rating: number;
+  date: string;
+  comment: string;
+  /** Initiale + couleur de fond (avatar fallback) */
+  avatarBg: string;
+};
+
 export type Transitaire = {
   id: string;
   slug: string;
   name: string;
+  /** Description courte affichée sur le profil */
+  about: string;
   /** Initiales (fallback si pas de logo image) */
   avatar: string;
   /** Couleur de fond du logo (fallback) */
@@ -40,4 +54,6 @@ export type Transitaire = {
   modes: ModeOffer[];
   activeVendors: number;
   partnerSince: number;
+  /** Avis vendeurs (max 5 affichés sur le profil, lien vers tous) */
+  reviews: Review[];
 };
