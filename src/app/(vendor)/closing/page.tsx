@@ -42,34 +42,39 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "injoignable", label: CLOSING_STATUS_LABELS.injoignable },
 ];
 
-/** Couleur de TEXTE seul, pas de fond (pour ne pas surcharger) */
-function statusTextColor(s: ClosingStatus) {
+/** Pill avec fond léger + dot + texte coloré */
+function statusClasses(s: ClosingStatus) {
   switch (s) {
     case "nouvelle":
-      return "text-kamoo-orange-700";
+      return {
+        bg: "bg-kamoo-orange-50",
+        text: "text-kamoo-orange-700",
+        dot: "bg-kamoo-orange-500",
+      };
     case "rappele":
-      return "text-kamoo-blue-700";
+      return {
+        bg: "bg-kamoo-blue-50",
+        text: "text-kamoo-blue-700",
+        dot: "bg-kamoo-blue-600",
+      };
     case "livraison_en_cours":
-      return "text-emerald-700";
+      return {
+        bg: "bg-emerald-50",
+        text: "text-emerald-700",
+        dot: "bg-emerald-500",
+      };
     case "annule":
-      return "text-red-700";
+      return {
+        bg: "bg-red-50",
+        text: "text-red-700",
+        dot: "bg-red-500",
+      };
     case "injoignable":
-      return "text-ink-500";
-  }
-}
-
-function statusDot(s: ClosingStatus) {
-  switch (s) {
-    case "nouvelle":
-      return "bg-kamoo-orange-500";
-    case "rappele":
-      return "bg-kamoo-blue-600";
-    case "livraison_en_cours":
-      return "bg-emerald-500";
-    case "annule":
-      return "bg-red-500";
-    case "injoignable":
-      return "bg-ink-300";
+      return {
+        bg: "bg-paper-2",
+        text: "text-ink-500",
+        dot: "bg-ink-300",
+      };
   }
 }
 
@@ -288,8 +293,15 @@ export default function ClosingPage() {
 /* ─── Tableau allégé style Shopify ───────────────────────────── */
 function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line bg-white">
-      <table className="w-full text-[13px]">
+    <div className="rounded-2xl border border-line bg-white">
+      <div
+        className="overflow-x-auto rounded-2xl"
+        style={{
+          scrollbarColor: "#D1D5DB #F5F5EE",
+          scrollbarWidth: "thin",
+        }}
+      >
+        <table className="w-full min-w-[1100px] text-[13px]">
         <thead>
           <tr className="border-b border-line bg-paper-2/40 text-left">
             <Th>N°</Th>
@@ -374,15 +386,23 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
               </Td>
 
               <Td>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1.5 text-[12.5px] font-bold",
-                    statusTextColor(a.status),
-                  )}
-                >
-                  <span className={cn("h-1.5 w-1.5 rounded-full", statusDot(a.status))} />
-                  {CLOSING_STATUS_LABELS[a.status]}
-                </span>
+                {(() => {
+                  const c = statusClasses(a.status);
+                  return (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold whitespace-nowrap",
+                        c.bg,
+                        c.text,
+                      )}
+                    >
+                      <span
+                        className={cn("h-1.5 w-1.5 rounded-full", c.dot)}
+                      />
+                      {CLOSING_STATUS_LABELS[a.status]}
+                    </span>
+                  );
+                })()}
               </Td>
 
               <Td>
@@ -414,7 +434,8 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }
