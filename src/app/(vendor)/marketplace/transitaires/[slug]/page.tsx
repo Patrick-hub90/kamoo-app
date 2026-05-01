@@ -66,7 +66,7 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
 
         {/* Logo overlay (bas-gauche, 80% sur banner / 20% dehors) */}
         <div
-          className="absolute bottom-0 left-10 z-20 grid h-24 w-24 translate-y-8 place-items-center overflow-hidden rounded-full border-4 border-white bg-white text-2xl font-extrabold text-white shadow-lg"
+          className="absolute bottom-0 left-10 z-20 grid h-24 w-24 translate-y-3 place-items-center overflow-hidden rounded-full border-4 border-white bg-white text-2xl font-extrabold text-white shadow-lg"
           style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
         >
           {t.logoImageUrl ? (
@@ -83,7 +83,7 @@ export default async function TransitaireProfilePage({ params }: PageProps) {
       </div>
 
       {/* IDENTITÉ + ACTIONS */}
-      <div className="border-b border-line bg-white px-10 pb-4 pt-12">
+      <div className="border-b border-line bg-white px-10 pb-4 pt-5">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0 flex-1 pl-32">
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900">
