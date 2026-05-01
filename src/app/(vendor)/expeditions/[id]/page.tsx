@@ -307,19 +307,7 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                   key={i}
                   className="flex items-center gap-3 rounded-xl bg-paper-2 px-3.5 py-3"
                 >
-                  {/* Photos déclarées */}
-                  <div className="flex shrink-0 gap-1.5">
-                    {p.photosDeclared.map((ph, j) => (
-                      <div
-                        key={j}
-                        className="grid h-12 w-12 place-items-center rounded-lg text-2xl"
-                        style={{ background: ph.bg }}
-                      >
-                        {ph.emoji}
-                      </div>
-                    ))}
-                  </div>
-                  {/* Nom + meta */}
+                  {/* Nom + meta — à gauche */}
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold text-ink-900">
                       {p.name}
@@ -332,6 +320,18 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                       </span>{" "}
                       déclaré
                     </div>
+                  </div>
+                  {/* Photos déclarées — à droite */}
+                  <div className="flex shrink-0 gap-1.5">
+                    {p.photosDeclared.map((ph, j) => (
+                      <div
+                        key={j}
+                        className="grid h-12 w-12 place-items-center rounded-lg text-2xl"
+                        style={{ background: ph.bg }}
+                      >
+                        {ph.emoji}
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
