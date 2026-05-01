@@ -21,7 +21,9 @@ export function CountrySelector({ value, onChange }: Props) {
       >
         <span className="text-base">{value.flag}</span>
         <div className="text-left leading-tight">
-          <div className="text-[13px] font-bold text-ink-900">{value.name}</div>
+          <div className="text-[13px] font-bold text-ink-900">
+            {value.isGlobal ? "Vue globale" : `Marché ${value.name}`}
+          </div>
           <div className="text-[10px] text-ink-500">{value.warehouseCity}</div>
         </div>
         <ChevronDown className="h-3.5 w-3.5 text-ink-400" />
@@ -35,7 +37,7 @@ export function CountrySelector({ value, onChange }: Props) {
           />
           <div className="absolute right-0 top-[calc(100%+8px)] z-20 w-72 rounded-xl border border-line bg-white p-1.5 shadow-[var(--shadow-kamoo-lg)]">
             <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-400">
-              Mes pays d'opération
+              Mes marchés
             </div>
             {COUNTRIES.map((c) => (
               <CountryRow

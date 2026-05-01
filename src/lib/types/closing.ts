@@ -26,10 +26,14 @@ export type ClosingAssignment = {
   productName: string;
   productEmoji: string;
   productBg: string;
+  /** Quantité commandée */
+  quantity: number;
   /** Client */
   client: {
     name: string;
     phone: string;
+    /** WhatsApp peut différer du téléphone d'appel */
+    whatsapp?: string;
     city: string;
     isReturning: boolean; // déjà commandé avant
   };
@@ -43,6 +47,8 @@ export type ClosingAssignment = {
   scheduledDeliveryAt?: string;
   /** Si cancelled, motif */
   cancellationReason?: CancellationReason;
+  /** Commentaire libre laissé par la closeuse */
+  comment?: string;
   /** Date dernière activité (appel, etc.) */
   lastActivityAt: string;
   /** Date de création de la commande */

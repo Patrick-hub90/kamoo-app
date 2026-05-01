@@ -10,6 +10,7 @@ import {
   Phone,
   Truck,
   ShoppingBag,
+  Users,
   Wallet,
   Settings,
   ChevronDown,
@@ -79,7 +80,8 @@ const SECTIONS: Section[] = [
     label: "Mon activité",
     items: [
       { href: "/expeditions", label: "Expéditions", icon: Package, badge: 12 },
-      { href: "/commandes", label: "Commandes", icon: ShoppingBag },
+      { href: "/boutique", label: "Boutique", icon: ShoppingBag },
+      { href: "/clients", label: "Clients", icon: Users },
       { href: "/closing", label: "Closing", icon: Phone },
       { href: "/livraisons", label: "Livraisons", icon: Truck },
       { href: "/finances", label: "Finances", icon: Wallet },

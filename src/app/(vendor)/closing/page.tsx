@@ -4,13 +4,15 @@ import { useMemo, useState } from "react";
 import {
   CheckCircle2,
   ChevronDown,
+  MessageCircle,
   Phone,
   Search,
   Star,
   XCircle,
 } from "lucide-react";
-import { ClosingCard } from "@/components/kamoo/closing-card";
 import { StatCard } from "@/components/kamoo/stat-card";
+import { StatusPill } from "@/components/kamoo/status-pill";
+import { Countdown } from "@/components/kamoo/countdown";
 import {
   DateRangeFilter,
   type DateFilterValue,
@@ -22,8 +24,11 @@ import {
 } from "@/lib/data/mock-closing";
 import {
   CLOSING_STATUS_LABELS,
+  CANCELLATION_REASON_LABELS,
+  type ClosingAssignment,
   type ClosingStatus,
 } from "@/lib/types/closing";
+import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type StatusFilter = "all" | ClosingStatus;
@@ -37,6 +42,22 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "cancelled", label: CLOSING_STATUS_LABELS.cancelled },
   { id: "delivered", label: CLOSING_STATUS_LABELS.delivered },
 ];
+
+function statusTone(s: ClosingStatus) {
+  switch (s) {
+    case "to_call":
+      return "amber" as const;
+    case "called":
+    case "callback_scheduled":
+      return "blue" as const;
+    case "confirmed":
+      return "green" as const;
+    case "cancelled":
+      return "red" as const;
+    case "delivered":
+      return "gray" as const;
+  }
+}
 
 export default function ClosingPage() {
   const assignments = MOCK_CLOSING_ASSIGNMENTS;
@@ -66,7 +87,6 @@ export default function ClosingPage() {
         )
           return false;
       }
-      // Date filtering omitted for brevity; could be applied like in expeditions
       return true;
     });
   }, [assignments, statusFilter, search]);
@@ -212,7 +232,6 @@ export default function ClosingPage() {
             )}
           </div>
 
-          {/* Filtre date */}
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
 
           {filtersActive && (
@@ -236,8 +255,8 @@ export default function ClosingPage() {
         </div>
       </div>
 
-      {/* LISTE */}
-      <div className="flex-1 overflow-y-auto px-10 py-6">
+      {/* TABLEAU style Shopify */}
+      <div className="flex-1 overflow-auto px-10 py-6">
         {filtered.length === 0 ? (
           <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-white py-20 text-center">
             <div className="text-3xl">📞</div>
@@ -246,13 +265,197 @@ export default function ClosingPage() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((a) => (
-              <ClosingCard key={a.id} assignment={a} />
-            ))}
-          </div>
+          <ClosingTable assignments={filtered} />
         )}
       </div>
     </div>
+  );
+}
+
+/* ─── Tableau type Shopify ──────────────────────────────────────── */
+function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="border-b border-line bg-paper-2/50 text-left">
+            <Th>N°</Th>
+            <Th>Produit</Th>
+            <Th align="center">Qté</Th>
+            <Th align="right">Total</Th>
+            <Th>Client</Th>
+            <Th>Téléphone</Th>
+            <Th align="center">WhatsApp</Th>
+            <Th>Statut</Th>
+            <Th>Commentaire</Th>
+            <Th>Compte à rebours</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {assignments.map((a) => (
+            <tr
+              key={a.id}
+              className="border-b border-line last:border-0 hover:bg-paper-2/40"
+            >
+              {/* N° */}
+              <Td>
+                <span className="font-mono-kamoo text-[11.5px] font-bold text-ink-700">
+                  {a.publicCode}
+                </span>
+              </Td>
+
+              {/* Produit */}
+              <Td>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-base"
+                    style={{ background: a.productBg }}
+                  >
+                    {a.productEmoji}
+                  </div>
+                  <span className="truncate font-semibold text-ink-900">
+                    {a.productName}
+                  </span>
+                </div>
+              </Td>
+
+              {/* Quantité */}
+              <Td align="center">
+                <span className="font-bold text-ink-900">×{a.quantity}</span>
+              </Td>
+
+              {/* Total */}
+              <Td align="right">
+                <span className="font-bold text-ink-900">
+                  {formatXOF(a.amountXof)}
+                </span>
+              </Td>
+
+              {/* Client */}
+              <Td>
+                <div>
+                  <div className="font-semibold text-ink-900">
+                    {a.client.name}
+                    {a.client.isReturning && (
+                      <span className="ml-1.5 inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase text-emerald-700">
+                        Fidèle
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-ink-500">
+                    {a.client.city}
+                  </div>
+                </div>
+              </Td>
+
+              {/* Téléphone */}
+              <Td>
+                <a
+                  href={`tel:${a.client.phone}`}
+                  className="inline-flex items-center gap-1 font-mono-kamoo text-[12px] font-semibold text-ink-700 hover:text-kamoo-blue-700"
+                >
+                  <Phone className="h-3 w-3" />
+                  {a.client.phone}
+                </a>
+              </Td>
+
+              {/* WhatsApp */}
+              <Td align="center">
+                {a.client.whatsapp ? (
+                  <a
+                    href={`https://wa.me/${a.client.whatsapp.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    WhatsApp
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-ink-400">—</span>
+                )}
+              </Td>
+
+              {/* Statut */}
+              <Td>
+                <StatusPill
+                  tone={statusTone(a.status)}
+                  label={CLOSING_STATUS_LABELS[a.status]}
+                />
+              </Td>
+
+              {/* Commentaire */}
+              <Td>
+                {a.comment ? (
+                  <span
+                    className="block max-w-[200px] truncate text-[12px] italic text-ink-700"
+                    title={a.comment}
+                  >
+                    {a.comment}
+                  </span>
+                ) : a.status === "cancelled" && a.cancellationReason ? (
+                  <span className="text-[11px] text-red-700">
+                    {CANCELLATION_REASON_LABELS[a.cancellationReason]}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-ink-400">—</span>
+                )}
+              </Td>
+
+              {/* Compte à rebours */}
+              <Td>
+                {a.status === "callback_scheduled" && a.callbackAt ? (
+                  <Countdown targetIso={a.callbackAt} compact />
+                ) : a.status === "confirmed" && a.scheduledDeliveryAt ? (
+                  <Countdown targetIso={a.scheduledDeliveryAt} />
+                ) : (
+                  <span className="text-[11px] text-ink-400">—</span>
+                )}
+              </Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Th({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "center" | "right";
+}) {
+  return (
+    <th
+      className={cn(
+        "px-3 py-2.5 text-[10.5px] font-bold uppercase tracking-wider text-ink-500",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function Td({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "center" | "right";
+}) {
+  return (
+    <td
+      className={cn(
+        "px-3 py-3 align-middle text-[13px]",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+      )}
+    >
+      {children}
+    </td>
   );
 }

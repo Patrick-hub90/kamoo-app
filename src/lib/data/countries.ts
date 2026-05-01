@@ -40,9 +40,9 @@ export const COUNTRIES: Country[] = [
 
 export const GLOBAL_OPTION: Country = {
   code: "GLOBAL",
-  name: "Mode Global",
+  name: "Vue globale",
   flag: "🌍",
-  warehouseCity: "Tous pays consolidés",
+  warehouseCity: "Tous marchés consolidés (lecture seule)",
   currency: "XOF",
   isGlobal: true,
 };
