@@ -15,7 +15,7 @@ export type DateFilterPreset = "all" | "7j" | "30j" | "3m" | "custom";
 
 export type DateFilterValue = {
   preset: DateFilterPreset;
-  range?: DateRange; // utilisé seulement si preset === "custom"
+  range?: DateRange;
 };
 
 const PRESETS: { id: DateFilterPreset; label: string }[] = [
@@ -36,6 +36,7 @@ function formatDateShort(date: Date): string {
   return date.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "short",
+    year: "numeric",
   });
 }
 
@@ -52,38 +53,57 @@ function formatTriggerLabel(value: DateFilterValue): string {
   return PRESET_LABELS[value.preset];
 }
 
+function startOfDay(d: Date): Date {
+  const c = new Date(d);
+  c.setHours(0, 0, 0, 0);
+  return c;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return startOfDay(a).getTime() === startOfDay(b).getTime();
+}
+
 type Props = {
   value: DateFilterValue;
   onChange: (next: DateFilterValue) => void;
 };
 
 /**
- * Filtre de plage de date :
- * - Trigger : bouton dropdown avec valeur courante
+ * Filtre de plage de date.
+ * - Trigger : bouton dropdown
  * - Popover : presets à gauche + calendrier range à droite (si "Personnalisé")
- * - Validation explicite : pas de fermeture automatique sur sélection
+ * - Validation explicite (bouton "Valider")
+ *
+ * Règles de sélection custom :
+ *  • 1er clic : définit la date de début
+ *  • 2ème clic après début : définit la date de fin (si après début)
+ *  • Clic avant début : la date devient nouveau début, fin à resaisir
+ *  • Clic sur début déjà sélectionné : réinitialise tout
+ *  • Plage 1 jour autorisée (début = fin)
+ *  • Pas d'échange automatique
  */
 export function DateRangeFilter({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<DateFilterPreset>(
     value.preset,
   );
-  const [draftRange, setDraftRange] = useState<DateRange | undefined>(
-    value.range,
+  const [draftFrom, setDraftFrom] = useState<Date | undefined>(
+    value.range?.from,
   );
+  const [draftTo, setDraftTo] = useState<Date | undefined>(value.range?.to);
 
   const isActive = value.preset !== "all";
   const triggerLabel = formatTriggerLabel(value);
   const showCalendar = selectedPreset === "custom";
   const canValidate =
     selectedPreset !== "custom" ||
-    (draftRange?.from !== undefined && draftRange?.to !== undefined);
+    (draftFrom !== undefined && draftTo !== undefined);
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
-      // Réinitialise le draft à la valeur actuelle quand on ouvre
       setSelectedPreset(value.preset);
-      setDraftRange(value.range);
+      setDraftFrom(value.range?.from);
+      setDraftTo(value.range?.to);
     }
     setOpen(next);
   };
@@ -91,15 +111,50 @@ export function DateRangeFilter({ value, onChange }: Props) {
   const handleSelectPreset = (preset: DateFilterPreset) => {
     setSelectedPreset(preset);
     if (preset !== "custom") {
-      // Validation immédiate pour les presets simples
       onChange({ preset });
       setOpen(false);
     }
   };
 
+  /**
+   * Logique de clic sur un jour (règles custom du fondateur).
+   */
+  const handleDayClick = (day: Date) => {
+    const d = startOfDay(day);
+
+    // Aucune sélection en cours OU plage complète → on commence une nouvelle
+    if (!draftFrom || (draftFrom && draftTo)) {
+      setDraftFrom(d);
+      setDraftTo(undefined);
+      return;
+    }
+
+    // On a un from, pas de to encore
+    // 1. Click sur le from déjà sélectionné → reset
+    if (isSameDay(d, draftFrom)) {
+      setDraftFrom(undefined);
+      setDraftTo(undefined);
+      return;
+    }
+
+    // 2. Click avant le from → ce jour devient le nouveau from, to à resaisir
+    if (d < draftFrom) {
+      setDraftFrom(d);
+      setDraftTo(undefined);
+      return;
+    }
+
+    // 3. Click après le from → définit le to (plage 1 jour autorisée si égal)
+    setDraftTo(d);
+  };
+
   const handleValidate = () => {
     if (selectedPreset === "custom") {
-      onChange({ preset: "custom", range: draftRange });
+      onChange({
+        preset: "custom",
+        range:
+          draftFrom && draftTo ? { from: draftFrom, to: draftTo } : undefined,
+      });
     }
     setOpen(false);
   };
@@ -107,8 +162,16 @@ export function DateRangeFilter({ value, onChange }: Props) {
   const handleClear = () => {
     onChange({ preset: "all" });
     setSelectedPreset("all");
-    setDraftRange(undefined);
+    setDraftFrom(undefined);
+    setDraftTo(undefined);
     setOpen(false);
+  };
+
+  // Modifiers pour styler la plage
+  const rangeMiddle = (date: Date): boolean => {
+    if (!draftFrom || !draftTo) return false;
+    const d = startOfDay(date).getTime();
+    return d > startOfDay(draftFrom).getTime() && d < startOfDay(draftTo).getTime();
   };
 
   return (
@@ -133,7 +196,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
         )}
       >
         <div className="flex">
-          {/* Presets — colonne gauche */}
+          {/* Presets */}
           <div className="flex w-44 shrink-0 flex-col gap-0.5 p-2">
             {PRESETS.map((p) => (
               <button
@@ -164,33 +227,58 @@ export function DateRangeFilter({ value, onChange }: Props) {
             )}
           </div>
 
-          {/* Calendrier — colonne droite (visible si Personnalisé) */}
+          {/* Calendrier — colonne droite */}
           {showCalendar && (
             <div className="flex flex-col border-l border-line">
               <Calendar
-                mode="range"
-                selected={draftRange}
-                onSelect={setDraftRange}
+                mode="single"
+                selected={draftFrom}
+                onDayClick={handleDayClick}
                 numberOfMonths={1}
-                defaultMonth={draftRange?.from ?? new Date()}
-                className="bg-transparent p-2"
+                defaultMonth={draftFrom ?? new Date()}
+                captionLayout="dropdown"
+                modifiers={{
+                  range_start: draftFrom ? [draftFrom] : [],
+                  range_end: draftTo ? [draftTo] : [],
+                  range_middle: rangeMiddle,
+                }}
+                modifiersClassNames={{
+                  range_start:
+                    "bg-kamoo-blue-700 text-white rounded-l-md rounded-r-none hover:bg-kamoo-blue-700",
+                  range_end:
+                    "bg-kamoo-blue-700 text-white rounded-r-md rounded-l-none hover:bg-kamoo-blue-700",
+                  range_middle:
+                    "bg-kamoo-blue-50 text-kamoo-blue-700 rounded-none hover:bg-kamoo-blue-100",
+                }}
+                className="bg-transparent p-3"
               />
-              <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-3 py-2">
-                <div className="text-[11px] text-ink-500">
-                  {draftRange?.from && !draftRange?.to && "Choisis la date de fin"}
-                  {!draftRange?.from && "Choisis la date de début"}
-                  {draftRange?.from && draftRange?.to && (
-                    <>
-                      {formatDateShort(draftRange.from)} →{" "}
-                      {formatDateShort(draftRange.to)}
-                    </>
+              <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-4 py-3">
+                <div className="text-[12px] text-ink-700">
+                  {!draftFrom && (
+                    <span className="text-ink-500">
+                      Choisis la date de début
+                    </span>
+                  )}
+                  {draftFrom && !draftTo && (
+                    <span>
+                      <b>{formatDateShort(draftFrom)}</b>{" "}
+                      <span className="text-ink-500">
+                        → choisis la date de fin
+                      </span>
+                    </span>
+                  )}
+                  {draftFrom && draftTo && (
+                    <span className="font-semibold text-ink-900">
+                      {formatDateShort(draftFrom)} →{" "}
+                      {formatDateShort(draftTo)}
+                    </span>
                   )}
                 </div>
                 <button
                   onClick={handleValidate}
                   disabled={!canValidate}
                   className={cn(
-                    "rounded-md bg-kamoo-orange-500 px-3 py-1.5 text-[12px] font-bold text-white hover:bg-kamoo-orange-600",
+                    "rounded-md bg-kamoo-orange-500 px-4 py-2 text-[12px] font-bold text-white hover:bg-kamoo-orange-600",
                     !canValidate && "cursor-not-allowed opacity-40",
                   )}
                 >
