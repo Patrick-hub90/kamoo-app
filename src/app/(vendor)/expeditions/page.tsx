@@ -26,7 +26,7 @@ import {
 import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type DatePreset = "7j" | "30j" | "3m" | "all";
+type DatePreset = "7j" | "30j" | "3m" | "all" | "custom";
 type StatusFilter = "all" | ExpeditionStatus;
 
 const DATE_PRESETS: { id: DatePreset; label: string }[] = [
@@ -43,28 +43,46 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "arrived_destination", label: STATUS_LABELS.arrived_destination },
 ];
 
+function presetToCutoff(preset: DatePreset): Date | null {
+  if (preset === "all" || preset === "custom") return null;
+  const days = preset === "7j" ? 7 : preset === "30j" ? 30 : 90;
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
 export default function ExpeditionsListPage() {
   const expeditions = MOCK_EXPEDITIONS;
   const stats = computeListStats(expeditions);
 
-  const [tab, setTab] = useState<"en_cours" | "historique">("en_cours");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [datePreset, setDatePreset] = useState<DatePreset>("30j");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [statusOpen, setStatusOpen] = useState(false);
 
   const currentStatusLabel =
     STATUS_FILTERS.find((s) => s.id === statusFilter)?.label ?? "Statut";
 
   const filtered = useMemo(() => {
+    const cutoff = presetToCutoff(datePreset);
+    const customStartDate = customStart ? new Date(customStart) : null;
+    const customEndDate = customEnd ? new Date(customEnd) : null;
+
     return expeditions.filter((e) => {
-      // Onglet
-      if (tab === "en_cours" && e.status === "arrived_destination")
-        return false;
-      if (tab === "historique" && e.status !== "arrived_destination")
-        return false;
       // Statut
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
+
+      // Date
+      const created = new Date(e.createdAt);
+      if (datePreset === "custom") {
+        if (customStartDate && created < customStartDate) return false;
+        if (customEndDate && created > customEndDate) return false;
+      } else if (cutoff && created < cutoff) {
+        return false;
+      }
+
       // Recherche
       if (search) {
         const q = search.toLowerCase();
@@ -76,20 +94,28 @@ export default function ExpeditionsListPage() {
       }
       return true;
     });
-  }, [expeditions, tab, statusFilter, search]);
+  }, [
+    expeditions,
+    statusFilter,
+    datePreset,
+    customStart,
+    customEnd,
+    search,
+  ]);
 
   const filtersActive =
-    search.length > 0 || statusFilter !== "all" || datePreset !== "30j";
+    search.length > 0 ||
+    statusFilter !== "all" ||
+    datePreset !== "30j" ||
+    customStart ||
+    customEnd;
 
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("all");
     setDatePreset("30j");
-  };
-
-  const counts = {
-    en_cours: expeditions.filter((e) => e.status !== "arrived_destination").length,
-    historique: expeditions.filter((e) => e.status === "arrived_destination").length,
+    setCustomStart("");
+    setCustomEnd("");
   };
 
   return (
@@ -148,24 +174,8 @@ export default function ExpeditionsListPage() {
 
       {/* SÉPARATEUR : barre de filtres */}
       <div className="mt-8 border-y border-line bg-paper-2/60 px-10 py-3">
-        <div className="flex items-center gap-3">
-          {/* Onglets */}
-          <div className="inline-flex gap-1 rounded-lg border border-line bg-white p-1">
-            <TabButton
-              active={tab === "en_cours"}
-              onClick={() => setTab("en_cours")}
-              label="En cours"
-              count={counts.en_cours}
-            />
-            <TabButton
-              active={tab === "historique"}
-              onClick={() => setTab("historique")}
-              label="Historique"
-              count={counts.historique}
-            />
-          </div>
-
-          {/* Recherche */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Recherche — en premier */}
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
             <input
@@ -224,7 +234,7 @@ export default function ExpeditionsListPage() {
             )}
           </div>
 
-          {/* Filtre date */}
+          {/* Filtre date — chips presets */}
           <div className="inline-flex items-center gap-1 rounded-lg border border-line bg-white p-1">
             <Calendar className="ml-1 h-3.5 w-3.5 text-ink-400" />
             {DATE_PRESETS.map((d) => (
@@ -241,7 +251,37 @@ export default function ExpeditionsListPage() {
                 {d.label}
               </button>
             ))}
+            <button
+              onClick={() => setDatePreset("custom")}
+              className={cn(
+                "ml-0.5 rounded-md px-2.5 py-1 text-[12px] font-bold transition",
+                datePreset === "custom"
+                  ? "bg-kamoo-blue-700 text-white"
+                  : "text-ink-500 hover:bg-paper-2",
+              )}
+            >
+              Personnalisé
+            </button>
           </div>
+
+          {/* Champs de date personnalisée */}
+          {datePreset === "custom" && (
+            <div className="inline-flex items-center gap-2">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="h-9 rounded-lg border border-line bg-white px-2.5 text-[13px] outline-none focus:border-kamoo-blue-600"
+              />
+              <span className="text-[12px] text-ink-500">→</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="h-9 rounded-lg border border-line bg-white px-2.5 text-[13px] outline-none focus:border-kamoo-blue-600"
+              />
+            </div>
+          )}
 
           {/* Effacer */}
           {filtersActive && (
@@ -258,7 +298,7 @@ export default function ExpeditionsListPage() {
 
           {/* Compteur */}
           <div className="text-[12px] font-semibold text-ink-500">
-            {filtered.length} / {expeditions.length}
+            {filtered.length} / {expeditions.length} expéditions
           </div>
         </div>
       </div>
@@ -287,39 +327,5 @@ export default function ExpeditionsListPage() {
         )}
       </div>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  label,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  count: number;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-bold transition",
-        active
-          ? "bg-kamoo-blue-700 text-white"
-          : "text-ink-500 hover:bg-paper-2",
-      )}
-    >
-      {label}
-      <span
-        className={cn(
-          "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-          active ? "bg-white/20" : "bg-paper-2 text-ink-500",
-        )}
-      >
-        {count}
-      </span>
-    </button>
   );
 }
