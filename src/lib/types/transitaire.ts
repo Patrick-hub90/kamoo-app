@@ -14,26 +14,26 @@ export type Transitaire = {
   id: string;
   slug: string;
   name: string;
-  /** Initiales / logo court */
+  /** Initiales (fallback si pas de logo image) */
   avatar: string;
-  /** Couleur (gradient CSS) du logo */
+  /** Couleur de fond du logo (fallback) */
   avatarBg: string;
-  /** Bannière de couverture (gradient ou image) */
+  /** Bannière de couverture (fallback gradient si pas d'image) */
   coverBg: string;
+  /** URL de la bannière (chemin /public/... ou URL distante) */
+  coverImageUrl?: string;
+  /** URL du logo (chemin /public/... ou URL distante) */
+  logoImageUrl?: string;
   city: string;
-  countryCode: string; // 🇨🇳
+  countryCode: string;
   rating: number;
   reviewsCount: number;
-  /** Vérifié par Kamoo (KYC + entretien) */
   isVerified: boolean;
-  /** Top 5% des transitaires */
   isTopChoice: boolean;
   paymentPolicy: "upfront" | "on_arrival";
   refusedCategories: string[];
   specialties: string[];
   modes: ModeOffer[];
-  /** Nombre de vendeurs Kamoo qui travaillent actuellement avec ce transitaire */
   activeVendors: number;
-  /** Année où il a rejoint Kamoo */
   partnerSince: number;
 };

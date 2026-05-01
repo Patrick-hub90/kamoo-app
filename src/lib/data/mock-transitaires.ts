@@ -6,6 +6,51 @@ import type { Transitaire } from "@/lib/types/transitaire";
  */
 export const MOCK_TRANSITAIRES: Transitaire[] = [
   {
+    id: "tr_trust",
+    slug: "trust-transit-services",
+    name: "Trust Transit & Services",
+    avatar: "TT",
+    avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
+    coverBg:
+      "linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FDBA74 100%)",
+    coverImageUrl: "/transitaires/trust-transit-cover.png",
+    logoImageUrl: "/transitaires/trust-transit-logo.png",
+    city: "Guangzhou",
+    countryCode: "🇨🇳",
+    rating: 4.7,
+    reviewsCount: 184,
+    isVerified: true,
+    isTopChoice: true,
+    paymentPolicy: "upfront",
+    refusedCategories: ["Cosmétiques liquides", "Batteries lithium"],
+    specialties: ["Express Cameroun", "Mode", "Électronique"],
+    modes: [
+      {
+        mode: "air_express",
+        fromXof: 8_500,
+        toXof: 11_000,
+        unit: "kg",
+        delay: "2 jours (48h chrono)",
+      },
+      {
+        mode: "air_standard",
+        fromXof: 5_800,
+        toXof: 7_500,
+        unit: "kg",
+        delay: "8–10 jours",
+      },
+      {
+        mode: "sea",
+        fromXof: 70_000,
+        toXof: 100_000,
+        unit: "cbm",
+        delay: "32–40 jours",
+      },
+    ],
+    activeVendors: 73,
+    partnerSince: 2024,
+  },
+  {
     id: "tr_liang",
     slug: "liang-wei-trading",
     name: "Liang Wei Trading",
