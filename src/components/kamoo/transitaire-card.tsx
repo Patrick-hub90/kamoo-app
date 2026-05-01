@@ -63,10 +63,10 @@ export function TransitaireCard({ transitaire: t }: Props) {
       </div>
 
       <div className="px-4 pb-4">
-        {/* Logo overlay sur la bannière */}
-        <div className="-mt-9 flex items-end justify-between">
+        {/* Logo overlay sur la bannière (gros, 1/3 sur banner, 2/3 dessous) */}
+        <div className="-mt-8 flex items-end justify-between">
           <div
-            className="grid h-16 w-16 place-items-center overflow-hidden rounded-2xl border-[3px] border-white bg-white text-lg font-extrabold text-white shadow-md"
+            className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl border-4 border-white bg-white text-xl font-extrabold text-white shadow-md"
             style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
           >
             {t.logoImageUrl ? (
