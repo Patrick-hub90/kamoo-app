@@ -43,7 +43,7 @@ export function Countdown({ targetIso }: Props) {
   return (
     <span
       className={`font-mono-kamoo text-[15px] font-extrabold ${
-        past ? "text-red-700" : "text-red-600"
+        past ? "text-red-700" : "text-ink-900"
       }`}
     >
       {past && "−"}

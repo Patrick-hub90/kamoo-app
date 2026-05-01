@@ -312,12 +312,12 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
         </thead>
         <tbody>
           {assignments.map((a) => {
+            // Seuls Rappelé et Injoignable ont un compte à rebours
             const target =
-              a.status === "rappele" && a.callbackAt
+              (a.status === "rappele" || a.status === "injoignable") &&
+              a.callbackAt
                 ? a.callbackAt
-                : a.status === "livraison_en_cours" && a.scheduledDeliveryAt
-                  ? a.scheduledDeliveryAt
-                  : null;
+                : null;
             const expired = target ? isCountdownExpired(target) : false;
             return (
             <tr
