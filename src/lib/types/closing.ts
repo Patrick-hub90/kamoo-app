@@ -3,17 +3,15 @@
  */
 
 export type ClosingStatus =
-  | "to_call" // À appeler
-  | "called" // Appelée mais pas encore de décision
-  | "callback_scheduled" // Rappel planifié à une date
-  | "confirmed" // Confirmée, prête pour livraison
-  | "cancelled" // Annulée par la closeuse
-  | "delivered"; // Livrée (statut final)
+  | "nouvelle" // À appeler (par défaut quand commande arrive)
+  | "rappele" // Appelée + rappel planifié OU client demande à être rappelé
+  | "livraison_en_cours" // Confirmée par closeuse, en cours / partie à la livraison
+  | "annule" // Annulée
+  | "injoignable"; // Plusieurs tentatives sans réponse
 
 export type CancellationReason =
   | "wrong_number"
   | "no_money"
-  | "no_answer_3_attempts"
   | "client_traveling"
   | "refused_product"
   | "negotiation_failed"
@@ -21,35 +19,29 @@ export type CancellationReason =
 
 export type ClosingAssignment = {
   id: string;
-  publicCode: string; // ex: ORD-SN-2026-00128
-  /** Produit principal */
+  publicCode: string;
   productName: string;
   productEmoji: string;
   productBg: string;
-  /** Quantité commandée */
   quantity: number;
-  /** Client */
   client: {
     name: string;
     phone: string;
-    /** WhatsApp peut différer du téléphone d'appel */
     whatsapp?: string;
     city: string;
-    isReturning: boolean; // déjà commandé avant
+    isReturning: boolean;
   };
-  /** Montant total commande */
   amountXof: number;
-  /** Statut closing */
   status: ClosingStatus;
-  /** Si callback_scheduled, quand ? */
+  /** Si rappele, quand ? */
   callbackAt?: string;
-  /** Si confirmed, date livraison souhaitée */
+  /** Si livraison_en_cours, ETA livraison */
   scheduledDeliveryAt?: string;
-  /** Si cancelled, motif */
+  /** Si annule, motif */
   cancellationReason?: CancellationReason;
   /** Commentaire libre laissé par la closeuse */
   comment?: string;
-  /** Date dernière activité (appel, etc.) */
+  /** Date dernière activité */
   lastActivityAt: string;
   /** Date de création de la commande */
   createdAt: string;
@@ -58,18 +50,16 @@ export type ClosingAssignment = {
 };
 
 export const CLOSING_STATUS_LABELS: Record<ClosingStatus, string> = {
-  to_call: "À appeler",
-  called: "Appelée",
-  callback_scheduled: "Rappel planifié",
-  confirmed: "Confirmée",
-  cancelled: "Annulée",
-  delivered: "Livrée",
+  nouvelle: "Nouvelle",
+  rappele: "Rappelé",
+  livraison_en_cours: "Livraison en cours",
+  annule: "Annulé",
+  injoignable: "Injoignable",
 };
 
 export const CANCELLATION_REASON_LABELS: Record<CancellationReason, string> = {
   wrong_number: "Faux numéro",
   no_money: "Pas d'argent",
-  no_answer_3_attempts: "Injoignable (3 tentatives)",
   client_traveling: "Client en voyage",
   refused_product: "Refus du produit",
   negotiation_failed: "Négociation échouée",
@@ -83,5 +73,5 @@ export type ActiveCloseuse = {
   avatarBg: string;
   rating: number;
   reviewsCount: number;
-  startedAt: string; // ex: "2024-09-15"
+  startedAt: string;
 };

@@ -26,7 +26,7 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
       isReturning: false,
     },
     amountXof: 18000,
-    status: "to_call",
+    status: "nouvelle",
     lastActivityAt: "2026-05-01T08:30:00Z",
     createdAt: "2026-05-01T08:00:00Z",
     callAttempts: 0,
@@ -46,7 +46,7 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
       isReturning: true,
     },
     amountXof: 22000,
-    status: "to_call",
+    status: "nouvelle",
     comment: "Client fidèle, généralement rapide à confirmer",
     lastActivityAt: "2026-05-01T07:45:00Z",
     createdAt: "2026-05-01T07:30:00Z",
@@ -66,7 +66,7 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
       isReturning: false,
     },
     amountXof: 12500,
-    status: "callback_scheduled",
+    status: "rappele",
     callbackAt: "2026-05-01T16:00:00Z",
     comment: "Demande de rappeler à 16h après le boulot",
     lastActivityAt: "2026-05-01T10:15:00Z",
@@ -88,7 +88,7 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
       isReturning: true,
     },
     amountXof: 25000,
-    status: "confirmed",
+    status: "livraison_en_cours",
     scheduledDeliveryAt: "2026-05-02T14:30:00Z",
     comment: "Préfère livraison après-midi",
     lastActivityAt: "2026-05-01T11:30:00Z",
@@ -110,7 +110,7 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
       isReturning: false,
     },
     amountXof: 21000,
-    status: "confirmed",
+    status: "livraison_en_cours",
     scheduledDeliveryAt: "2026-05-01T17:00:00Z",
     lastActivityAt: "2026-05-01T09:50:00Z",
     createdAt: "2026-04-30T14:00:00Z",
@@ -130,9 +130,9 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
       isReturning: false,
     },
     amountXof: 8500,
-    status: "cancelled",
+    status: "annule",
     cancellationReason: "no_money",
-    comment: "Client souhaitait reporter, finalement pas d'argent ce mois",
+    comment: "Pas d'argent ce mois",
     lastActivityAt: "2026-05-01T11:00:00Z",
     createdAt: "2026-04-30T12:00:00Z",
     callAttempts: 2,
@@ -147,15 +147,15 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
     client: {
       name: "Aïssatou Faye",
       phone: "+221 78 222 11 99",
-      whatsapp: "+221 78 222 11 99",
       city: "Dakar · Almadies",
       isReturning: true,
     },
     amountXof: 18000,
-    status: "delivered",
-    lastActivityAt: "2026-04-30T15:00:00Z",
+    status: "injoignable",
+    comment: "5 tentatives, ne décroche pas",
+    lastActivityAt: "2026-05-01T13:20:00Z",
     createdAt: "2026-04-29T10:00:00Z",
-    callAttempts: 1,
+    callAttempts: 5,
   },
 ];
 
@@ -163,18 +163,13 @@ export function computeClosingStats(assignments: ClosingAssignment[]) {
   const today = new Date().toDateString();
 
   return {
-    toCall: assignments.filter((a) => a.status === "to_call").length,
-    inProgress: assignments.filter(
-      (a) => a.status === "called" || a.status === "callback_scheduled",
-    ).length,
-    confirmedToday: assignments.filter(
+    nouvelles: assignments.filter((a) => a.status === "nouvelle").length,
+    rappelees: assignments.filter((a) => a.status === "rappele").length,
+    enLivraison: assignments.filter((a) => a.status === "livraison_en_cours")
+      .length,
+    annuleesToday: assignments.filter(
       (a) =>
-        a.status === "confirmed" &&
-        new Date(a.lastActivityAt).toDateString() === today,
-    ).length,
-    cancelledToday: assignments.filter(
-      (a) =>
-        a.status === "cancelled" &&
+        a.status === "annule" &&
         new Date(a.lastActivityAt).toDateString() === today,
     ).length,
   };

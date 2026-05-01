@@ -18,8 +18,8 @@ function diffParts(target: Date, now: Date) {
 }
 
 /**
- * Compte à rebours minimaliste, mis à jour chaque minute.
- * Si la date est passée → affiche "il y a X" en rouge.
+ * Compteur épuré mais remarquable : font-display gras, taille un peu plus grande,
+ * couleur (vert futur / rouge dépassé). Pas de fond, pas d'icône.
  */
 export function Countdown({ targetIso }: Props) {
   const target = new Date(targetIso);
@@ -37,15 +37,14 @@ export function Countdown({ targetIso }: Props) {
   if (hours > 0 || days > 0) parts.push(`${hours}h`);
   parts.push(`${minutes}min`);
 
-  const label = past ? `-${parts.join(" ")}` : parts.join(" ");
-
   return (
     <span
-      className={`font-mono-kamoo text-[12px] ${
-        past ? "text-red-600" : "text-ink-900"
+      className={`font-display text-[14px] font-extrabold tracking-tight ${
+        past ? "text-red-600" : "text-emerald-700"
       }`}
     >
-      {label}
+      {past && "− "}
+      {parts.join(" ")}
     </span>
   );
 }

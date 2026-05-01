@@ -6,12 +6,12 @@ import {
   ChevronDown,
   MessageCircle,
   Phone,
+  RotateCcw,
   Search,
   Star,
   XCircle,
 } from "lucide-react";
 import { StatCard } from "@/components/kamoo/stat-card";
-import { StatusPill } from "@/components/kamoo/status-pill";
 import { Countdown } from "@/components/kamoo/countdown";
 import {
   DateRangeFilter,
@@ -35,27 +35,41 @@ type StatusFilter = "all" | ClosingStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "Tous les statuts" },
-  { id: "to_call", label: CLOSING_STATUS_LABELS.to_call },
-  { id: "called", label: CLOSING_STATUS_LABELS.called },
-  { id: "callback_scheduled", label: CLOSING_STATUS_LABELS.callback_scheduled },
-  { id: "confirmed", label: CLOSING_STATUS_LABELS.confirmed },
-  { id: "cancelled", label: CLOSING_STATUS_LABELS.cancelled },
-  { id: "delivered", label: CLOSING_STATUS_LABELS.delivered },
+  { id: "nouvelle", label: CLOSING_STATUS_LABELS.nouvelle },
+  { id: "rappele", label: CLOSING_STATUS_LABELS.rappele },
+  { id: "livraison_en_cours", label: CLOSING_STATUS_LABELS.livraison_en_cours },
+  { id: "annule", label: CLOSING_STATUS_LABELS.annule },
+  { id: "injoignable", label: CLOSING_STATUS_LABELS.injoignable },
 ];
 
-function statusTone(s: ClosingStatus) {
+/** Couleur de TEXTE seul, pas de fond (pour ne pas surcharger) */
+function statusTextColor(s: ClosingStatus) {
   switch (s) {
-    case "to_call":
-      return "amber" as const;
-    case "called":
-    case "callback_scheduled":
-      return "blue" as const;
-    case "confirmed":
-      return "green" as const;
-    case "cancelled":
-      return "red" as const;
-    case "delivered":
-      return "gray" as const;
+    case "nouvelle":
+      return "text-kamoo-orange-700";
+    case "rappele":
+      return "text-kamoo-blue-700";
+    case "livraison_en_cours":
+      return "text-emerald-700";
+    case "annule":
+      return "text-red-700";
+    case "injoignable":
+      return "text-ink-500";
+  }
+}
+
+function statusDot(s: ClosingStatus) {
+  switch (s) {
+    case "nouvelle":
+      return "bg-kamoo-orange-500";
+    case "rappele":
+      return "bg-kamoo-blue-600";
+    case "livraison_en_cours":
+      return "bg-emerald-500";
+    case "annule":
+      return "bg-red-500";
+    case "injoignable":
+      return "bg-ink-300";
   }
 }
 
@@ -105,8 +119,7 @@ export default function ClosingPage() {
             Closing
           </h1>
           <p className="mt-1 text-sm text-ink-500">
-            Suivez les appels de votre closeuse pour valider les commandes
-            avant livraison.
+            Suivez les appels de votre closeuse pour valider les commandes.
           </p>
         </div>
 
@@ -147,27 +160,27 @@ export default function ClosingPage() {
       <div className="px-10 pt-8">
         <div className="grid grid-cols-4 gap-3">
           <StatCard
-            label="À appeler"
-            value={stats.toCall}
+            label="Nouvelles"
+            value={stats.nouvelles}
             icon={<Phone className="h-4 w-4" />}
             tone="orange"
-            badge={stats.toCall > 0}
+            badge={stats.nouvelles > 0}
           />
           <StatCard
-            label="En cours"
-            value={stats.inProgress}
-            icon={<Phone className="h-4 w-4" />}
+            label="À rappeler"
+            value={stats.rappelees}
+            icon={<RotateCcw className="h-4 w-4" />}
             tone="blue"
           />
           <StatCard
-            label="Confirmées (auj.)"
-            value={stats.confirmedToday}
+            label="En livraison"
+            value={stats.enLivraison}
             icon={<CheckCircle2 className="h-4 w-4" />}
             tone="green"
           />
           <StatCard
             label="Annulées (auj.)"
-            value={stats.cancelledToday}
+            value={stats.annuleesToday}
             icon={<XCircle className="h-4 w-4" />}
             tone="gray"
           />
@@ -188,7 +201,7 @@ export default function ClosingPage() {
             />
           </div>
 
-          {/* Filtre statut */}
+          {/* Filtre statut — liste déroulante */}
           <div className="relative">
             <button
               onClick={() => setStatusOpen(!statusOpen)}
@@ -255,7 +268,7 @@ export default function ClosingPage() {
         </div>
       </div>
 
-      {/* TABLEAU style Shopify */}
+      {/* TABLEAU */}
       <div className="flex-1 overflow-auto px-10 py-6">
         {filtered.length === 0 ? (
           <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-white py-20 text-center">
@@ -272,13 +285,13 @@ export default function ClosingPage() {
   );
 }
 
-/* ─── Tableau type Shopify ──────────────────────────────────────── */
+/* ─── Tableau allégé style Shopify ───────────────────────────── */
 function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-line bg-white">
       <table className="w-full text-[13px]">
         <thead>
-          <tr className="border-b border-line bg-paper-2/50 text-left">
+          <tr className="border-b border-line bg-paper-2/40 text-left">
             <Th>N°</Th>
             <Th>Produit</Th>
             <Th align="center">Qté</Th>
@@ -295,121 +308,107 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
           {assignments.map((a) => (
             <tr
               key={a.id}
-              className="border-b border-line last:border-0 hover:bg-paper-2/40"
+              className="border-b border-line last:border-0 hover:bg-paper-2/30"
             >
-              {/* N° */}
               <Td>
-                <span className="font-mono-kamoo text-[11.5px] font-bold text-ink-700">
+                <span className="font-mono-kamoo text-[11.5px] text-ink-500">
                   {a.publicCode}
                 </span>
               </Td>
 
-              {/* Produit */}
               <Td>
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-base"
-                    style={{ background: a.productBg }}
-                  >
-                    {a.productEmoji}
-                  </div>
-                  <span className="truncate font-semibold text-ink-900">
-                    {a.productName}
-                  </span>
-                </div>
+                <span className="truncate font-semibold text-ink-900">
+                  {a.productName}
+                </span>
               </Td>
 
-              {/* Quantité */}
               <Td align="center">
                 <span className="font-bold text-ink-900">×{a.quantity}</span>
               </Td>
 
-              {/* Total */}
               <Td align="right">
                 <span className="font-bold text-ink-900">
                   {formatXOF(a.amountXof)}
                 </span>
               </Td>
 
-              {/* Client */}
               <Td>
                 <div>
-                  <div className="font-semibold text-ink-900">
+                  <span className="font-semibold text-ink-900">
                     {a.client.name}
-                    {a.client.isReturning && (
-                      <span className="ml-1.5 inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase text-emerald-700">
-                        Fidèle
-                      </span>
-                    )}
-                  </div>
+                  </span>
+                  {a.client.isReturning && (
+                    <span className="ml-1.5 text-[10px] font-bold uppercase text-emerald-700">
+                      ★ Fidèle
+                    </span>
+                  )}
                   <div className="text-[11px] text-ink-500">
                     {a.client.city}
                   </div>
                 </div>
               </Td>
 
-              {/* Téléphone */}
               <Td>
                 <a
                   href={`tel:${a.client.phone}`}
-                  className="inline-flex items-center gap-1 font-mono-kamoo text-[12px] font-semibold text-ink-700 hover:text-kamoo-blue-700"
+                  className="font-mono-kamoo text-[12px] text-ink-700 hover:text-kamoo-blue-700"
                 >
-                  <Phone className="h-3 w-3" />
                   {a.client.phone}
                 </a>
               </Td>
 
-              {/* WhatsApp */}
               <Td align="center">
                 {a.client.whatsapp ? (
                   <a
                     href={`https://wa.me/${a.client.whatsapp.replace(/\D/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                    className="inline-flex items-center justify-center text-emerald-600 hover:text-emerald-700"
+                    title="WhatsApp"
                   >
-                    <MessageCircle className="h-3 w-3" />
-                    WhatsApp
+                    <MessageCircle className="h-4 w-4" />
                   </a>
                 ) : (
-                  <span className="text-[11px] text-ink-400">—</span>
+                  <span className="text-[11px] text-ink-300">—</span>
                 )}
               </Td>
 
-              {/* Statut */}
               <Td>
-                <StatusPill
-                  tone={statusTone(a.status)}
-                  label={CLOSING_STATUS_LABELS[a.status]}
-                />
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 text-[12.5px] font-bold",
+                    statusTextColor(a.status),
+                  )}
+                >
+                  <span className={cn("h-1.5 w-1.5 rounded-full", statusDot(a.status))} />
+                  {CLOSING_STATUS_LABELS[a.status]}
+                </span>
               </Td>
 
-              {/* Commentaire */}
               <Td>
                 {a.comment ? (
                   <span
-                    className="block max-w-[200px] truncate text-[12px] italic text-ink-700"
+                    className="block max-w-[180px] truncate text-[12px] italic text-ink-700"
                     title={a.comment}
                   >
                     {a.comment}
                   </span>
-                ) : a.status === "cancelled" && a.cancellationReason ? (
-                  <span className="text-[11px] text-red-700">
+                ) : a.status === "annule" && a.cancellationReason ? (
+                  <span className="text-[11px] italic text-red-700">
                     {CANCELLATION_REASON_LABELS[a.cancellationReason]}
                   </span>
                 ) : (
-                  <span className="text-[11px] text-ink-400">—</span>
+                  <span className="text-[11px] text-ink-300">—</span>
                 )}
               </Td>
 
-              {/* Compte à rebours */}
               <Td>
-                {a.status === "callback_scheduled" && a.callbackAt ? (
+                {a.status === "rappele" && a.callbackAt ? (
                   <Countdown targetIso={a.callbackAt} />
-                ) : a.status === "confirmed" && a.scheduledDeliveryAt ? (
+                ) : a.status === "livraison_en_cours" && a.scheduledDeliveryAt ? (
                   <Countdown targetIso={a.scheduledDeliveryAt} />
                 ) : (
-                  <span className="text-[11px] text-ink-400">—</span>
+                  <span className="text-[11px] text-ink-300">—</span>
                 )}
               </Td>
             </tr>
