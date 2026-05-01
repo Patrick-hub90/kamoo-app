@@ -14,37 +14,45 @@ function diffParts(target: Date, now: Date) {
   const days = Math.floor(ms / 86_400_000);
   const hours = Math.floor((ms % 86_400_000) / 3_600_000);
   const minutes = Math.floor((ms % 3_600_000) / 60_000);
-  return { past, days, hours, minutes };
+  const seconds = Math.floor((ms % 60_000) / 1000);
+  return { past, days, hours, minutes, seconds };
+}
+
+function pad(n: number) {
+  return n.toString().padStart(2, "0");
 }
 
 /**
- * Compteur épuré mais remarquable : font-display gras, taille un peu plus grande,
- * couleur (vert futur / rouge dépassé). Pas de fond, pas d'icône.
+ * Compteur format HH:MM:SS ou Dj:HH:MM:SS, toujours en rouge gras.
+ * Met à jour chaque seconde.
  */
 export function Countdown({ targetIso }: Props) {
   const target = new Date(targetIso);
   const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const { past, days, hours, minutes } = diffParts(target, now);
+  const { past, days, hours, minutes, seconds } = diffParts(target, now);
 
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days}j`);
-  if (hours > 0 || days > 0) parts.push(`${hours}h`);
-  parts.push(`${minutes}min`);
+  const time = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  const label = days > 0 ? `${days}j:${time}` : time;
 
   return (
     <span
-      className={`font-display text-[14px] font-extrabold tracking-tight ${
-        past ? "text-red-600" : "text-emerald-700"
+      className={`font-mono-kamoo text-[15px] font-extrabold ${
+        past ? "text-red-700" : "text-red-600"
       }`}
     >
-      {past && "− "}
-      {parts.join(" ")}
+      {past && "−"}
+      {label}
     </span>
   );
+}
+
+/** Helper exporté pour vérifier expiration sans monter le composant */
+export function isCountdownExpired(targetIso: string, now = new Date()): boolean {
+  return new Date(targetIso).getTime() < now.getTime();
 }

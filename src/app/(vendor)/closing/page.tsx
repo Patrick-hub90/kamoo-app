@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   ChevronDown,
@@ -12,7 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { StatCard } from "@/components/kamoo/stat-card";
-import { Countdown } from "@/components/kamoo/countdown";
+import { Countdown, isCountdownExpired } from "@/components/kamoo/countdown";
 import {
   DateRangeFilter,
   type DateFilterValue,
@@ -272,6 +273,7 @@ export default function ClosingPage() {
 
 /* ─── Tableau allégé style Shopify ───────────────────────────── */
 function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
+  const router = useRouter();
   return (
     <div className="rounded-2xl border border-line bg-white">
       <div
@@ -281,9 +283,9 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
           scrollbarWidth: "thin",
         }}
       >
-        <table className="w-full min-w-[1380px] table-fixed text-[13px]">
+        <table className="w-full min-w-[1430px] table-fixed text-[13px]">
         <colgroup>
-          <col style={{ width: "115px" }} /> {/* N° */}
+          <col style={{ width: "150px" }} /> {/* N° */}
           <col style={{ width: "230px" }} /> {/* Produit */}
           <col style={{ width: "60px" }} />  {/* Qté */}
           <col style={{ width: "115px" }} /> {/* Total */}
@@ -291,8 +293,8 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
           <col style={{ width: "145px" }} /> {/* Téléphone */}
           <col style={{ width: "85px" }} />  {/* WhatsApp */}
           <col style={{ width: "165px" }} /> {/* Statut */}
-          <col style={{ width: "200px" }} /> {/* Commentaire */}
-          <col style={{ width: "135px" }} /> {/* Compte à rebours */}
+          <col style={{ width: "180px" }} /> {/* Commentaire */}
+          <col style={{ width: "150px" }} /> {/* Compte à rebours */}
         </colgroup>
         <thead>
           <tr className="border-b border-line bg-paper-2/40 text-left">
@@ -305,14 +307,28 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
             <Th align="center">WhatsApp</Th>
             <Th align="center">Statut</Th>
             <Th>Commentaire</Th>
-            <Th>Compte à rebours</Th>
+            <Th align="center">Compte à rebours</Th>
           </tr>
         </thead>
         <tbody>
-          {assignments.map((a) => (
+          {assignments.map((a) => {
+            const target =
+              a.status === "rappele" && a.callbackAt
+                ? a.callbackAt
+                : a.status === "livraison_en_cours" && a.scheduledDeliveryAt
+                  ? a.scheduledDeliveryAt
+                  : null;
+            const expired = target ? isCountdownExpired(target) : false;
+            return (
             <tr
               key={a.id}
-              className="border-b border-line last:border-0 hover:bg-paper-2/30"
+              onClick={() => router.push(`/closing/${a.id}`)}
+              className={cn(
+                "cursor-pointer border-b border-line last:border-0 transition",
+                expired
+                  ? "bg-red-50 hover:bg-red-100"
+                  : "hover:bg-paper-2/30",
+              )}
             >
               <Td>
                 <span className="font-mono-kamoo text-[11.5px] text-ink-500">
@@ -341,11 +357,6 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
                   <span className="font-semibold text-ink-900">
                     {a.client.name}
                   </span>
-                  {a.client.isReturning && (
-                    <span className="ml-1.5 text-[10px] font-bold uppercase text-emerald-700">
-                      ★ Fidèle
-                    </span>
-                  )}
                   <div className="text-[11px] text-ink-500">
                     {a.client.city}
                   </div>
@@ -355,6 +366,7 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
               <Td>
                 <a
                   href={`tel:${a.client.phone}`}
+                  onClick={(e) => e.stopPropagation()}
                   className="font-mono-kamoo text-[12px] text-ink-700 hover:text-kamoo-blue-700"
                 >
                   {a.client.phone}
@@ -367,6 +379,7 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
                     href={`https://wa.me/${a.client.whatsapp.replace(/\D/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center justify-center text-emerald-600 hover:text-emerald-700"
                     title="WhatsApp"
                   >
@@ -405,17 +418,16 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
                 )}
               </Td>
 
-              <Td>
-                {a.status === "rappele" && a.callbackAt ? (
-                  <Countdown targetIso={a.callbackAt} />
-                ) : a.status === "livraison_en_cours" && a.scheduledDeliveryAt ? (
-                  <Countdown targetIso={a.scheduledDeliveryAt} />
+              <Td align="center">
+                {target ? (
+                  <Countdown targetIso={target} />
                 ) : (
                   <span className="text-[11px] text-ink-300">—</span>
                 )}
               </Td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
         </table>
       </div>
