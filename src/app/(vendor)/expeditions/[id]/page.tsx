@@ -12,7 +12,6 @@ import {
 import { StatusPill } from "@/components/kamoo/status-pill";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { ExpeditionHistory } from "@/components/kamoo/expedition-history";
-import { PaymentMethods } from "@/components/kamoo/payment-methods";
 import { getMockExpeditionDetail } from "@/lib/data/mock-expedition-detail";
 import {
   STATUS_LABELS,
@@ -402,15 +401,10 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
 
                 {exp.paymentStatus === "unpaid" &&
                   exp.transitaire.paymentPolicy === "upfront" && (
-                    <>
-                      <button className="mt-3 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-kamoo-orange-500 px-4 py-3.5 text-sm font-extrabold text-white hover:bg-kamoo-orange-600">
-                        <Wallet className="h-4 w-4" />
-                        Payer maintenant
-                      </button>
-                      <div className="mt-3">
-                        <PaymentMethods variant="dark" />
-                      </div>
-                    </>
+                    <button className="mt-3 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-kamoo-orange-500 px-4 py-3.5 text-sm font-extrabold text-white hover:bg-kamoo-orange-600">
+                      <Wallet className="h-4 w-4" />
+                      Payer maintenant
+                    </button>
                   )}
               </div>
             </div>
