@@ -1,0 +1,979 @@
+
+> kamoo-app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.100.21:3000
+- Environments: .env.local
+✓ Ready in 597ms
+
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+ GET / 200 in 2.0s (next.js: 343ms, application-code: 1687ms)
+○ Compiling /dashboard ...
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+✓ Finished writing to filesystem cache in 22.2s
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+
+<--- Last few GCs --->
+[66356:000001DBF090B000]     3179 ms: Scavenge 6.0 (7.2) -> 5.4 (10.0) MB, pooled: 0 MB, 3022.40 / 0.00 ms  (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+ 1: 00007FF77AD1C36F node::OnFatalError+1343
+ 2: 00007FF77B964D77 v8::Function::NewInstance+423
+ 3: 00007FF77B2DFBD6 v8::SnapshotCreator::GetIsolate+56566
+ 4: 00007FF77AED8081 v8::internal::Version::GetVersion+165025
+ 5: 00007FF77B3A62DD v8::base::CPU::has_bmi2+21053
+ 6: 00007FF77B38C822 v8::base::CPU::family+40546
+ 7: 00007FF77B38D1BA v8::base::CPU::family+43002
+ 8: 00007FF77B38DC47 v8::base::CPU::family+45703
+ 9: 00007FF77B3940E6 v8::base::CPU::family+71462
+10: 00007FF77B391B92 v8::base::CPU::family+61906
+11: 00007FF77B393FAB v8::base::CPU::family+71147
+12: 00007FF77B392380 v8::base::CPU::family+63936
+13: 00007FF77B394232 v8::base::CPU::family+71794
+14: 00007FF77B394232 v8::base::CPU::family+71794
+15: 00007FF77B391B92 v8::base::CPU::family+61906
+16: 00007FF77B393FAB v8::base::CPU::family+71147
+17: 00007FF77B392380 v8::base::CPU::family+63936
+18: 00007FF77B394232 v8::base::CPU::family+71794
+19: 00007FF77B394232 v8::base::CPU::family+71794
+20: 00007FF77B391B92 v8::base::CPU::family+61906
+21: 00007FF77B393FAB v8::base::CPU::family+71147
+22: 00007FF77B392380 v8::base::CPU::family+63936
+23: 00007FF77B394232 v8::base::CPU::family+71794
+24: 00007FF77B394232 v8::base::CPU::family+71794
+25: 00007FF77B391B92 v8::base::CPU::family+61906
+26: 00007FF77B393A68 v8::base::CPU::family+69800
+27: 00007FF77B3922FF v8::base::CPU::family+63807
+28: 00007FF77B394232 v8::base::CPU::family+71794
+29: 00007FF77B393A68 v8::base::CPU::family+69800
+30: 00007FF77B3922FF v8::base::CPU::family+63807
+31: 00007FF77B394232 v8::base::CPU::family+71794
+32: 00007FF77B394232 v8::base::CPU::family+71794
+33: 00007FF77B393A68 v8::base::CPU::family+69800
+34: 00007FF77B3922FF v8::base::CPU::family+63807
+35: 00007FF77B38D144 v8::base::CPU::family+42884
+36: 00007FF77B394232 v8::base::CPU::family+71794
+37: 00007FF77B394232 v8::base::CPU::family+71794
+38: 00007FF77B390286 v8::base::CPU::family+55494
+39: 00007FF77B393A68 v8::base::CPU::family+69800
+40: 00007FF77B3922FF v8::base::CPU::family+63807
+41: 00007FF77B394232 v8::base::CPU::family+71794
+42: 00007FF77B394232 v8::base::CPU::family+71794
+43: 00007FF77B393A68 v8::base::CPU::family+69800
+44: 00007FF77B3922FF v8::base::CPU::family+63807
+45: 00007FF77B38C4A8 v8::base::CPU::family+39656
+46: 00007FF77B36F9C0 v8::String::Utf8Value::~Utf8Value+220416
+47: 00007FF77B36F0E2 v8::String::Utf8Value::~Utf8Value+218146
+48: 00007FF77B36D9D9 v8::String::Utf8Value::~Utf8Value+212249
+49: 00007FF77B36DC6C v8::String::Utf8Value::~Utf8Value+212908
+50: 00007FF77B36DB4B v8::String::Utf8Value::~Utf8Value+212619
+51: 00007FF77B3448D2 v8::String::Utf8Value::~Utf8Value+44050
+52: 000001DBAFE7733A 
+
+
+#
+# Fatal process out of memory: Re-embedded builtins: set permissions
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Re-embedded builtins: set permissions
+#
+----- Native stack trace -----
+
+
+<--- Last few GCs --->
+
+
+
+#
+# Fatal JavaScript out of memory: MemoryChunk allocation failed during deserialization.
+#
+----- Native stack trace -----
+
+ 1: 00007FF77AC70ECD 
+ 1: 00007FF77AC70ECD 
+ 1: 00007FF77AC70ECD 
+ 2: 00007FF77C0D2576 
+ 3: 00007FF77B964D56 
+ 2: 00007FF77C0D2576 
+ 2: 00007FF77C0D2576 
+ 4: 00007FF77B7CBCFE 
+ 3: 00007FF77B964D56 
+ 3: 00007FF77B964D56 
+ 5: 00007FF77B7FF2DF 
+ 4: 00007FF77B765467 
+ 4: 00007FF77B7CBCFE 
+ 6: 00007FF77B7FFD92 
+ 5: 00007FF77B7176BA 
+ 5: 00007FF77B7FF2DF 
+ 7: 00007FF77B800772 
+ 6: 00007FF77B71777C 
+ 6: 00007FF77B7FFD92 
+ 8: 00007FF77B2FDDC3 
+ 7: 00007FF77B71806B 
+ 7: 00007FF77B800772 
+ 9: 00007FF77B98FEE6 
+ 8: 00007FF77B6EF2C1 
+ 8: 00007FF77B2FDDC3 
+10: 00007FF77AE2A14D 
+ 9: 00007FF77B98FEE6 
+ 9: 00007FF77B755173 
+11: 00007FF77AB85B73 
+10: 00007FF77B754EDE 
+10: 00007FF77AE2A14D 
+12: 00007FF77AB84F09 
+11: 00007FF77B753CC8 
+11: 00007FF77AB85B73 
+13: 00007FF77AB8EA90 
+12: 00007FF77B753C4A 
+12: 00007FF77AB84F09 
+13: 00007FF77B31B423 
+14: 00007FF77B9BA096 
+13: 00007FF77AB8EA90 
+15: 00007FF77CC192B3 
+14: 00007FF77B31926C 
+14: 00007FF77B9BA096 
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+15: 00007FF77B3204EE 
+15: 00007FF77CC192B3 
+17: 00007FFD87A2C48C RtlUserThreadStart+44
+16: 00007FF77B319C9D 
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+17: 00007FF77B76D428 
+17: 00007FFD87A2C48C RtlUserThreadStart+44
+18: 00007FF77B2F8183 
+19: 00007FF77B80037C 
+20: 00007FF77B800772 
+21: 00007FF77B2FDDC3 
+22: 00007FF77B98FEE6 
+23: 00007FF77AE2A14D 
+24: 00007FF77AB85B73 
+25: 00007FF77AB84F09 
+26: 00007FF77AB8EA90 
+27: 00007FF77B9BA096 
+28: 00007FF77CC192B3 
+29: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+30: 00007FFD87A2C48C RtlUserThreadStart+44
+
+<--- Last few GCs --->
+
+FATAL ERROR: Committing semi space failed. Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 00007FF77AD1C36F 
+ 2: 00007FF77B964D77 
+ 3: 00007FF77B765467 
+ 4: 00007FF77B6FDE8B 
+ 5: 00007FF77B6D58DE 
+ 6: 00007FF77B767F02 
+ 7: 00007FF77B766EB7 
+ 8: 00007FF77B777E22 
+ 9: 00007FF77B77794B 
+10: 00007FF77CBFDAED 
+11: 00007FF77B762F30 
+12: 00007FF77B77D7BA 
+13: 00007FF77B789C56 
+14: 00007FF77B35CD47 
+15: 000002C7798F733A 
+
+
+#
+# Fatal process out of memory: Re-embedded builtins: set permissions
+#
+----- Native stack trace -----
+
+ 1: 00007FF77AC70ECD 
+ 2: 00007FF77C0D2576 
+ 3: 00007FF77B964D56 
+ 4: 00007FF77B7CBCFE 
+ 5: 00007FF77B7FF2DF 
+ 6: 00007FF77B7FFD92 
+ 7: 00007FF77B800772 
+ 8: 00007FF77B2FDDC3 
+ 9: 00007FF77B98FEE6 
+10: 00007FF77AE2A14D 
+11: 00007FF77AB85B73 
+12: 00007FF77AB84F09 
+13: 00007FF77AB8EA90 
+✓ Finished writing to filesystem cache in 14.3s
+14: 00007FF77B9BA096 
+15: 00007FF77CC192B3 
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+17: 00007FFD87A2C48C 
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+
+
+
+#
+
+# Fatal process out of memory: Re-embedded builtins: set permissions
+#
+# Fatal process out of memory: Re-embedded builtins: set permissions
+#
+----- Native stack trace -----
+#
+
+----- Native stack trace -----
+
+ 1: 00007FF77AC70ECD 
+ 1: 00007FF77AC70ECD node::MultiIsolatePlatform::DisposeIsolate+5341
+ 2: 00007FF77C0D2576 
+ 3: 00007FF77B964D56 
+ 2: 00007FF77C0D2576 v8::base::FatalOOM+54
+ 4: 00007FF77B7CBCFE 
+ 3: 00007FF77B964D56 v8::Function::NewInstance+390
+ 5: 00007FF77B7FF2DF 
+ 4: 00007FF77B7CBCFE v8::CppHeap::CollectGarbageInYoungGenerationForTesting+111438
+ 6: 00007FF77B7FFD92 
+ 5: 00007FF77B7FF2DF SSL_CTX_set_default_read_buffer_len+41247
+ 7: 00007FF77B800772 
+ 6: 00007FF77B7FFD92 SSL_CTX_set_default_read_buffer_len+43986
+ 8: 00007FF77B2FDDC3 
+ 7: 00007FF77B800772 SSL_CTX_set_default_read_buffer_len+46514
+ 9: 00007FF77B98FEE6 
+ 8: 00007FF77B2FDDC3 v8::internal::Version::GetSONAME+122307
+10: 00007FF77AE2A14D 
+ 9: 00007FF77B98FEE6 v8::Isolate::Initialize+662
+11: 00007FF77AB85B73 
+10: 00007FF77AE2A14D node::SetIsolateUpForNode+749
+12: 00007FF77AB84F09 
+11: 00007FF77AB85B73 RSA_meth_get_flags+222691
+13: 00007FF77AB8EA90 
+12: 00007FF77AB84F09 RSA_meth_get_flags+219513
+14: 00007FF77B9BA096 
+13: 00007FF77AB8EA90 RSA_meth_get_flags+259328
+15: 00007FF77CC192B3 
+14: 00007FF77B9BA096 uv_thread_detach+150
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+15: 00007FF77CC192B3 v8::base::UnsignedDivisionByConstant<unsigned __int64>+2904003
+17: 00007FFD87A2C48C RtlUserThreadStart+44
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+17: 00007FFD87A2C48C RtlUserThreadStart+44
+✓ Finished writing to filesystem cache in 82s
+
+<--- Last few GCs --->
+
+
+<--- Last few GCs --->
+
+
+
+#
+# Fatal JavaScript out of memory: MemoryChunk allocation failed during deserialization.
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal JavaScript out of memory: MemoryChunk allocation failed during deserialization.
+#
+----- Native stack trace -----
+
+
+<--- Last few GCs --->
+
+FATAL ERROR: Committing semi space failed. Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+
+<--- Last few GCs --->
+
+
+<--- Last few GCs --->
+[56744:00000281FE0D8000]       17 ms: Scavenge 5.1 (6.8) -> 4.8 (9.6) MB, pooled: 0 MB, 0.63 / 0.00 ms  (average mu = 1.000, current mu = 1.000) allocation failure; 
+[56744:00000281FE0D8000]     9143 ms: Mark-Compact (reduce) 6.9 (10.8) -> 5.7 (7.8) MB, pooled: 0 MB, 1015.05 / 0.00 ms  (+ 1.6 ms in 27 steps since start of marking, biggest step 0.2 ms, walltime since start of marking 1017 ms) (average mu = 0.889, curre
+
+FATAL ERROR: Committing semi space failed. Allocation failed - JavaScript heap out of memory
+FATAL ERROR: Committing semi space failed. Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+ 1: 00007FF77AC70ECD 
+----- Native stack trace -----
+
+
+ 1: 00007FF77AD1C36F node::OnFatalError+1343
+ 2: 00007FF77C0D2576 
+ 2: 00007FF77B964D77 v8::Function::NewInstance+423
+ 3: 00007FF77B964D56 
+ 3: 00007FF77B765467 v8::base::AddressSpaceReservation::AddressSpaceReservation+322071
+ 4: 00007FF77B765467 
+ 4: 00007FF77B6FDE8B v8::platform::DefaultPlatform::CurrentClockTimeMillis+491051
+ 5: 00007FF77B7176BA 
+ 5: 00007FF77B6D58DE v8::platform::DefaultPlatform::CurrentClockTimeMillis+325758
+ 6: 00007FF77B71777C 
+ 6: 00007FF77B767F02 v8::base::AddressSpaceReservation::AddressSpaceReservation+332978
+ 7: 00007FF77B71806B 
+ 7: 00007FF77B766EB7 v8::base::AddressSpaceReservation::AddressSpaceReservation+328807
+ 8: 00007FF77B6EF2C1 
+ 8: 00007FF77B777E22 v8::internal::StrongRootAllocatorBase::deallocate_impl+15858
+ 9: 00007FF77B755173 
+ 9: 00007FF77B77794B v8::internal::StrongRootAllocatorBase::deallocate_impl+14619
+10: 00007FF77B754EDE 
+10: 00007FF77CBFDAED v8::base::UnsignedDivisionByConstant<unsigned __int64>+2791421
+11: 00007FF77B753CC8 
+11: 00007FF77B762F30 v8::base::AddressSpaceReservation::AddressSpaceReservation+312544
+12: 00007FF77B753C4A 
+12: 00007FF77B77D7BA X509_STORE_set_cleanup+5098
+13: 00007FF77B77D6E5 
+13: 00007FF77B789C56 uv_timer_set_repeat+20694
+14: 00007FF77B31B498 
+14: 00007FF77B35CD47 v8::String::Utf8Value::~Utf8Value+143495
+15: 00007FF77B31926C 
+15: 000001DBBFE7733A 
+16: 00007FF77B31EF16 
+17: 00007FF77B319F58 
+18: 00007FF77B31944E 
+19: 00007FF77B31EF16 
+20: 00007FF77B319F58 
+ 1: 00007FF77AC70ECD 
+ 1: 00007FF77AD1C36F 
+21: 00007FF77B31944E 
+22: 00007FF77B31EF16 
+ 2: 00007FF77C0D2576 
+ 2: 00007FF77B964D77 
+23: 00007FF77B319F58 
+ 3: 00007FF77B964D56 
+ 3: 00007FF77B765467 
+24: 00007FF77B31944E 
+ 4: 00007FF77B765467 
+ 4: 00007FF77B6FDE8B 
+25: 00007FF77B31EF16 
+ 5: 00007FF77B7176BA 
+ 5: 00007FF77B6D58DE 
+26: 00007FF77B319F58 
+ 6: 00007FF77B71777C 
+ 6: 00007FF77B767F02 
+27: 00007FF77B31944E 
+ 7: 00007FF77B71806B 
+ 7: 00007FF77B766EB7 
+28: 00007FF77B3204EE 
+ 8: 00007FF77B6EF2C1 
+ 8: 00007FF77B777E22 
+29: 00007FF77B319C9D 
+ 9: 00007FF77B755173 
+ 9: 00007FF77B77794B 
+10: 00007FF77B754EDE 
+30: 00007FF77B76D428 
+10: 00007FF77CBFDAED 
+31: 00007FF77B2F8183 
+11: 00007FF77B753CC8 
+11: 00007FF77B762F30 
+32: 00007FF77B80037C 
+12: 00007FF77B753C4A 
+12: 00007FF77B77D7BA 
+33: 00007FF77B800772 
+13: 00007FF77B77D6E5 
+34: 00007FF77B2FDDC3 
+13: 00007FF77B789C56 
+14: 00007FF77B31B498 
+14: 00007FF77B35CD47 
+35: 00007FF77B98FEE6 
+15: 00007FF77B31926C 
+15: 0000020DBFE7733A 
+36: 00007FF77AE2A14D 
+16: 00007FF77B31EF16 
+37: 00007FF77AB85B73 
+17: 00007FF77B319F58 
+38: 00007FF77AB84F09 
+18: 00007FF77B31944E 
+39: 00007FF77AB8EA90 
+19: 00007FF77B31EF16 
+40: 00007FF77B9BA096 
+20: 00007FF77B319F58 
+41: 00007FF77CC192B3 
+21: 00007FF77B31944E 
+42: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+22: 00007FF77B31EF16 
+43: 00007FFD87A2C48C RtlUserThreadStart+44
+23: 00007FF77B319F58 
+24: 00007FF77B31944E 
+25: 00007FF77B31EF16 
+26: 00007FF77B319F58 
+27: 00007FF77B31944E 
+28: 00007FF77B3204EE 
+29: 00007FF77B319C9D 
+30: 00007FF77B76D428 
+31: 00007FF77B2F8183 
+32: 00007FF77B80037C 
+33: 00007FF77B800772 
+34: 00007FF77B2FDDC3 
+35: 00007FF77B98FEE6 
+36: 00007FF77AE2A14D 
+37: 00007FF77AB85B73 
+38: 00007FF77AB84F09 
+39: 00007FF77AB8EA90 
+40: 00007FF77B9BA096 
+41: 00007FF77CC192B3 
+42: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+43: 00007FFD87A2C48C 
+Error: Can't resolve 'tailwindcss' in 'C:\Users\user\Documents\Kamoo'
+    [2m[at finishWithoutResolve (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:909:18)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1001:14][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:16:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\enhanced-resolve\lib\Resolver.js:1080:5][0m
+    [2m[at eval (eval at create (C:\Users\user\Documents\Kamoo\kamoo-app\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m {
+  details: "resolve 'tailwindcss' in 'C:\\Users\\user\\Documents\\Kamoo'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in C:\\Users\\user\\Documents\\Kamoo or above\n' +
+    '  resolve as module\n' +
+    "    C:\\Users\\user\\Documents\\Kamoo\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\Documents\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\user\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "    C:\\node_modules doesn't exist or is not a directory"
+}
+
+
+#
+# Fatal process out of memory: Re-embedded builtins: set permissions
+#
+----- Native stack trace -----
+
+ 1: 00007FF77AC70ECD 
+ 2: 00007FF77C0D2576 
+ 3: 00007FF77B964D56 
+ 4: 00007FF77B7CBCFE 
+ 5: 00007FF77B7FF2DF 
+ 6: 00007FF77B7FFD92 
+ 7: 00007FF77B800772 
+ 8: 00007FF77B2FDDC3 
+ 9: 00007FF77B98FEE6 
+10: 00007FF77AE2A14D 
+11: 00007FF77AB85B73 
+12: 00007FF77AB84F09 
+13: 00007FF77AB8EA90 
+14: 00007FF77B9BA096 
+15: 00007FF77CC192B3 
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+17: 00007FFD87A2C48C RtlUserThreadStart+44
+✓ Finished writing to filesystem cache in 2.2min
+
+<--- Last few GCs --->
+[67192:000002550EC0F000]       55 ms: Scavenge 6.0 (7.2) -> 5.4 (10.0) MB, pooled: 0 MB, 2.31 / 0.00 ms  (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+ 1: 00007FF77AD1C36F node::OnFatalError+1343
+ 2: 00007FF77B964D77 v8::Function::NewInstance+423
+ 3: 00007FF77B2DFBD6 v8::SnapshotCreator::GetIsolate+56566
+ 4: 00007FF77B103B17 v8::internal::OptimizingCompileInputQueue::OptimizingCompileInputQueue+195447
+ 5: 00007FF77B10C07E SSL_CTX_get_client_CA_list+20718
+ 6: 00007FF77B10EDEE SSL_CTX_get_client_CA_list+32350
+ 7: 00007FF77B1B8DF2 SSL_CTX_get_client_CA_list+728674
+ 8: 00007FF77B1B7BE0 SSL_CTX_get_client_CA_list+724048
+ 9: 00007FF77B1B59DA SSL_CTX_get_client_CA_list+715338
+10: 00007FF77B8D89AF X509_STORE_set_get_issuer+200559
+11: 00007FF77B1B74BB SSL_CTX_get_client_CA_list+722219
+12: 00007FF77C14570F v8::platform::DefaultJobHandle::UpdatePriority+591
+13: 00007FF77AC6CD8E node::GetNodeReport+90334
+14: 00007FF77B9BA096 uv_thread_detach+150
+15: 00007FF77CC192B3 v8::base::UnsignedDivisionByConstant<unsigned __int64>+2904003
+16: 00007FFD85F8E8D7 BaseThreadInitThunk+23
+17: 00007FFD87A2C48C RtlUserThreadStart+44
+
+<--- Last few GCs --->
+
+[69876:00000273D0CC7000]     9184 ms: Mark-Compact 8.6 (11.5) -> 7.6 (12.8) MB, pooled: 0 MB, 4.95 / 0.00 ms  (average mu = 0.999, current mu = 0.999) background allocation failure; GC in old space requested
+[69876:00000273D0CC7000]     9239 ms: Scavenge (interleaved) 10.5 (13.3) -> 9.4 (13.3) MB, pooled: 0 MB, 0.66 / 0.00 ms  (average mu = 0.999, current mu = 0.999) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+ 1: 00007FF77AD1C36F 
+ 2: 00007FF77B964D77 
+ 3: 00007FF77B2DFBD6 
+ 4: 00007FF77AEA106A 
+ 5: 00007FF77AEA0FC3 
+ 6: 00007FF77C6759AC 
+ 7: 00007FF77C674F22 
+ 8: 00007FF77C68EEE1 
+ 9: 00007FF77C68F009 
+10: 00007FF77C6BBE87 
+11: 00007FF77C6B9F7B 
+12: 00007FF77C67B51E 
+13: 00007FF77C677E8A 
+14: 00007FF77C674A07 
+15: 00007FF77C674579 
+16: 00007FF77C674034 
+17: 00007FF77C67348F 
+18: 00007FF77C67310E 
+19: 00007FF77C360C06 
+20: 00007FF77C357DB8 
+21: 00007FF77C3572C0 
+22: 00007FF77B8D89AF 
+23: 00007FF77B89DA3D 
+24: 00007FF77B89D735 
+25: 00007FF77C14570F 
+26: 00007FF77AC6CD8E 
+27: 00007FF77B9BA096 
+28: 00007FF77CC192B3 
+29: 00007FFD85F8E8D7 
+30: 00007FFD87A2C48C 
+
+
+#
+# Fatal error in , line 0
+# Out of memory: HashMap::Initialize
+#
+#
+#
+#FailureMessage Object: 000000B531FFA530
+----- Native stack trace -----
+
+ 1: 00007FF77AC70ECD 
+ 2: 00007FF77C0D2B0F 
+ 3: 00007FF77B962E16 
+ 4: 00007FF77B962502 
+ 5: 00007FF77B962330 
+ 6: 00007FF77B3EAA9F 
+ 7: 00007FF77B42A297 
+ 8: 00007FF77B4290C6 
+ 9: 00007FF77B4206B6 
+10: 00007FF77B421DBB 
+11: 00007FF77B420F8E 
+12: 00007FF77B432E62 
+13: 00007FF77B412935 
+14: 00007FF77B41B53B 
+15: 00007FF77B41AA3A 
+16: 00007FF77B40E137 
+17: 00007FF77B40D304 
+18: 00007FF77B40C5F2 
+19: 00007FF77B40C29A 
+20: 00007FF77B4078C9 
+21: 00007FF77B8E271F 
+22: 00007FF77B8E5521 
+23: 00007FF77B96E233 
+24: 00007FF77AD38F83 
+25: 00007FF77AD3772E 
+26: 0000023C1FDCF64D 
+
+<--- Last few GCs --->
+
+FATAL ERROR: Committing semi space failed. Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 00007FF77AD1C36F 
+ 2: 00007FF77B964D77 
+ 3: 00007FF77B765467 
+ 4: 00007FF77B6FDE8B 
+ 5: 00007FF77B6D58DE 
+ 6: 00007FF77B767F02 
+ 7: 00007FF77B766EB7 
+ 8: 00007FF77B777E22 
+ 9: 00007FF77B77794B 
+10: 00007FF77CBFDAED 
+11: 00007FF77B762F30 
+12: 00007FF77B77D7BA 
+13: 00007FF77B789C56 
+14: 00007FF77B35CD47 
+15: 0000017E9FE7733A 
+✓ Finished writing to filesystem cache in 2.8min
+✓ Finished writing to filesystem cache in 20.3s
