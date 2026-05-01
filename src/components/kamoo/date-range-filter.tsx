@@ -113,49 +113,62 @@ export function DateRangeFilter({ value, onChange }: Props) {
 
   /**
    * Règles custom de sélection :
-   * - 1er clic : from = to = day (plage 1 jour, validable immédiatement)
-   * - 2ème clic sur le même jour (range = 1 jour) : reset
-   * - 2ème clic avant le from : étend vers la gauche (from = day, to inchangé)
-   * - 2ème clic après le to : étend vers la droite (to = day)
-   * - Si plage de + de 1 jour : nouveau clic recommence (from = to = day)
+   * - Aucune sélection → 1er clic : from = to = day (plage 1 jour, validable)
+   * - Single day (from===to) :
+   *     - Clic même jour : reset
+   *     - Clic avant : NOUVELLE sélection (annule l'ancienne)
+   *     - Clic après : étend pour faire une plage (from=ancien, to=nouveau)
+   * - Plage [A, B] :
+   *     - Clic dans [A, B] (boundaries incluses) : la date devient la fin
+   *       (from = A inchangé, to = day) → permet de raccourcir la plage
+   *     - Clic hors de [A, B] : la plage s'annule, nouvelle sélection 1 jour
    * - Jours futurs et hors-mois : non cliquables
    */
   const handleDayClick = (day: Date) => {
     const d = startOfDay(day);
-
-    // Hors du mois affiché OU dans le futur → ignore
     if (isOutsideMonth(d) || isFuture(d)) return;
 
-    // Aucune sélection → start new (1 jour)
+    // Aucune sélection
     if (!draftFrom || !draftTo) {
       setDraftFrom(d);
       setDraftTo(d);
       return;
     }
 
-    // Plage déjà étendue (> 1 jour) → recommence
-    if (!isSameDay(draftFrom, draftTo)) {
-      setDraftFrom(d);
+    const isSingleDay = isSameDay(draftFrom, draftTo);
+
+    // Single day [A, A]
+    if (isSingleDay) {
+      if (isSameDay(d, draftFrom)) {
+        // Reset
+        setDraftFrom(undefined);
+        setDraftTo(undefined);
+        return;
+      }
+      if (d < draftFrom) {
+        // Annule l'ancienne, nouvelle sélection
+        setDraftFrom(d);
+        setDraftTo(d);
+        return;
+      }
+      // Clic après → étend (devient une plage)
       setDraftTo(d);
       return;
     }
 
-    // On a une plage de 1 jour (from === to)
-    // Clic sur ce même jour → reset
-    if (isSameDay(d, draftFrom)) {
-      setDraftFrom(undefined);
-      setDraftTo(undefined);
+    // Plage [A, B] (A < B)
+    const inRange =
+      d.getTime() >= startOfDay(draftFrom).getTime() &&
+      d.getTime() <= startOfDay(draftTo).getTime();
+
+    if (inRange) {
+      // Devient la nouvelle date de fin (raccourcit la plage)
+      setDraftTo(d);
       return;
     }
 
-    // Clic avant → étend vers la gauche
-    if (d < draftFrom) {
-      setDraftFrom(d);
-      // to inchangé (= ancien from)
-      return;
-    }
-
-    // Clic après → étend vers la droite
+    // Hors de la plage → la plage s'annule, nouvelle sélection 1 jour
+    setDraftFrom(d);
     setDraftTo(d);
   };
 
@@ -282,28 +295,20 @@ export function DateRangeFilter({ value, onChange }: Props) {
                 }}
                 className="bg-transparent p-2 [--cell-size:--spacing(9)] [--cell-radius:9999px]"
               />
-              <div className="flex items-center justify-between border-t border-line bg-paper-2/50 px-3 py-2">
-                <div className="text-[12px] text-ink-700">
-                  {!draftFrom && (
-                    <span className="text-ink-500">
-                      Choisis une date
-                    </span>
+              <div className="flex items-center justify-end gap-2 border-t border-line bg-paper-2/50 px-3 py-2">
+                <button
+                  onClick={() => {
+                    setDraftFrom(undefined);
+                    setDraftTo(undefined);
+                  }}
+                  disabled={!draftFrom && !draftTo}
+                  className={cn(
+                    "rounded-md border border-line bg-white px-3 py-1.5 text-[12px] font-bold text-ink-700 hover:bg-paper-2",
+                    !draftFrom && !draftTo && "cursor-not-allowed opacity-40",
                   )}
-                  {draftFrom && draftTo && isSameDay(draftFrom, draftTo) && (
-                    <span className="font-semibold text-ink-900">
-                      {formatDateShort(draftFrom)}{" "}
-                      <span className="font-normal text-ink-500">
-                        · ajoute une 2ᵉ date pour étendre
-                      </span>
-                    </span>
-                  )}
-                  {draftFrom && draftTo && !isSameDay(draftFrom, draftTo) && (
-                    <span className="font-semibold text-ink-900">
-                      {formatDateShort(draftFrom)} →{" "}
-                      {formatDateShort(draftTo)}
-                    </span>
-                  )}
-                </div>
+                >
+                  Reset
+                </button>
                 <button
                   onClick={handleValidate}
                   disabled={!canValidate}
