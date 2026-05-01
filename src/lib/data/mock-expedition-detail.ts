@@ -9,6 +9,33 @@ function buildDetail(id: string): ExpeditionDetail | null {
   const base = MOCK_EXPEDITIONS.find((e) => e.id === id);
   if (!base) return null;
 
+  // Données dérivées du statut pour l'affichage
+  const currentStage =
+    base.status === "arrived_destination"
+      ? {
+          emoji: "📍",
+          label: "Arrivé à Dakar",
+          sub: "Récupère ton colis à l'entrepôt local",
+        }
+      : base.status === "received_china"
+        ? {
+            emoji: "🚢",
+            label: "En route vers Dakar",
+            sub: "Prochaine étape : dédouanement Port de Dakar",
+          }
+        : {
+            emoji: "⏳",
+            label: "En attente de réception en Chine",
+            sub: "Le transitaire t'enverra un devis dès réception",
+          };
+
+  const progress =
+    base.status === "arrived_destination"
+      ? 3
+      : base.status === "received_china"
+        ? 2
+        : 0;
+
   return {
     ...base,
     warehouseAddress:
@@ -18,6 +45,10 @@ function buildDetail(id: string): ExpeditionDetail | null {
     trackingNumber: base.status !== "awaiting_quote" ? "CMA-9482-0027-CN" : null,
     trackingCarrier: base.status !== "awaiting_quote" ? "CMA CGM" : null,
     aiCategory: { label: "Cosmétique", emoji: "🧴" },
+    currentStage,
+    progress,
+    transitaireReviews: 312,
+    dateSubmitted: "12 oct. 2025",
     products: [
       {
         name: base.productName,

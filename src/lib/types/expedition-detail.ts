@@ -45,4 +45,15 @@ export type ExpeditionDetail = Expedition & {
   products: Product[];
   quote: Quote | null;
   history: HistoryEvent[];
+
+  // Pour l'écran Détail (selon Claude Design)
+  currentStage: {
+    emoji: string;
+    label: string;
+    sub: string;
+  };
+  // 0=Soumis, 1=En Chine, 2=En transit, 3=Arrivé
+  progress: number;
+  transitaireReviews: number; // ex: 312
+  dateSubmitted: string; // "12 oct. 2025"
 };
