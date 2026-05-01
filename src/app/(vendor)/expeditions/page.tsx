@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
-  Calendar,
   Check,
   ChevronDown,
   Plus,
@@ -16,6 +15,10 @@ import {
 import { ShipmentCard } from "@/components/kamoo/shipment-card";
 import { StatCard } from "@/components/kamoo/stat-card";
 import {
+  DateRangeFilter,
+  type DateFilterValue,
+} from "@/components/kamoo/date-range-filter";
+import {
   MOCK_EXPEDITIONS,
   computeListStats,
 } from "@/lib/data/mock-expeditions";
@@ -26,15 +29,7 @@ import {
 import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type DatePreset = "7j" | "30j" | "3m" | "all" | "custom";
 type StatusFilter = "all" | ExpeditionStatus;
-
-const DATE_PRESETS: { id: DatePreset; label: string }[] = [
-  { id: "7j", label: "7 jours" },
-  { id: "30j", label: "30 jours" },
-  { id: "3m", label: "3 mois" },
-  { id: "all", label: "Tout" },
-];
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "Tous les statuts" },
@@ -43,9 +38,10 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "arrived_destination", label: STATUS_LABELS.arrived_destination },
 ];
 
-function presetToCutoff(preset: DatePreset): Date | null {
-  if (preset === "all" || preset === "custom") return null;
-  const days = preset === "7j" ? 7 : preset === "30j" ? 30 : 90;
+function presetToCutoff(value: DateFilterValue): Date | null {
+  if (value.preset === "all" || value.preset === "custom") return null;
+  const days =
+    value.preset === "7j" ? 7 : value.preset === "30j" ? 30 : 90;
   const d = new Date();
   d.setDate(d.getDate() - days);
   return d;
@@ -57,28 +53,27 @@ export default function ExpeditionsListPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [datePreset, setDatePreset] = useState<DatePreset>("30j");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>({
+    preset: "all",
+  });
   const [statusOpen, setStatusOpen] = useState(false);
 
   const currentStatusLabel =
     STATUS_FILTERS.find((s) => s.id === statusFilter)?.label ?? "Statut";
 
   const filtered = useMemo(() => {
-    const cutoff = presetToCutoff(datePreset);
-    const customStartDate = customStart ? new Date(customStart) : null;
-    const customEndDate = customEnd ? new Date(customEnd) : null;
-
+    const cutoff = presetToCutoff(dateFilter);
     return expeditions.filter((e) => {
       // Statut
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
 
       // Date
       const created = new Date(e.createdAt);
-      if (datePreset === "custom") {
-        if (customStartDate && created < customStartDate) return false;
-        if (customEndDate && created > customEndDate) return false;
+      if (dateFilter.preset === "custom") {
+        if (dateFilter.range?.from && created < dateFilter.range.from)
+          return false;
+        if (dateFilter.range?.to && created > dateFilter.range.to)
+          return false;
       } else if (cutoff && created < cutoff) {
         return false;
       }
@@ -94,28 +89,17 @@ export default function ExpeditionsListPage() {
       }
       return true;
     });
-  }, [
-    expeditions,
-    statusFilter,
-    datePreset,
-    customStart,
-    customEnd,
-    search,
-  ]);
+  }, [expeditions, statusFilter, dateFilter, search]);
 
   const filtersActive =
     search.length > 0 ||
     statusFilter !== "all" ||
-    datePreset !== "30j" ||
-    customStart ||
-    customEnd;
+    dateFilter.preset !== "all";
 
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("all");
-    setDatePreset("30j");
-    setCustomStart("");
-    setCustomEnd("");
+    setDateFilter({ preset: "all" });
   };
 
   return (
@@ -172,11 +156,11 @@ export default function ExpeditionsListPage() {
         </div>
       </div>
 
-      {/* SÉPARATEUR : barre de filtres */}
+      {/* SÉPARATEUR : barre de filtres (1 ligne, pas de wrap) */}
       <div className="mt-8 border-y border-line bg-paper-2/60 px-10 py-3">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3">
           {/* Recherche — en premier */}
-          <div className="relative w-72">
+          <div className="relative w-80">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
             <input
               type="search"
@@ -234,54 +218,8 @@ export default function ExpeditionsListPage() {
             )}
           </div>
 
-          {/* Filtre date — chips presets */}
-          <div className="inline-flex items-center gap-1 rounded-lg border border-line bg-white p-1">
-            <Calendar className="ml-1 h-3.5 w-3.5 text-ink-400" />
-            {DATE_PRESETS.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => setDatePreset(d.id)}
-                className={cn(
-                  "rounded-md px-2.5 py-1 text-[12px] font-bold transition",
-                  datePreset === d.id
-                    ? "bg-kamoo-blue-700 text-white"
-                    : "text-ink-500 hover:bg-paper-2",
-                )}
-              >
-                {d.label}
-              </button>
-            ))}
-            <button
-              onClick={() => setDatePreset("custom")}
-              className={cn(
-                "ml-0.5 rounded-md px-2.5 py-1 text-[12px] font-bold transition",
-                datePreset === "custom"
-                  ? "bg-kamoo-blue-700 text-white"
-                  : "text-ink-500 hover:bg-paper-2",
-              )}
-            >
-              Personnalisé
-            </button>
-          </div>
-
-          {/* Champs de date personnalisée */}
-          {datePreset === "custom" && (
-            <div className="inline-flex items-center gap-2">
-              <input
-                type="date"
-                value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
-                className="h-9 rounded-lg border border-line bg-white px-2.5 text-[13px] outline-none focus:border-kamoo-blue-600"
-              />
-              <span className="text-[12px] text-ink-500">→</span>
-              <input
-                type="date"
-                value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
-                className="h-9 rounded-lg border border-line bg-white px-2.5 text-[13px] outline-none focus:border-kamoo-blue-600"
-              />
-            </div>
-          )}
+          {/* Filtre date — dropdown unique avec calendrier intégré */}
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
 
           {/* Effacer */}
           {filtersActive && (
@@ -297,7 +235,7 @@ export default function ExpeditionsListPage() {
           <div className="flex-1" />
 
           {/* Compteur */}
-          <div className="text-[12px] font-semibold text-ink-500">
+          <div className="whitespace-nowrap text-[12px] font-semibold text-ink-500">
             {filtered.length} / {expeditions.length} expéditions
           </div>
         </div>
