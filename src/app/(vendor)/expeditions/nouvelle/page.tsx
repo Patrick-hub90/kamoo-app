@@ -905,7 +905,7 @@ function TransportModeCard({
           </span>
         </div>
         {allowed ? (
-          <div className="mt-1 flex items-center gap-3 text-[12px] text-ink-500">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-ink-500">
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {mode.delay}
@@ -918,6 +918,21 @@ function TransportModeCard({
           </div>
         )}
       </div>
+
+      {/* Tarif indicatif à droite */}
+      {allowed && (
+        <div className="text-right">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+            À partir de
+          </div>
+          <div className="font-display text-[15px] font-extrabold leading-tight text-ink-900">
+            {mode.unitCostFromXof.toLocaleString("fr-FR")}
+          </div>
+          <div className="text-[10px] font-semibold text-ink-500">
+            F CFA / {mode.unit === "kg" ? "kg" : "m³"}
+          </div>
+        </div>
+      )}
     </button>
   );
 }

@@ -8,6 +8,9 @@ export type TransportModeData = {
   bestFor: string;
   icon: "Ship" | "Plane" | "Zap";
   recommended?: boolean;
+  /** Tarif indicatif "à partir de" — sert à comparer les modes au choix */
+  unitCostFromXof: number;
+  unit: "kg" | "cbm";
 };
 
 export const TRANSPORT_MODES_DATA: TransportModeData[] = [
@@ -18,6 +21,8 @@ export const TRANSPORT_MODES_DATA: TransportModeData[] = [
     delay: "35–45 jours",
     bestFor: "Gros volumes, non urgent",
     icon: "Ship",
+    unitCostFromXof: 75_000,
+    unit: "cbm",
   },
   {
     id: "air_standard",
@@ -27,6 +32,8 @@ export const TRANSPORT_MODES_DATA: TransportModeData[] = [
     bestFor: "Recommandé pour la plupart",
     icon: "Plane",
     recommended: true,
+    unitCostFromXof: 5_500,
+    unit: "kg",
   },
   {
     id: "air_express",
@@ -35,5 +42,7 @@ export const TRANSPORT_MODES_DATA: TransportModeData[] = [
     delay: "3–5 jours",
     bestFor: "Produits à forte valeur, urgent",
     icon: "Zap",
+    unitCostFromXof: 8_200,
+    unit: "kg",
   },
 ];
