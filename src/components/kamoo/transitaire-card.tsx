@@ -83,9 +83,9 @@ export function TransitaireCard({ transitaire: t }: Props) {
         </div>
       </div>
 
-      <div className="px-4 pb-4 pt-4">
+      <div className="px-4 pb-4 pt-2">
         {/* Note alignée à droite (le logo est en absolute à gauche) */}
-        <div className="flex h-10 items-start justify-end">
+        <div className="flex h-7 items-start justify-end">
           <div className="flex items-center gap-1 text-[12px]">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
             <span className="font-bold text-ink-900">{t.rating}</span>
@@ -94,7 +94,7 @@ export function TransitaireCard({ transitaire: t }: Props) {
         </div>
 
         {/* Nom + ville */}
-        <div className="mt-2">
+        <div className="mt-1">
           <h3 className="font-display text-[17px] font-extrabold leading-tight text-ink-900">
             {t.name}
           </h3>
