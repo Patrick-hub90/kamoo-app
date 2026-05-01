@@ -297,8 +297,15 @@ export function DateRangeFilter({ value, onChange }: Props) {
               />
               <div className="flex items-center justify-end gap-2 border-t border-line bg-paper-2/50 px-3 py-2">
                 <button
-                  onClick={handleClear}
-                  className="rounded-md border border-line bg-white px-3 py-1.5 text-[12px] font-bold text-ink-700 hover:bg-paper-2"
+                  onClick={() => {
+                    setDraftFrom(undefined);
+                    setDraftTo(undefined);
+                  }}
+                  disabled={!draftFrom && !draftTo}
+                  className={cn(
+                    "rounded-md border border-line bg-white px-3 py-1.5 text-[12px] font-bold text-ink-700 hover:bg-paper-2",
+                    !draftFrom && !draftTo && "cursor-not-allowed opacity-40",
+                  )}
                 >
                   Reset
                 </button>
