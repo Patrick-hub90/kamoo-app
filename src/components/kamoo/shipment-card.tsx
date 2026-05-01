@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Clock, Plane, Ship } from "lucide-react";
+import { ArrowRight, ChevronRight, Clock } from "lucide-react";
 import {
   type Expedition,
   STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
-  TRANSPORT_MODE_LABELS,
 } from "@/lib/types/expedition";
 import { StatusPill } from "./status-pill";
 
@@ -15,15 +14,14 @@ type Props = {
 /**
  * Carte d'une expédition dans la liste.
  *
- * Convention validée : UNE SEULE étiquette visible par card.
- *  - Si paiement attendu → "Non payé" (orange)
- *  - Sinon → statut logistique
- * Le statut secondaire apparaît en texte gris discret.
+ * Direction : Wave-style minimaliste.
+ *  - Thumbnail emoji sur fond neutre paper-2 (plus de dégradés colorés)
+ *  - Hiérarchie typographique forte (titre gros, méta discrète)
+ *  - UNE SEULE étiquette colorée par card
+ *  - Pas d'icônes superflues (transitaire avatar / mode transport / star colorée)
+ *  - Action en bandeau bas, sobre (border-top + texte + flèche)
  */
 export function ShipmentCard({ expedition: e }: Props) {
-  const TransportIcon = e.transportMode === "sea" ? Ship : Plane;
-
-  // Logique étiquette unique
   const showPaymentPill = e.paymentStatus === "unpaid";
   const primaryPill = showPaymentPill
     ? { tone: "orange" as const, label: PAYMENT_STATUS_LABELS.unpaid }
@@ -44,97 +42,63 @@ export function ShipmentCard({ expedition: e }: Props) {
   return (
     <Link
       href={`/expeditions/${e.id}`}
-      className="group block overflow-hidden rounded-2xl border border-line bg-white transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]"
+      className="group block overflow-hidden rounded-2xl border border-line bg-white transition hover:border-ink-300"
     >
-      {/* Bandeau action si applicable */}
-      {e.action && (
-        <div
-          className={`flex items-center justify-between gap-3 px-5 py-2.5 text-xs font-bold text-white ${
-            e.action.urgent
-              ? "bg-gradient-to-r from-kamoo-orange-500 to-kamoo-orange-600"
-              : "bg-gradient-to-r from-emerald-500 to-emerald-600"
-          }`}
-        >
-          <span className="inline-flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            {e.action.label}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            Action rapide <ArrowRight className="h-3 w-3" />
-          </span>
-        </div>
-      )}
-
-      {/* Contenu */}
-      <div className="flex items-center gap-4 p-4">
-        {/* Vignette */}
-        <div
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-xl text-3xl"
-          style={{ background: e.thumb.bg }}
-        >
+      {/* Contenu principal */}
+      <div className="flex items-center gap-4 px-5 py-4">
+        {/* Vignette neutre */}
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-paper-2 text-2xl">
           {e.thumb.emoji}
         </div>
 
         {/* Infos */}
         <div className="min-w-0 flex-1">
-          {/* Code + étiquette unique */}
           <div className="flex items-center gap-2.5">
-            <span className="font-mono-kamoo text-[11.5px] font-bold text-ink-500">
-              {e.publicCode}
+            <span className="truncate text-[15px] font-bold text-ink-900">
+              {e.productName}
+              {e.otherProductsCount > 0 && (
+                <span className="font-medium text-ink-500">
+                  {" + "}
+                  {e.otherProductsCount}
+                </span>
+              )}
             </span>
             <StatusPill tone={primaryPill.tone} label={primaryPill.label} />
-            <span className="text-[11px] text-ink-400">·</span>
-            <span className="text-[11px] text-ink-500">
-              {secondaryStatusText}
-            </span>
           </div>
 
-          {/* Nom du produit */}
-          <div className="mt-1 truncate text-[15px] font-bold text-ink-900">
-            {e.productName}
-            {e.otherProductsCount > 0 && (
-              <span className="font-medium text-ink-500">
-                {" et "}
-                {e.otherProductsCount} autre
-                {e.otherProductsCount > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-
-          {/* Meta : transitaire · mode · ETA */}
-          <div className="mt-2 flex items-center gap-3 text-[12px] text-ink-500">
-            <div className="inline-flex items-center gap-1.5">
-              <span
-                className="grid h-5 w-5 place-items-center rounded-full text-[9px] font-extrabold text-white"
-                style={{ background: e.transitaire.avatarBg }}
-              >
-                {e.transitaire.avatar}
-              </span>
-              <span className="font-semibold text-ink-700">
-                {e.transitaire.name}
-              </span>
-              <span className="font-bold text-amber-500">
-                ★ {e.transitaire.rating}
-              </span>
-            </div>
-            <span className="h-1 w-1 rounded-full bg-ink-300" />
-            <span className="inline-flex items-center gap-1">
-              <TransportIcon className="h-3 w-3" />
-              <span className="font-semibold text-ink-700">
-                {TRANSPORT_MODE_LABELS[e.transportMode]}
-              </span>
-            </span>
-            <span className="h-1 w-1 rounded-full bg-ink-300" />
+          <div className="mt-1 flex items-center gap-2 text-[12px] text-ink-500">
+            <span className="font-mono-kamoo">{e.publicCode}</span>
+            <span className="text-ink-300">·</span>
+            <span>{e.transitaire.name}</span>
+            <span className="text-ink-300">·</span>
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span className="font-semibold text-ink-700">{e.eta}</span>
+              {e.eta}
             </span>
+          </div>
+
+          <div className="mt-0.5 text-[11px] text-ink-400">
+            {secondaryStatusText}
           </div>
         </div>
 
-        {/* Chevron */}
-        <ArrowRight className="h-4 w-4 text-ink-300 transition group-hover:translate-x-1 group-hover:text-ink-500" />
+        {/* Chevron à droite */}
+        <ChevronRight className="h-4 w-4 text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-ink-500" />
       </div>
+
+      {/* Bandeau action (si nécessaire) — sobre, pas un gradient */}
+      {e.action && (
+        <div
+          className={`flex items-center justify-between border-t border-line px-5 py-2.5 text-[12.5px] font-semibold ${
+            e.action.urgent
+              ? "bg-kamoo-orange-50 text-kamoo-orange-700"
+              : "bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          <span>{e.action.label}</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </div>
+      )}
     </Link>
   );
 }
