@@ -998,10 +998,12 @@ function Step3Confirm({
                 En attente de réception en Chine
               </div>
               <p className="mt-2 text-[13px] leading-relaxed text-ink-700">
-                Une fois ton colis arrivé chez notre transitaire à{" "}
-                <b>Guangzhou</b>, il sera <b>pesé</b> et{" "}
-                <b>photographié</b>. Tu recevras alors le <b>devis exact</b>{" "}
-                à valider avant l&apos;expédition.
+                Nous vous prions de vous préparer financièrement à la
+                réception de vos marchandises. Une fois ton colis arrivé
+                chez notre transitaire à <b>Guangzhou</b>, il sera{" "}
+                <b>pesé</b> et <b>photographié</b>, puis tu recevras le
+                devis exact (poids, volume si besoin, coût unitaire et
+                total).
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-2">

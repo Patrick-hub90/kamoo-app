@@ -93,19 +93,12 @@ function buildDetail(id: string): ExpeditionDetail | null {
         ? {
             issuedAt: "24 oct. 2025 · 10:12",
             validUntil: "31 oct. 2025",
-            lines: [
-              {
-                label: "Transport maritime · 1.07 kg",
-                amountXof: 89000,
-              },
-              { label: "Frais de dédouanement", amountXof: 78000 },
-              { label: "Assurance Kamoo (2%)", amountXof: 18000 },
-              {
-                label: "Livraison dernier kilomètre · Dakar",
-                amountXof: 45000,
-              },
-              { label: "Frais de service Kamoo", amountXof: 15000 },
-            ],
+            weightKg: 1.07,
+            volumeCbm: base.transportMode === "sea" ? 0.024 : undefined,
+            unitCost: {
+              amountXof: base.transportMode === "sea" ? 1_650_000 : 8_200,
+              unit: base.transportMode === "sea" ? "cbm" : "kg",
+            },
             totalXof: base.amountXof,
           }
         : null,

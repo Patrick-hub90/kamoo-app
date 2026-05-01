@@ -14,15 +14,17 @@ export type Product = {
   photosReceived: { emoji: string; bg: string }[];
 };
 
-export type QuoteLine = {
-  label: string;
-  amountXof: number;
-};
-
 export type Quote = {
   issuedAt: string;
   validUntil: string;
-  lines: QuoteLine[];
+  weightKg: number;
+  /** Volume en m³ (CBM), optionnel — pertinent surtout pour le maritime */
+  volumeCbm?: number;
+  /** Tarif unitaire (au kg pour avion, au m³ pour maritime) */
+  unitCost: {
+    amountXof: number;
+    unit: "kg" | "cbm";
+  };
   totalXof: number;
 };
 

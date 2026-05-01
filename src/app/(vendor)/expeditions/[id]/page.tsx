@@ -395,23 +395,26 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2">
-                  {exp.quote.lines.map((line) => (
-                    <div
-                      key={line.label}
-                      className="flex items-start justify-between text-[12.5px] opacity-95"
-                    >
-                      <span className="pr-3">{line.label}</span>
-                      <span className="whitespace-nowrap font-bold">
-                        {formatXOF(line.amountXof, false)}
-                      </span>
-                    </div>
-                  ))}
+                  <DevisRow
+                    label="Poids"
+                    value={`${exp.quote.weightKg} kg`}
+                  />
+                  {exp.quote.volumeCbm !== undefined && (
+                    <DevisRow
+                      label="Volume"
+                      value={`${exp.quote.volumeCbm} m³`}
+                    />
+                  )}
+                  <DevisRow
+                    label={`Coût / ${exp.quote.unitCost.unit === "kg" ? "kg" : "m³"}`}
+                    value={`${formatXOF(exp.quote.unitCost.amountXof, false)} F CFA`}
+                  />
                 </div>
 
                 <div className="my-4 h-px bg-white/20" />
 
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[13px] opacity-85">Total</span>
+                  <span className="text-[13px] opacity-85">Total à payer</span>
                   <div className="font-display flex items-baseline gap-1.5 whitespace-nowrap text-[26px] font-extrabold text-kamoo-orange-400">
                     <span>{formatXOF(exp.quote.totalXof, false)}</span>
                     <span className="text-xs font-bold opacity-85">F CFA</span>
@@ -420,7 +423,11 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
 
                 {exp.paymentStatus === "unpaid" && (
                   <>
-                    <button className="mt-4 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-kamoo-orange-500 px-4 py-3.5 text-sm font-extrabold text-white hover:bg-kamoo-orange-600">
+                    <p className="mt-4 rounded-lg bg-white/8 p-3 text-[12px] leading-relaxed opacity-95">
+                      Nous vous prions de vous préparer financièrement à la
+                      réception de vos marchandises.
+                    </p>
+                    <button className="mt-3 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-kamoo-orange-500 px-4 py-3.5 text-sm font-extrabold text-white hover:bg-kamoo-orange-600">
                       <Wallet className="h-4 w-4" />
                       Payer maintenant
                     </button>
@@ -504,6 +511,15 @@ function PhotoGrid({
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function DevisRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between text-[13px] opacity-95">
+      <span className="opacity-85">{label}</span>
+      <span className="whitespace-nowrap font-bold">{value}</span>
     </div>
   );
 }
