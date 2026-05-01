@@ -67,7 +67,7 @@ export function TransitaireCard({ transitaire: t }: Props) {
 
         {/* Logo absolument positionné AU-DESSUS de la bannière (z-10) */}
         <div
-          className="absolute left-4 top-[80px] z-20 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl border-[3px] border-white bg-white text-base font-extrabold text-white shadow-md"
+          className="absolute left-4 top-[80px] z-20 grid h-16 w-16 place-items-center overflow-hidden rounded-full border-[3px] border-white bg-white text-base font-extrabold text-white shadow-md"
           style={!t.logoImageUrl ? { background: t.avatarBg } : undefined}
         >
           {t.logoImageUrl ? (
