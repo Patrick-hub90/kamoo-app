@@ -113,36 +113,49 @@ export function DateRangeFilter({ value, onChange }: Props) {
 
   /**
    * Règles custom de sélection :
-   * - 1er clic : début
-   * - Click sur début déjà sélectionné : reset
-   * - Click avant début : nouveau début, fin à resaisir (pas de swap)
-   * - Click après début : fin (plage 1 jour autorisée)
-   * - Plage complète puis nouveau click : recommence
+   * - 1er clic : from = to = day (plage 1 jour, validable immédiatement)
+   * - 2ème clic sur le même jour (range = 1 jour) : reset
+   * - 2ème clic avant le from : étend vers la gauche (from = day, to inchangé)
+   * - 2ème clic après le to : étend vers la droite (to = day)
+   * - Si plage de + de 1 jour : nouveau clic recommence (from = to = day)
+   * - Jours futurs et hors-mois : non cliquables
    */
   const handleDayClick = (day: Date) => {
     const d = startOfDay(day);
 
-    // Hors du mois affiché → ignore
-    if (!isSameMonth(d, displayedMonth)) return;
+    // Hors du mois affiché OU dans le futur → ignore
+    if (isOutsideMonth(d) || isFuture(d)) return;
 
-    if (!draftFrom || (draftFrom && draftTo)) {
+    // Aucune sélection → start new (1 jour)
+    if (!draftFrom || !draftTo) {
       setDraftFrom(d);
-      setDraftTo(undefined);
+      setDraftTo(d);
       return;
     }
 
+    // Plage déjà étendue (> 1 jour) → recommence
+    if (!isSameDay(draftFrom, draftTo)) {
+      setDraftFrom(d);
+      setDraftTo(d);
+      return;
+    }
+
+    // On a une plage de 1 jour (from === to)
+    // Clic sur ce même jour → reset
     if (isSameDay(d, draftFrom)) {
       setDraftFrom(undefined);
       setDraftTo(undefined);
       return;
     }
 
+    // Clic avant → étend vers la gauche
     if (d < draftFrom) {
       setDraftFrom(d);
-      setDraftTo(undefined);
+      // to inchangé (= ancien from)
       return;
     }
 
+    // Clic après → étend vers la droite
     setDraftTo(d);
   };
 
@@ -178,6 +191,16 @@ export function DateRangeFilter({ value, onChange }: Props) {
   // Désactive les jours hors du mois affiché (visibles mais non cliquables)
   const isOutsideMonth = (date: Date): boolean =>
     !isSameMonth(date, displayedMonth);
+
+  // Désactive les jours dans le futur
+  const isFuture = (date: Date): boolean => {
+    const today = startOfDay(new Date());
+    return startOfDay(date).getTime() > today.getTime();
+  };
+
+  // Combine les contraintes pour la prop disabled de react-day-picker
+  const isDisabled = (date: Date): boolean =>
+    isOutsideMonth(date) || isFuture(date);
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -243,7 +266,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
                 onMonthChange={setDisplayedMonth}
                 numberOfMonths={1}
                 captionLayout="dropdown"
-                disabled={isOutsideMonth}
+                disabled={isDisabled}
                 modifiers={{
                   range_start: draftFrom ? [draftFrom] : [],
                   range_end: draftTo ? [draftTo] : [],
@@ -263,16 +286,18 @@ export function DateRangeFilter({ value, onChange }: Props) {
                 <div className="text-[12px] text-ink-700">
                   {!draftFrom && (
                     <span className="text-ink-500">
-                      Choisis la date de début
+                      Choisis une date
                     </span>
                   )}
-                  {draftFrom && !draftTo && (
-                    <span>
-                      <b>{formatDateShort(draftFrom)}</b>{" "}
-                      <span className="text-ink-500">→ date de fin ?</span>
+                  {draftFrom && draftTo && isSameDay(draftFrom, draftTo) && (
+                    <span className="font-semibold text-ink-900">
+                      {formatDateShort(draftFrom)}{" "}
+                      <span className="font-normal text-ink-500">
+                        · ajoute une 2ᵉ date pour étendre
+                      </span>
                     </span>
                   )}
-                  {draftFrom && draftTo && (
+                  {draftFrom && draftTo && !isSameDay(draftFrom, draftTo) && (
                     <span className="font-semibold text-ink-900">
                       {formatDateShort(draftFrom)} →{" "}
                       {formatDateShort(draftTo)}
