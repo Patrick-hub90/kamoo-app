@@ -35,6 +35,12 @@ export type Expedition = {
     avatar: string; // 2 lettres
     avatarBg: string; // gradient CSS
     rating: number; // 4.9
+    /**
+     * Politique de paiement du transitaire :
+     *  - "upfront" : paie avant l'expédition de Chine
+     *  - "on_arrival" : paie à l'arrivée du colis dans le pays de destination
+     */
+    paymentPolicy: "upfront" | "on_arrival";
   };
 
   // Transport

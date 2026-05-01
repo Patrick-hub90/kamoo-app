@@ -3,10 +3,32 @@ import type { Expedition } from "@/lib/types/expedition";
 /**
  * Données mockées pour les expéditions — usage UI uniquement.
  * Sera remplacé par des requêtes Supabase une fois la DB en place.
- *
- * Couvre les 3 statuts logistiques + 2 statuts paiement avec
- * des combinaisons réalistes (action requise vs non).
  */
+
+const TRANSITAIRES = {
+  liang: {
+    name: "Liang Wei Trading",
+    avatar: "LW",
+    avatarBg: "linear-gradient(135deg,#1E40AF,#0EA5E9)",
+    rating: 4.9,
+    paymentPolicy: "upfront" as const,
+  },
+  shanghai: {
+    name: "Shanghai Express Cargo",
+    avatar: "SE",
+    avatarBg: "linear-gradient(135deg,#7C3AED,#A78BFA)",
+    rating: 4.6,
+    paymentPolicy: "on_arrival" as const,
+  },
+  pearl: {
+    name: "Pearl River Logistics",
+    avatar: "PR",
+    avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
+    rating: 4.8,
+    paymentPolicy: "upfront" as const,
+  },
+};
+
 export const MOCK_EXPEDITIONS: Expedition[] = [
   {
     id: "exp_01",
@@ -18,12 +40,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     productName: "Crème hydratante L'Oréal",
     otherProductsCount: 1,
     thumb: { emoji: "🧴", bg: "linear-gradient(135deg,#FCE7F3,#F472B6)" },
-    transitaire: {
-      name: "Liang Wei Trading",
-      avatar: "LW",
-      avatarBg: "linear-gradient(135deg,#1E40AF,#0EA5E9)",
-      rating: 4.9,
-    },
+    transitaire: TRANSITAIRES.liang,
     transportMode: "sea",
     eta: "18 nov. 2025",
     createdAt: "2025-10-12T14:32:00Z",
@@ -44,20 +61,15 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     productName: "Power banks 10 000mAh",
     otherProductsCount: 0,
     thumb: { emoji: "🔋", bg: "linear-gradient(135deg,#DCFCE7,#22C55E)" },
-    transitaire: {
-      name: "Shanghai Express Cargo",
-      avatar: "SE",
-      avatarBg: "linear-gradient(135deg,#7C3AED,#A78BFA)",
-      rating: 4.6,
-    },
+    transitaire: TRANSITAIRES.shanghai,
     transportMode: "air_standard",
     eta: "22 oct. 2025",
     createdAt: "2025-10-08T09:18:00Z",
     amountXof: 178000,
     action: {
-      label: "Paie 178 000 F CFA pour libérer",
+      label: "Devis émis · paiement à l'arrivée",
       href: "/expeditions/exp_02",
-      urgent: true,
+      urgent: false,
     },
   },
   {
@@ -70,12 +82,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     productName: "Lunettes solaires aviateur",
     otherProductsCount: 2,
     thumb: { emoji: "🕶️", bg: "linear-gradient(135deg,#FEF3C7,#F59E0B)" },
-    transitaire: {
-      name: "Pearl River Logistics",
-      avatar: "PR",
-      avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
-      rating: 4.8,
-    },
+    transitaire: TRANSITAIRES.pearl,
     transportMode: "sea",
     eta: "03 déc. 2025",
     createdAt: "2025-10-15T16:47:00Z",
@@ -92,12 +99,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     productName: "Sacs à main cuir véritable",
     otherProductsCount: 0,
     thumb: { emoji: "👜", bg: "linear-gradient(135deg,#DBEAFE,#3B82F6)" },
-    transitaire: {
-      name: "Liang Wei Trading",
-      avatar: "LW",
-      avatarBg: "linear-gradient(135deg,#1E40AF,#0EA5E9)",
-      rating: 4.9,
-    },
+    transitaire: TRANSITAIRES.liang,
     transportMode: "air_express",
     eta: "Arrivé · 28 oct.",
     createdAt: "2025-10-02T10:12:00Z",
@@ -118,12 +120,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     productName: "Casquettes brodées",
     otherProductsCount: 0,
     thumb: { emoji: "🧢", bg: "linear-gradient(135deg,#FED7AA,#F97316)" },
-    transitaire: {
-      name: "Pearl River Logistics",
-      avatar: "PR",
-      avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
-      rating: 4.8,
-    },
+    transitaire: TRANSITAIRES.pearl,
     transportMode: "sea",
     eta: "11 nov. 2025",
     createdAt: "2025-09-28T08:00:00Z",
@@ -140,12 +137,7 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     productName: "Coques téléphone silicone",
     otherProductsCount: 4,
     thumb: { emoji: "📱", bg: "linear-gradient(135deg,#E9D5FF,#A78BFA)" },
-    transitaire: {
-      name: "Shanghai Express Cargo",
-      avatar: "SE",
-      avatarBg: "linear-gradient(135deg,#7C3AED,#A78BFA)",
-      rating: 4.6,
-    },
+    transitaire: TRANSITAIRES.shanghai,
     transportMode: "air_standard",
     eta: "Arrivé · 14 oct.",
     createdAt: "2025-09-20T12:00:00Z",
@@ -154,22 +146,14 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
   },
 ];
 
-/**
- * Stats à afficher en haut de la page Liste.
- * Calculées à partir des mocks pour rester cohérent.
- */
 export function computeListStats(expeditions: Expedition[]) {
   const enCours = expeditions.filter(
     (e) => e.status !== "arrived_destination",
   ).length;
-
   const enAttenteAction = expeditions.filter((e) => e.action?.urgent).length;
-
-  // Pour la démo, on simule "arrivées ce mois"
   const arriveesCeMois = expeditions.filter(
     (e) => e.status === "arrived_destination",
   ).length;
-
   const totalAPayer = expeditions
     .filter((e) => e.paymentStatus === "unpaid" && e.amountXof)
     .reduce((sum, e) => sum + (e.amountXof ?? 0), 0);

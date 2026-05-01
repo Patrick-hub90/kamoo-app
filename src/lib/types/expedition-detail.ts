@@ -8,10 +8,7 @@ import type { Expedition } from "./expedition";
 export type Product = {
   name: string;
   cartons: number;
-  weightDeclared: number; // kg
-  weightActual: number | null; // null tant que pas pesé
-  photosDeclared: { emoji: string; bg: string }[];
-  photosReceived: { emoji: string; bg: string }[];
+  weightDeclared: number; // kg, déclaré par le vendeur
 };
 
 export type Quote = {
@@ -41,21 +38,18 @@ export type ExpeditionDetail = Expedition & {
   warehouseAddress: string;
   destinationCity: string;
   destinationCityFlag: string;
-  trackingNumber: string | null;
-  trackingCarrier: string | null;
   aiCategory: { label: string; emoji: string };
   products: Product[];
   quote: Quote | null;
   history: HistoryEvent[];
 
-  // Pour l'écran Détail (selon Claude Design)
   currentStage: {
     emoji: string;
     label: string;
     sub: string;
   };
-  // 0=Soumis, 1=En Chine, 2=En transit, 3=Arrivé
+  /** 0=Soumis, 1=Reçu en Chine, 2=Arrivé à destination */
   progress: number;
-  transitaireReviews: number; // ex: 312
-  dateSubmitted: string; // "12 oct. 2025"
+  transitaireReviews: number;
+  dateSubmitted: string;
 };
