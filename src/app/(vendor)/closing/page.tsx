@@ -42,39 +42,19 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "injoignable", label: CLOSING_STATUS_LABELS.injoignable },
 ];
 
-/** Pill avec fond léger + dot + texte coloré */
+/** Pill avec fond plein code couleur statut */
 function statusClasses(s: ClosingStatus) {
   switch (s) {
     case "nouvelle":
-      return {
-        bg: "bg-kamoo-orange-50",
-        text: "text-kamoo-orange-700",
-        dot: "bg-kamoo-orange-500",
-      };
+      return "bg-kamoo-orange-500 text-white";
     case "rappele":
-      return {
-        bg: "bg-kamoo-blue-50",
-        text: "text-kamoo-blue-700",
-        dot: "bg-kamoo-blue-600",
-      };
+      return "bg-kamoo-blue-700 text-white";
     case "livraison_en_cours":
-      return {
-        bg: "bg-emerald-50",
-        text: "text-emerald-700",
-        dot: "bg-emerald-500",
-      };
+      return "bg-emerald-600 text-white";
     case "annule":
-      return {
-        bg: "bg-red-50",
-        text: "text-red-700",
-        dot: "bg-red-500",
-      };
+      return "bg-red-600 text-white";
     case "injoignable":
-      return {
-        bg: "bg-paper-2",
-        text: "text-ink-500",
-        dot: "bg-ink-300",
-      };
+      return "bg-ink-500 text-white";
   }
 }
 
@@ -301,7 +281,19 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
           scrollbarWidth: "thin",
         }}
       >
-        <table className="w-full min-w-[1100px] text-[13px]">
+        <table className="w-full min-w-[1380px] table-fixed text-[13px]">
+        <colgroup>
+          <col style={{ width: "115px" }} /> {/* N° */}
+          <col style={{ width: "230px" }} /> {/* Produit */}
+          <col style={{ width: "60px" }} />  {/* Qté */}
+          <col style={{ width: "115px" }} /> {/* Total */}
+          <col style={{ width: "180px" }} /> {/* Client */}
+          <col style={{ width: "145px" }} /> {/* Téléphone */}
+          <col style={{ width: "85px" }} />  {/* WhatsApp */}
+          <col style={{ width: "165px" }} /> {/* Statut */}
+          <col style={{ width: "200px" }} /> {/* Commentaire */}
+          <col style={{ width: "135px" }} /> {/* Compte à rebours */}
+        </colgroup>
         <thead>
           <tr className="border-b border-line bg-paper-2/40 text-left">
             <Th>N°</Th>
@@ -311,7 +303,7 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
             <Th>Client</Th>
             <Th>Téléphone</Th>
             <Th align="center">WhatsApp</Th>
-            <Th>Statut</Th>
+            <Th align="center">Statut</Th>
             <Th>Commentaire</Th>
             <Th>Compte à rebours</Th>
           </tr>
@@ -329,7 +321,7 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
               </Td>
 
               <Td>
-                <span className="truncate font-semibold text-ink-900">
+                <span className="block truncate font-semibold text-ink-900" title={a.productName}>
                   {a.productName}
                 </span>
               </Td>
@@ -386,29 +378,20 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
               </Td>
 
               <Td>
-                {(() => {
-                  const c = statusClasses(a.status);
-                  return (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold whitespace-nowrap",
-                        c.bg,
-                        c.text,
-                      )}
-                    >
-                      <span
-                        className={cn("h-1.5 w-1.5 rounded-full", c.dot)}
-                      />
-                      {CLOSING_STATUS_LABELS[a.status]}
-                    </span>
-                  );
-                })()}
+                <span
+                  className={cn(
+                    "inline-flex w-[140px] items-center justify-center rounded-full px-2 py-1 text-[11.5px] font-bold whitespace-nowrap",
+                    statusClasses(a.status),
+                  )}
+                >
+                  {CLOSING_STATUS_LABELS[a.status]}
+                </span>
               </Td>
 
               <Td>
                 {a.comment ? (
                   <span
-                    className="block max-w-[180px] truncate text-[12px] italic text-ink-700"
+                    className="block truncate text-[12px] italic text-ink-700"
                     title={a.comment}
                   >
                     {a.comment}
