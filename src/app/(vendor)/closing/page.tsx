@@ -405,7 +405,7 @@ function ClosingTable({ assignments }: { assignments: ClosingAssignment[] }) {
               {/* Compte à rebours */}
               <Td>
                 {a.status === "callback_scheduled" && a.callbackAt ? (
-                  <Countdown targetIso={a.callbackAt} compact />
+                  <Countdown targetIso={a.callbackAt} />
                 ) : a.status === "confirmed" && a.scheduledDeliveryAt ? (
                   <Countdown targetIso={a.scheduledDeliveryAt} />
                 ) : (
