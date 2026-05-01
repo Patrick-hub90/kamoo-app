@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Box,
@@ -79,6 +80,7 @@ export default function NewExpeditionPage() {
   ]);
   const [aiCategoryId, setAiCategoryId] = useState("cosmetique");
   const [mode, setMode] = useState<TransportMode>("air_standard");
+  const [responsibilityAccepted, setResponsibilityAccepted] = useState(false);
 
   // Pays actif (à remplacer par un context global plus tard)
   const country = COUNTRIES[0]; // SN
@@ -120,6 +122,9 @@ export default function NewExpeditionPage() {
           (c) => c.name.trim().length > 0 && c.photos.some(Boolean),
         )
       : true;
+
+  // Étape 3 : la soumission requiert l'acceptation de responsabilité
+  const canSubmit = step === 3 && responsibilityAccepted;
 
   // Mock shipping mark — sera généré côté serveur en vrai
   const shippingMark = `KMO-${country.code}-78421`;
@@ -222,6 +227,8 @@ export default function NewExpeditionPage() {
             shippingMark={shippingMark}
             totalWeight={totalWeight}
             totalPhotos={totalPhotos}
+            responsibilityAccepted={responsibilityAccepted}
+            onResponsibilityChange={setResponsibilityAccepted}
           />
         )}
       </div>
@@ -245,8 +252,10 @@ export default function NewExpeditionPage() {
         <div className="flex-1 text-center text-[12px] text-ink-500">
           {step < 3 && canNext && "✓ Tout est rempli, tu peux continuer"}
           {step < 3 && !canNext && "Complète les champs requis pour continuer"}
-          {step === 3 &&
+          {step === 3 && canSubmit &&
             "Une fois validée, ton colis sera réceptionné en Chine sous 5–10 jours"}
+          {step === 3 && !canSubmit &&
+            "Coche la case de responsabilité pour pouvoir valider"}
         </div>
 
         {step < 3 ? (
@@ -262,7 +271,13 @@ export default function NewExpeditionPage() {
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         ) : (
-          <button className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-6 py-3 text-sm font-extrabold text-white hover:bg-kamoo-orange-600">
+          <button
+            disabled={!canSubmit}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-6 py-3 text-sm font-extrabold text-white hover:bg-kamoo-orange-600",
+              !canSubmit && "cursor-not-allowed opacity-40",
+            )}
+          >
             Valider l&apos;expédition
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
@@ -916,6 +931,8 @@ function Step3Confirm({
   shippingMark,
   totalWeight,
   totalPhotos,
+  responsibilityAccepted,
+  onResponsibilityChange,
 }: {
   colis: Colis[];
   mode: TransportMode;
@@ -924,6 +941,8 @@ function Step3Confirm({
   shippingMark: string;
   totalWeight: number;
   totalPhotos: number;
+  responsibilityAccepted: boolean;
+  onResponsibilityChange: (v: boolean) => void;
 }) {
   const modeData = TRANSPORT_MODES_DATA.find((m) => m.id === mode)!;
   const ModeIcon = TRANSPORT_ICON[mode];
@@ -1080,6 +1099,41 @@ function Step3Confirm({
             </div>
           </div>
         </div>
+
+        {/* GARDE-FOU : que se passe-t-il si refusé + checkbox responsabilité */}
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div className="flex-1 text-[12.5px] leading-relaxed text-amber-900">
+              <div className="font-bold">
+                Que se passe-t-il si le contenu ne correspond pas ?
+              </div>
+              <p className="mt-1 text-amber-800">
+                Si le transitaire reçoit un produit incompatible avec le mode
+                choisi (ex : cosmétiques liquides en avion), il refusera
+                l&apos;expédition. Tu devras alors fournir une adresse
+                alternative en Chine et payer les frais de réacheminement.
+                Kamoo ne détruit jamais ton colis.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300">
+          <input
+            type="checkbox"
+            checked={responsibilityAccepted}
+            onChange={(e) => onResponsibilityChange(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-kamoo-orange-500"
+          />
+          <span className="text-[13px] leading-relaxed text-ink-900">
+            <b>Je confirme</b> que le contenu de mes colis correspond à la
+            catégorie déclarée. En cas de divergence, j&apos;accepte de payer
+            les frais de réacheminement.
+          </span>
+        </label>
       </div>
 
       {/* DROITE — Shipping mark */}

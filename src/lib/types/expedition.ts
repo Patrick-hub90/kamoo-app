@@ -41,6 +41,11 @@ export type Expedition = {
      *  - "on_arrival" : paie à l'arrivée du colis dans le pays de destination
      */
     paymentPolicy: "upfront" | "on_arrival";
+    /**
+     * Catégories de produits que ce transitaire REFUSE d'expédier.
+     * Le vendeur les voit avant de s'engager + à la création.
+     */
+    refusedCategories: string[];
   };
 
   // Transport

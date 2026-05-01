@@ -254,6 +254,12 @@ export default async function ExpeditionDetailPage({ params }: PageProps) {
                     ? "Paiement avant l'expédition"
                     : "Paiement à l'arrivée"}
                 </div>
+                {exp.transitaire.refusedCategories.length > 0 && (
+                  <div className="mt-2 text-[10.5px] leading-snug text-ink-500">
+                    <span className="font-bold text-red-700">N&apos;accepte pas :</span>{" "}
+                    {exp.transitaire.refusedCategories.join(" · ")}
+                  </div>
+                )}
               </div>
               {/* Mode + dates */}
               <div className="rounded-xl bg-paper-2 p-3">

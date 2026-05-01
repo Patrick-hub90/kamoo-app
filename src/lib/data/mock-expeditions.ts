@@ -12,6 +12,11 @@ const TRANSITAIRES = {
     avatarBg: "linear-gradient(135deg,#1E40AF,#0EA5E9)",
     rating: 4.9,
     paymentPolicy: "upfront" as const,
+    refusedCategories: [
+      "Cosmétiques liquides",
+      "Batteries lithium",
+      "Parfumerie",
+    ],
   },
   shanghai: {
     name: "Shanghai Express Cargo",
@@ -19,6 +24,7 @@ const TRANSITAIRES = {
     avatarBg: "linear-gradient(135deg,#7C3AED,#A78BFA)",
     rating: 4.6,
     paymentPolicy: "on_arrival" as const,
+    refusedCategories: ["Batteries lithium", "Alimentaire frais"],
   },
   pearl: {
     name: "Pearl River Logistics",
@@ -26,6 +32,7 @@ const TRANSITAIRES = {
     avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
     rating: 4.8,
     paymentPolicy: "upfront" as const,
+    refusedCategories: ["Parfumerie"],
   },
 };
 
