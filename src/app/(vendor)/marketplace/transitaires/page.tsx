@@ -4,9 +4,6 @@ import { MOCK_TRANSITAIRES } from "@/lib/data/mock-transitaires";
 
 export default function MarketplaceTransitairesPage() {
   const list = MOCK_TRANSITAIRES;
-  const avgRating = (
-    list.reduce((s, t) => s + t.rating, 0) / list.length
-  ).toFixed(1);
 
   return (
     <div className="flex h-full flex-col">
@@ -46,7 +43,7 @@ export default function MarketplaceTransitairesPage() {
           </button>
           <div className="flex-1" />
           <div className="text-[12px] font-semibold text-ink-500">
-            {list.length} transitaires · note moyenne ★ {avgRating}
+            {list.length} transitaires
           </div>
         </div>
       </div>
