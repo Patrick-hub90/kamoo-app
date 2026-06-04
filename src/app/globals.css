@@ -242,4 +242,56 @@
   .font-mono-kamoo {
     font-family: var(--font-mono);
   }
+
+  /* Scrollbar horizontale toujours visible (boutique table). Sur macOS,
+     les scrollbars sont auto-cachées par défaut — on force l'affichage
+     via WebKit pour signaler le scroll horizontal. */
+  .always-show-scrollbar::-webkit-scrollbar {
+    height: 10px;
+    -webkit-appearance: none;
+  }
+  .always-show-scrollbar::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 5px;
+  }
+  .always-show-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
+  .always-show-scrollbar::-webkit-scrollbar-track {
+    background: #F5F5EE;
+    border-radius: 5px;
+  }
+
+  /* Scrollbar masquée (rows d'onglets responsive). Le scroll fonctionne
+     toujours (touch/wheel/clavier), juste sans piste visible. */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+/* Tracé animé des jauges (widget performance closeuse). La valeur cible est
+   passée via --progress (0–100) sur l'élément <path> à pathLength=100. */
+@keyframes drawGauge {
+  from {
+    stroke-dasharray: 0 100;
+  }
+  to {
+    stroke-dasharray: var(--progress) 100;
+  }
+}
+
+/* Apparition discrète du chiffre central de la jauge. */
+@keyframes gaugeNumberIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

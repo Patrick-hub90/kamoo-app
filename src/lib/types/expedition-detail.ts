@@ -16,6 +16,15 @@ export type Product = {
 export type Quote = {
   issuedAt: string;
   validUntil: string;
+  /**
+   * Description libre du transitaire — détaille l'état du colis reçu,
+   * les opérations effectuées (consolidation, palettisation…) et la base
+   * de calcul du devis. Donne au vendeur le contexte humain derrière le
+   * chiffre final.
+   */
+  description: string;
+  /** Nombre de cartons réellement comptés par le transitaire à réception */
+  cartons: number;
   weightKg: number;
   /** Volume en m³ (CBM), optionnel — pertinent surtout pour le maritime */
   volumeCbm?: number;
@@ -25,6 +34,12 @@ export type Quote = {
     unit: "kg" | "cbm";
   };
   totalXof: number;
+  /**
+   * Photo de confirmation envoyée par le transitaire lors de la réception
+   * du colis en Chine. Stockée en V1 comme {emoji, bg} ; en prod sera une
+   * URL d'image S3 uploadée via la PWA Transitaire.
+   */
+  photo: { emoji: string; bg: string };
 };
 
 export type HistoryEvent = {

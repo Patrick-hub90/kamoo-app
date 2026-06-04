@@ -1,11 +1,5 @@
-import { StubPage } from "@/components/kamoo/stub-page";
+import { redirect } from "next/navigation";
 
 export default function ParametresPage() {
-  return (
-    <StubPage
-      title="Paramètres"
-      subtitle="Profil entreprise, boutiques connectées, Mobile Money, abonnement."
-      emoji="⚙️"
-    />
-  );
+  redirect("/parametres/compte");
 }

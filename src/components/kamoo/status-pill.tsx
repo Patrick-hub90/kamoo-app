@@ -1,6 +1,14 @@
 import { cn } from "@/lib/utils";
 
-type Tone = "blue" | "orange" | "green" | "gray" | "red" | "amber";
+type Tone =
+  | "blue"
+  | "orange"
+  | "green"
+  | "gray"
+  | "red"
+  | "amber"
+  | "cyan"
+  | "brown";
 
 const TONE_CLASSES: Record<Tone, string> = {
   blue: "bg-kamoo-blue-50 text-kamoo-blue-700 ring-kamoo-blue-100",
@@ -9,6 +17,8 @@ const TONE_CLASSES: Record<Tone, string> = {
   gray: "bg-paper-2 text-ink-700 ring-line",
   red: "bg-red-50 text-red-700 ring-red-100",
   amber: "bg-amber-50 text-amber-700 ring-amber-100",
+  cyan: "bg-cyan-50 text-cyan-700 ring-cyan-100",
+  brown: "bg-amber-100/70 text-amber-900 ring-amber-200",
 };
 
 type Props = {

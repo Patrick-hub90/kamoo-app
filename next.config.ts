@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Désactive l'indicateur dev « N · X Issue » en bas à droite (Next 16+).
+  devIndicators: false,
 };
 
 export default nextConfig;

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -21,6 +22,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { ProductSelector } from "@/components/kamoo/product-selector";
 import { COUNTRIES } from "@/lib/data/countries";
 import { TRANSPORT_MODES_DATA } from "@/lib/data/transport-modes";
 import { PRODUCT_CATEGORIES, getCategoryById } from "@/lib/data/categories";
@@ -38,7 +40,10 @@ type Photo = {
 
 type Colis = {
   id: number;
+  /** Nom affiché. Si productId est set, vient du catalogue. Sinon saisi libre. */
   name: string;
+  /** ID du produit dans la Boutique si lié au catalogue, undefined sinon */
+  productId?: string;
   weight: string; // kg, optionnel
   cartons: string; // nombre, optionnel
   photos: (Photo | null)[]; // 5 slots
@@ -67,7 +72,9 @@ const TRANSPORT_FG: Record<TransportMode, string> = {
 /* ─── Composant principal ──────────────────────────────────────────── */
 
 export default function NewExpeditionPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [expandedColis, setExpandedColis] = useState(0);
   const [colis, setColis] = useState<Colis[]>([
     {
@@ -124,7 +131,32 @@ export default function NewExpeditionPage() {
       : true;
 
   // Étape 3 : la soumission requiert l'acceptation de responsabilité
-  const canSubmit = step === 3 && responsibilityAccepted;
+  const canSubmit = step === 3 && responsibilityAccepted && !submitting;
+
+  /**
+   * Soumission du wizard. V1 mock : on flag la création en sessionStorage
+   * pour qu'une bannière de succès s'affiche sur /expeditions, puis on
+   * navigue. V2 : remplacer par un appel server action qui crée la ligne
+   * en base + génère le shipping mark côté serveur.
+   */
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    try {
+      sessionStorage.setItem(
+        "expedition.justCreated",
+        JSON.stringify({
+          colis: colis.length,
+          mode,
+          categoryId: aiCategoryId,
+          at: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      // sessionStorage indispo (mode privé) — pas bloquant, on navigue quand même
+    }
+    router.push("/expeditions");
+  };
 
   // Mock shipping mark — sera généré côté serveur en vrai
   const shippingMark = `KMO-${country.code}-78421`;
@@ -273,13 +305,15 @@ export default function NewExpeditionPage() {
           </button>
         ) : (
           <button
+            type="button"
+            onClick={handleSubmit}
             disabled={!canSubmit}
             className={cn(
               "inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-6 py-3 text-sm font-extrabold text-white hover:bg-kamoo-orange-600",
               !canSubmit && "cursor-not-allowed opacity-40",
             )}
           >
-            Valider l&apos;expédition
+            {submitting ? "Création…" : "Valider l'expédition"}
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         )}
@@ -431,11 +465,11 @@ function ColisCard({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white">
+    <div className="rounded-2xl border border-line bg-white">
       {/* Header de la card */}
       <div
         onClick={onToggle}
-        className="flex cursor-pointer items-center gap-3.5 px-5 py-4"
+        className="flex cursor-pointer items-center gap-3.5 rounded-t-2xl px-5 py-4"
       >
         <div className="grid h-9 w-9 place-items-center rounded-lg bg-kamoo-blue-50 text-sm font-extrabold text-kamoo-blue-700">
           #{index + 1}
@@ -518,15 +552,24 @@ function ColisCard({
 
             {/* Champs */}
             <div className="flex flex-col gap-3.5">
-              <Field label="Nom du produit" required>
-                <input
-                  type="text"
-                  placeholder="Ex: Baskets Nike Air Max"
+              <Field label="Produit" required>
+                <ProductSelector
                   value={colis.name}
-                  onChange={(e) =>
-                    onChange({ ...colis, name: e.target.value })
+                  productId={colis.productId}
+                  onSelectExisting={(p) =>
+                    onChange({
+                      ...colis,
+                      productId: p.id,
+                      name: p.name,
+                    })
                   }
-                  className="w-full rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+                  onChangeNew={(name) =>
+                    onChange({
+                      ...colis,
+                      productId: undefined,
+                      name,
+                    })
+                  }
                 />
               </Field>
 

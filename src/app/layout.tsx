@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { BitdefenderHydrationFix } from "@/components/bitdefender-hydration-fix";
 import "./globals.css";
 
 const inter = Inter({
@@ -35,8 +36,13 @@ export default function RootLayout({
     <html
       lang="fr"
       className={`${inter.variable} ${plusJakarta.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-paper text-ink-900">
+      <body
+        className="min-h-full flex flex-col bg-paper text-ink-900"
+        suppressHydrationWarning
+      >
+        <BitdefenderHydrationFix />
         {children}
       </body>
     </html>

@@ -52,7 +52,8 @@ export function Countdown({ targetIso }: Props) {
   );
 }
 
-/** Helper exporté pour vérifier expiration sans monter le composant */
-export function isCountdownExpired(targetIso: string, now = new Date()): boolean {
-  return new Date(targetIso).getTime() < now.getTime();
-}
+/**
+ * Re-export pour compat existante.
+ * Le helper canonique vit dans `@/lib/countdown-utils` (utilisable serveur + client).
+ */
+export { isCountdownExpired } from "@/lib/countdown-utils";

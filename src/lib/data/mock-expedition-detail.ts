@@ -84,6 +84,11 @@ function buildDetail(id: string): ExpeditionDetail | null {
         ? {
             issuedAt: "24 oct. 2025 · 10:12",
             validUntil: "31 oct. 2025",
+            description:
+              base.transportMode === "sea"
+                ? "Marchandise reçue en bon état. 3 cartons consolidés sur palette filmée. Volume calculé sur dimensions LxlxH des cartons (60×40×30 cm). Départ prévu sur le prochain départ maritime hebdomadaire (mardi)."
+                : "Marchandise reçue en bon état. 3 cartons pesés à l'unité puis additionnés. Étiquetage aérien posé. Décollage prévu sur le prochain vol cargo (lundi matin).",
+            cartons: 3,
             weightKg: 1.07,
             volumeCbm: base.transportMode === "sea" ? 0.024 : undefined,
             unitCost: {
@@ -91,6 +96,10 @@ function buildDetail(id: string): ExpeditionDetail | null {
               unit: base.transportMode === "sea" ? "cbm" : "kg",
             },
             totalXof: base.amountXof,
+            photo: {
+              emoji: "📦",
+              bg: "linear-gradient(135deg,#FED7AA,#F97316)",
+            },
           }
         : null,
     history: [

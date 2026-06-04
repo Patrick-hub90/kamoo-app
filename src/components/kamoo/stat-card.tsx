@@ -13,16 +13,22 @@ type Props = {
   label: string;
   value: string | number;
   unit?: string;
+  /** Complément affiché à côté de la valeur, gros et gras (ex: "(80%)" à côté de "5/7") */
+  valueAccent?: string;
+  /** Sous-titre visible sous la valeur (taille moyenne, gras) */
+  subtitle?: string;
   icon: React.ReactNode;
   tone?: Tone;
-  highlight?: boolean; // entoure de bordure orange pour mettre en avant
-  badge?: boolean; // pastille orange pulsante
+  highlight?: boolean;
+  badge?: boolean;
 };
 
 export function StatCard({
   label,
   value,
   unit,
+  valueAccent,
+  subtitle,
   icon,
   tone = "blue",
   highlight = false,
@@ -32,8 +38,10 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border bg-white p-4 transition",
-        highlight ? "border-kamoo-orange-400 ring-1 ring-kamoo-orange-100" : "border-line",
+        "relative flex items-center gap-3.5 overflow-hidden rounded-2xl border bg-white px-4 py-3.5 transition",
+        highlight
+          ? "border-kamoo-orange-400 ring-1 ring-kamoo-orange-100"
+          : "border-line",
       )}
     >
       {badge && (
@@ -41,27 +49,47 @@ export function StatCard({
       )}
       <div
         className={cn(
-          "mb-3 grid h-8 w-8 place-items-center rounded-lg",
+          "grid h-8 w-8 shrink-0 place-items-center rounded-lg",
           t.bg,
           t.fg,
         )}
       >
         {icon}
       </div>
-      <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-        {label}
-      </div>
-      <div className="mt-1 flex items-baseline gap-1.5">
-        <span
-          className={cn(
-            "font-display text-2xl font-extrabold leading-none",
-            highlight ? "text-kamoo-orange-600" : "text-ink-900",
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+          {label}
+        </div>
+        <div className="mt-1 flex items-baseline gap-1">
+          <span
+            className={cn(
+              "font-display text-[24px] font-extrabold leading-none tabular-nums",
+              highlight ? "text-kamoo-orange-600" : "text-ink-900",
+            )}
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            {value}
+          </span>
+          {valueAccent && (
+            <span
+              className={cn(
+                "font-display text-[13px] font-extrabold leading-none",
+                highlight ? "text-kamoo-orange-500" : "text-ink-500",
+              )}
+            >
+              {valueAccent}
+            </span>
           )}
-        >
-          {value}
-        </span>
-        {unit && (
-          <span className="text-xs font-bold text-ink-500">{unit}</span>
+          {unit && (
+            <span className="whitespace-nowrap text-[10.5px] font-bold text-ink-500">
+              {unit}
+            </span>
+          )}
+        </div>
+        {subtitle && (
+          <div className={cn("mt-1 text-[12px] font-bold", t.fg)}>
+            {subtitle}
+          </div>
         )}
       </div>
     </div>

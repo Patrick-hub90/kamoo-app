@@ -1,11 +1,13 @@
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowRight,
   Check,
+  Clock,
   MapPin,
   Plane,
   Ship,
-  Wallet,
+  Star,
   Zap,
 } from "lucide-react";
 import {
@@ -15,6 +17,7 @@ import {
   TRANSPORT_MODE_LABELS,
 } from "@/lib/types/expedition";
 import { formatXOF } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type Props = {
   expedition: Expedition;
@@ -26,188 +29,232 @@ const TRANSPORT_ICON = {
   air_express: Zap,
 } as const;
 
-function formatDateShort(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 /**
- * Carte d'une expédition dans la liste.
+ * Carte d'une expédition — design « banner action » :
  *
- * Disposition :
- *  • Gauche : logo transitaire + code expédition
- *  • Centre : produit, statuts, méta (transitaire / mode / créée / ETA)
- *  • Droite haut : montant
- *  • Droite bas : bouton Payer (si paiement requis) ou check vert "Payé"
+ *  ┌──────────────────────────────────────────────────────┐
+ *  │ ⚠ Paie 245 000 F CFA pour libérer    Action rapide → │  ← banner couleur si action
+ *  ├──────────────────────────────────────────────────────┤
+ *  │ KMO-SN-78421  [Non payé] [📍 Reçu]    245 000 F CFA  │
+ *  │ 🧴 Crème hydratante L'Oréal et 1 autre   [Détails →] │
+ *  │ LW Liang Wei ★ 4.9 · 🚢 Maritime · ⏰ 18 nov. 2025    │
+ *  └──────────────────────────────────────────────────────┘
  *
- * Toutes les infos clés visibles en 1 seconde.
+ * Le banner du haut met en avant l'action requise (paiement, récupération).
+ * Couleurs :
+ *  - Orange : paiement requis (urgent ou à l'arrivée)
+ *  - Vert   : colis arrivé, à récupérer
+ *  - Aucun  : pas d'action immédiate (en transit payé / en attente devis)
  */
 export function ShipmentCard({ expedition: e }: Props) {
-  const TransportIcon = TRANSPORT_ICON[e.transportMode];
   const needsPayment =
     e.paymentStatus === "unpaid" && e.amountXof !== null;
+  const isPaid = e.paymentStatus === "paid";
   const hasAmount = e.amountXof !== null;
+  const isArrived = e.status === "arrived_destination";
+  const TransportIcon = TRANSPORT_ICON[e.transportMode];
+
+  // Action label dérivée de l'état (assure cohérence même si mock incomplet)
+  const banner = needsPayment
+    ? {
+        tone: "orange" as const,
+        label:
+          e.transitaire.paymentPolicy === "upfront"
+            ? `Paie ${formatXOF(e.amountXof!, false)} F CFA pour libérer`
+            : `Paie ${formatXOF(e.amountXof!, false)} F CFA à l'arrivée`,
+      }
+    : isArrived
+      ? {
+          tone: "green" as const,
+          label: "Récupère ton colis · Mermoz, Dakar",
+        }
+      : null;
 
   return (
     <Link
       href={`/expeditions/${e.id}`}
-      className="group flex items-stretch gap-4 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300"
+      className="group block overflow-hidden rounded-2xl border border-line bg-white transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]"
     >
-      {/* GAUCHE : logo transitaire + code expédition */}
-      <div className="flex w-[88px] shrink-0 flex-col items-center justify-between gap-2">
+      {/* BANNER d'action (si pertinent) */}
+      {banner && (
         <div
-          className="grid h-12 w-12 place-items-center rounded-xl text-sm font-extrabold text-white"
-          style={{ background: e.transitaire.avatarBg }}
-          title={e.transitaire.name}
+          className={cn(
+            "flex items-center justify-between gap-3 px-4 py-2 text-[12.5px] font-bold text-white",
+            banner.tone === "orange" && "bg-kamoo-orange-500",
+            banner.tone === "green" && "bg-emerald-600",
+          )}
         >
-          {e.transitaire.avatar}
+          <span className="inline-flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span className="truncate">{banner.label}</span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 text-[12px] opacity-95 transition group-hover:opacity-100">
+            Action rapide
+            <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+          </span>
         </div>
-        <span className="font-mono-kamoo text-[10.5px] font-bold text-ink-500">
-          #{e.publicCode.replace(/^KMO-/, "")}
-        </span>
-      </div>
+      )}
 
-      {/* CENTRE : infos */}
-      <div className="min-w-0 flex-1">
-        {/* Ligne 1 — Produit */}
-        <div className="truncate text-[15px] font-bold text-ink-900">
-          {e.productName}
-          {e.otherProductsCount > 0 && (
-            <span className="font-medium text-ink-500">
-              {" + "}
-              {e.otherProductsCount}
+      {/* CONTENU — grille 3 colonnes : [thumb | info | side]
+          Les 3 lignes du milieu (pills / produit / meta) alignent
+          exactement avec les éléments à droite (amount / spacer / bouton).
+          La gap-y régulière garantit un rythme vertical homogène. */}
+      <div className="grid grid-cols-[44px_1fr_auto] items-center gap-x-4 p-4">
+        {/* COLONNE 1 — thumb produit (centré verticalement sur 3 lignes) */}
+        <div
+          className="row-span-3 grid h-11 w-11 place-items-center rounded-xl text-[22px] leading-none"
+          style={{ background: e.thumb.bg }}
+        >
+          {e.thumb.emoji}
+        </div>
+
+        {/* COLONNE 2 — info (3 lignes : pills / produit / meta) */}
+        {/* Ligne 1 : code + pills */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px]">
+          <span className="font-mono-kamoo font-bold text-ink-500">
+            {e.publicCode}
+          </span>
+          <StatusPill
+            tone={isPaid ? "green" : "red"}
+            icon={isPaid ? <Check className="h-3 w-3" /> : undefined}
+            label={PAYMENT_STATUS_LABELS[e.paymentStatus]}
+          />
+          <StatusPill
+            tone={positionTone(e.status)}
+            icon={positionIcon(e.status)}
+            label={STATUS_LABELS[e.status]}
+          />
+        </div>
+
+        {/* COLONNE 3 (ligne 1) — montant aligné à droite avec les pills */}
+        <div className="text-right leading-none">
+          {hasAmount ? (
+            <>
+              <span
+                className={cn(
+                  "font-display text-[18px] font-extrabold tabular-nums",
+                  needsPayment
+                    ? "text-kamoo-orange-600"
+                    : "text-ink-900",
+                )}
+              >
+                {formatXOF(e.amountXof!, false)}
+              </span>
+              <span className="ml-1 text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                F CFA
+              </span>
+            </>
+          ) : (
+            <span className="text-[11.5px] font-semibold text-ink-400">
+              Devis à venir
             </span>
           )}
         </div>
 
-        {/* Ligne 2 — Position + paiement */}
-        <div className="mt-1.5 flex items-center gap-3 text-[12.5px]">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-ink-900">
-            <PositionDot status={e.status} />
-            {STATUS_LABELS[e.status]}
-          </span>
-          <span className="text-ink-300">·</span>
-          <span
-            className={`inline-flex items-center gap-1.5 font-semibold ${
-              e.paymentStatus === "paid"
-                ? "text-emerald-700"
-                : "text-kamoo-orange-700"
-            }`}
-          >
-            <PaymentDot status={e.paymentStatus} />
-            {PAYMENT_STATUS_LABELS[e.paymentStatus]}
-          </span>
-        </div>
+        {/* COLONNE 2 (ligne 2) — produit (nom + co-produits) */}
+        <h3 className="mt-2 min-w-0 truncate text-[15px] font-bold leading-tight text-ink-900">
+          {e.productName}
+          {e.otherProductsCount > 0 && (
+            <span className="ml-1 font-medium text-ink-500">
+              et {e.otherProductsCount}{" "}
+              {e.otherProductsCount > 1 ? "autres" : "autre"}
+            </span>
+          )}
+        </h3>
 
-        {/* Ligne 3 — Meta complète */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-500">
-          <MetaItem label="Transitaire" value={e.transitaire.name} />
-          <Sep />
-          <MetaItem
-            label="Mode"
-            value={TRANSPORT_MODE_LABELS[e.transportMode]}
-            icon={<TransportIcon className="h-3 w-3" />}
-          />
-          <Sep />
-          <MetaItem label="Créée" value={formatDateShort(e.createdAt)} />
-          <Sep />
-          <MetaItem
-            label="ETA"
-            value={e.eta}
-            icon={<MapPin className="h-3 w-3" />}
-          />
-        </div>
-      </div>
+        {/* COLONNE 3 (ligne 2) — vide pour conserver l'alignement vertical */}
+        <div className="mt-2" />
 
-      {/* DROITE : montant en haut + action en bas */}
-      <div className="flex w-32 shrink-0 flex-col items-end justify-between">
-        {hasAmount ? (
-          <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-              Montant
-            </div>
-            <div
-              className={`font-display text-[16px] font-extrabold leading-tight ${
-                needsPayment
-                  ? "text-kamoo-orange-600"
-                  : "text-ink-900"
-              }`}
+        {/* COLONNE 2 (ligne 3) — meta : transitaire · mode · ETA */}
+        <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[11.5px] text-ink-500">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="grid h-5 w-5 place-items-center rounded-md text-[9px] font-extrabold text-white"
+              style={{ background: e.transitaire.avatarBg }}
+              title={e.transitaire.name}
             >
-              {formatXOF(e.amountXof!, false)}
-            </div>
-            <div className="text-[10px] font-bold text-ink-500">F CFA</div>
-          </div>
-        ) : (
-          <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-              Devis
-            </div>
-            <div className="text-[12px] font-semibold text-ink-400">
-              à venir
-            </div>
-          </div>
-        )}
+              {e.transitaire.avatar}
+            </span>
+            <span className="font-semibold text-ink-700">
+              {e.transitaire.name}
+            </span>
+            <span className="inline-flex items-center gap-0.5 text-kamoo-orange-500">
+              <Star className="h-3 w-3 fill-current" />
+              <span className="font-bold">
+                {e.transitaire.rating.toFixed(1)}
+              </span>
+            </span>
+          </span>
+          <Sep />
+          <span className="inline-flex items-center gap-1">
+            <TransportIcon className="h-3 w-3 text-ink-400" />
+            <span className="font-semibold text-ink-700">
+              {TRANSPORT_MODE_LABELS[e.transportMode]}
+            </span>
+          </span>
+          <Sep />
+          <span className="inline-flex items-center gap-1">
+            {isArrived ? (
+              <MapPin className="h-3 w-3 text-emerald-600" />
+            ) : (
+              <Clock className="h-3 w-3 text-ink-400" />
+            )}
+            <span className="font-semibold text-ink-700">{e.eta}</span>
+          </span>
+        </div>
 
-        {needsPayment ? (
-          <div className="inline-flex items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-3 py-1.5 text-[12px] font-bold text-white transition group-hover:bg-kamoo-orange-600">
-            <Wallet className="h-3.5 w-3.5" />
-            Payer
-            <ArrowRight className="h-3 w-3" />
-          </div>
-        ) : e.paymentStatus === "paid" ? (
-          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-            <Check className="h-3 w-3" />
-            Payé
-          </div>
-        ) : (
-          <span className="text-[11px] font-medium text-ink-400">—</span>
-        )}
+        {/* COLONNE 3 (ligne 3) — bouton Détails aligné avec la meta */}
+        <span className="mt-2.5 inline-flex shrink-0 items-center gap-1 justify-self-end rounded-lg border border-line bg-white px-2.5 py-1 text-[11.5px] font-bold text-ink-700 transition group-hover:border-kamoo-blue-600 group-hover:text-kamoo-blue-700">
+          Détails
+          <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+        </span>
       </div>
     </Link>
   );
 }
 
-/* ─── Helpers visuels ───────────────────────────────────────────── */
+/* ─── Sub-components ─────────────────────────────────── */
 
-function PositionDot({ status }: { status: Expedition["status"] }) {
-  const color =
-    status === "arrived_destination"
-      ? "bg-emerald-500"
-      : status === "received_china"
-        ? "bg-kamoo-blue-600"
-        : "bg-ink-300";
-  return <span className={`h-1.5 w-1.5 rounded-full ${color}`} />;
-}
+type PillTone = "red" | "green" | "blue" | "amber" | "cyan" | "grey";
 
-function PaymentDot({ status }: { status: Expedition["paymentStatus"] }) {
-  return (
-    <span
-      className={`h-1.5 w-1.5 rounded-full ${
-        status === "paid" ? "bg-emerald-500" : "bg-kamoo-orange-500"
-      }`}
-    />
-  );
-}
-
-function MetaItem({
-  label,
-  value,
+function StatusPill({
+  tone,
   icon,
+  label,
 }: {
-  label: string;
-  value: string;
+  tone: PillTone;
   icon?: React.ReactNode;
+  label: string;
 }) {
   return (
-    <span className="inline-flex items-baseline gap-1">
-      {icon && <span className="self-center">{icon}</span>}
-      <span className="text-ink-400">{label} :</span>
-      <span className="font-semibold text-ink-700">{value}</span>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-bold",
+        tone === "red" && "bg-red-50 text-red-700",
+        tone === "green" && "bg-emerald-50 text-emerald-700",
+        tone === "blue" && "bg-kamoo-blue-50 text-kamoo-blue-700",
+        tone === "amber" && "bg-amber-50 text-amber-700",
+        tone === "cyan" && "bg-cyan-50 text-cyan-700",
+        tone === "grey" && "bg-paper-2 text-ink-600",
+      )}
+    >
+      {icon}
+      {label}
     </span>
   );
+}
+
+function positionTone(status: Expedition["status"]): PillTone {
+  if (status === "arrived_destination") return "green";
+  if (status === "received_china") return "blue";
+  return "cyan"; // awaiting_quote
+}
+
+function positionIcon(status: Expedition["status"]): React.ReactNode {
+  if (status === "arrived_destination")
+    return <MapPin className="h-3 w-3" />;
+  if (status === "received_china") return <MapPin className="h-3 w-3" />;
+  return <Clock className="h-3 w-3" />;
 }
 
 function Sep() {

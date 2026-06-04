@@ -26,8 +26,8 @@ export default function MarketplaceTransitairesPage() {
 
       {/* BARRE DE FILTRES */}
       <div className="border-b border-line bg-paper-2/60 px-10 py-3">
-        <div className="flex items-center gap-3">
-          <div className="relative w-80">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="relative min-w-[180px] flex-1 sm:flex-none sm:w-80">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
             <input
               type="search"
@@ -35,14 +35,14 @@ export default function MarketplaceTransitairesPage() {
               className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-[13px] outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
             />
           </div>
-          <button className="inline-flex h-9 items-center gap-2 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-900 hover:border-ink-300">
+          <button className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-900 hover:border-ink-300">
             <span className="text-ink-500">Spécialité :</span> Toutes
           </button>
-          <button className="inline-flex h-9 items-center gap-2 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-900 hover:border-ink-300">
+          <button className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-900 hover:border-ink-300">
             <span className="text-ink-500">Tri :</span> ★ Note
           </button>
-          <div className="flex-1" />
-          <div className="text-[12px] font-semibold text-ink-500">
+          <div className="hidden flex-1 lg:block" />
+          <div className="ml-auto whitespace-nowrap text-[12px] font-semibold text-ink-500 lg:ml-0">
             {list.length} transitaires
           </div>
         </div>

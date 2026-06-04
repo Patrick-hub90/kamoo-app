@@ -16,6 +16,9 @@ import {
   ChevronDown,
   Plus,
   LogOut,
+  Megaphone,
+  ListOrdered,
+  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +34,11 @@ type NavChild = {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  /**
+   * Si true → match exact uniquement (utile quand href = href du parent,
+   * ex. l'Aperçu d'un module). Sinon startsWith pour les sous-routes.
+   */
+  exact?: boolean;
 };
 
 type Section = {
@@ -80,20 +88,46 @@ const SECTIONS: Section[] = [
     label: "Mon activité",
     items: [
       { href: "/expeditions", label: "Expéditions", icon: Package, badge: 12 },
-      { href: "/boutique", label: "Boutique", icon: ShoppingBag },
+      { href: "/boutique", label: "Catalogue", icon: ShoppingBag },
       { href: "/clients", label: "Clients", icon: Users },
       { href: "/closing", label: "Closing", icon: Phone },
       { href: "/livraisons", label: "Livraisons", icon: Truck },
-      { href: "/finances", label: "Finances", icon: Wallet },
+      {
+        href: "/finances",
+        label: "Finances",
+        icon: Wallet,
+        children: [
+          { href: "/finances", label: "Aperçu", icon: PieChart, exact: true },
+          { href: "/finances/pubs", label: "Campagnes pubs", icon: Megaphone },
+          { href: "/finances/journal", label: "Journal", icon: ListOrdered },
+        ],
+      },
     ],
   },
   {
     label: "Compte",
-    items: [{ href: "/parametres", label: "Paramètres", icon: Settings }],
+    items: [
+      {
+        href: "/parametres",
+        label: "Paramètres",
+        icon: Settings,
+      },
+    ],
   },
 ];
 
-export function Sidebar() {
+type SidebarProps = {
+  /** True quand le drawer mobile est ouvert (ignoré ≥ lg, où la sidebar
+   *  est toujours visible). */
+  mobileOpen?: boolean;
+  /** Callback appelé quand l'overlay mobile ou un lien est cliqué. */
+  onMobileClose?: () => void;
+};
+
+export function Sidebar({
+  mobileOpen = false,
+  onMobileClose,
+}: SidebarProps = {}) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -104,7 +138,7 @@ export function Sidebar() {
       section.items.forEach((item) => {
         if (item.children) {
           const childActive = item.children.some((c) =>
-            pathname.startsWith(c.href),
+            c.exact ? pathname === c.href : pathname.startsWith(c.href),
           );
           if (childActive) next[item.href] = true;
         }
@@ -128,7 +162,26 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-line bg-white">
+    <>
+      {/* Overlay sombre derrière le drawer mobile (cliquable pour fermer) */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-ink-900/40 backdrop-blur-sm lg:hidden"
+          onClick={onMobileClose}
+          aria-hidden
+        />
+      )}
+
+      <aside
+        className={cn(
+          "flex w-60 flex-col border-r border-line bg-white",
+          // Desktop : statique dans le flow, toujours visible
+          "lg:static lg:h-screen lg:translate-x-0",
+          // Mobile : fixed drawer qui slide depuis la gauche
+          "fixed inset-y-0 left-0 z-40 h-full transition-transform duration-200 ease-out",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
+      >
       {/* Logo */}
       <div className="px-5 py-6">
         <Link href="/" className="inline-flex items-center gap-2">
@@ -162,13 +215,27 @@ export function Sidebar() {
                 const active = isActive(item.href);
                 const parentActive = isParentActive(item);
                 const hasChildren = !!item.children?.length;
-                const isExpanded = hasChildren && (expanded[item.href] || parentActive);
+                // L'état déplié est piloté UNIQUEMENT par `expanded[href]`.
+                // L'auto-expand (quand un enfant devient actif) est géré par
+                // le useEffect qui pose `expanded[href] = true` au changement
+                // de pathname. Ainsi, le vendeur peut toujours replier
+                // manuellement, même quand il est sur une sous-page —
+                // sinon `parentActive` empêchait le toggle de fermer.
+                const isExpanded = hasChildren && !!expanded[item.href];
 
                 return (
                   <div key={item.href}>
                     {hasChildren ? (
+                      // Parent avec enfants : clic = toggle sous-menu, pas
+                      // de navigation. Les pages parentes sont soit des
+                      // stubs (Marketplace) soit des redirections (Paramètres),
+                      // donc cliquer dessus n'apporte rien — on déplie pour
+                      // que le vendeur voit ses options.
                       <button
+                        type="button"
                         onClick={() => toggle(item.href)}
+                        aria-expanded={isExpanded}
+                        aria-label={isExpanded ? "Replier" : "Déplier"}
                         className={cn(
                           "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13.5px] font-medium transition",
                           parentActive
@@ -180,8 +247,9 @@ export function Sidebar() {
                         <span className="flex-1">{item.label}</span>
                         <ChevronDown
                           className={cn(
-                            "h-4 w-4 transition-transform",
+                            "h-4 w-4 text-ink-400 transition-transform",
                             isExpanded && "rotate-180",
+                            parentActive && "text-kamoo-blue-700",
                           )}
                         />
                       </button>
@@ -217,7 +285,9 @@ export function Sidebar() {
                       <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-line pl-3">
                         {item.children!.map((child) => {
                           const ChildIcon = child.icon;
-                          const childActive = isActive(child.href);
+                          const childActive = child.exact
+                            ? pathname === child.href
+                            : isActive(child.href);
                           return (
                             <Link
                               key={child.href}
@@ -261,6 +331,7 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

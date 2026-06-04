@@ -74,6 +74,17 @@ export const STATUS_LABELS: Record<ExpeditionStatus, string> = {
   arrived_destination: "Arrivé à destination",
 };
 
+/**
+ * Labels compacts pour les contextes serrés (carte de liste, badges).
+ * Le mot manquant est compris du contexte (statut d'une expédition →
+ * « Reçu » = reçu chez le transitaire en Chine, etc.).
+ */
+export const STATUS_LABELS_SHORT: Record<ExpeditionStatus, string> = {
+  received_china: "Reçu",
+  awaiting_quote: "En attente",
+  arrived_destination: "Arrivé",
+};
+
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   paid: "Payé",
   unpaid: "Non payé",

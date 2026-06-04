@@ -199,6 +199,14 @@ COMPTE
 - ✅ Anti-fraude V1 = KYC + OTP uniquement (pas de caution, pas d'escrow)
 - ✅ Pivot vers code direct (Phase 2.3 wireframes + Phase 3 design system fusionnés dans le code)
 - ✅ Phase 1.3 cadrage légal **en pause** (pas bloquant pour MVP)
+- ✅ **Pas de KPI numérique public sur les profils partenaires** (closeuses + livreurs).
+  Cohérent avec "pas de score 'bon payeur' public sur le profil vendeur" déjà acté.
+  Raisons : casse le cold start des nouveaux partenaires, encourage le cherry-picking
+  (refus des cas difficiles pour préserver la stat), bruit statistique sur petits volumes,
+  pression mentale sur les partenaires, vendeurs sans culture stat. **Reste visible publiquement** :
+  note ★ + nb d'avis + badge statut (Nouveau / Certifié Kamoo) + ancienneté.
+  **Reste calculé en interne** pour le tier auto + matching algorithmique + dashboard privée
+  du partenaire (pour s'auto-évaluer).
 
 ### 6.2 Règle anti-procrastination (5 règles)
 1. Critères "good enough" définis AVANT chaque phase
@@ -217,6 +225,12 @@ COMPTE
 - Auto-suggestion arguments closeuse pendant l'appel
 - Score "Closeuse Premium"
 - Marketplace stockistes (partenariat Teliaw potentiel)
+- **Personnalisation des vues vendeur (UI flexibility)** :
+  - Choisir quels onglets afficher (Closing, Expéditions, Livraisons, etc.) et leur ordre
+  - Choisir quelles colonnes afficher dans chaque tableau + leur ordre + leur largeur
+  - Sauvegarder plusieurs "vues" nommées par module (ex : "Vue Aïcha", "Vue weekend")
+  - Préférences stockées par utilisateur (Supabase user settings)
+  - Inspiration : Linear views, Notion databases, Airtable views
 
 ---
 

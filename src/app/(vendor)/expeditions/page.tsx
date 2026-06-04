@@ -1,19 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Check, Plus, Search, X } from "lucide-react";
 import {
-  AlertTriangle,
-  Check,
-  ChevronDown,
-  Plus,
-  Search,
-  Ship,
-  Wallet,
-  X,
-} from "lucide-react";
-import { ShipmentCard } from "@/components/kamoo/shipment-card";
-import { StatCard } from "@/components/kamoo/stat-card";
+  ExpeditionRow,
+  ExpeditionRowHeader,
+} from "@/components/console/expeditions/expedition-row";
 import {
   DateRangeFilter,
   type DateFilterValue,
@@ -22,62 +15,89 @@ import {
   MOCK_EXPEDITIONS,
   computeListStats,
 } from "@/lib/data/mock-expeditions";
-import {
-  STATUS_LABELS,
-  type ExpeditionStatus,
-} from "@/lib/types/expedition";
 import { formatXOF } from "@/lib/format";
+import {
+  filterByDateWith,
+  normalizeDateFilter,
+} from "@/lib/utils/date-filter";
+import { MOCK_TODAY } from "@/lib/clock";
+import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { cn } from "@/lib/utils";
 
-type StatusFilter = "all" | ExpeditionStatus;
+/* Tabs : action requise en premier (priorité), puis en transit, arrivées, tout.
+   Le filtre statut détaillé a été retiré — la tab suffit. */
+type TabFilter = "action" | "transit" | "arrivees" | "all";
 
-const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: "all", label: "Tous les statuts" },
-  { id: "received_china", label: STATUS_LABELS.received_china },
-  { id: "awaiting_quote", label: STATUS_LABELS.awaiting_quote },
-  { id: "arrived_destination", label: STATUS_LABELS.arrived_destination },
-];
-
-function presetToCutoff(value: DateFilterValue): Date | null {
-  if (value.preset === "all" || value.preset === "custom") return null;
-  const days =
-    value.preset === "7j" ? 7 : value.preset === "30j" ? 30 : 90;
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d;
-}
-
+/**
+ * Page liste des expéditions — flight schedule board.
+ *
+ * Layout aligné sur le design ref `console-expeditions.jsx` :
+ *  - Page header (titre + CTA orange "Nouvelle expédition")
+ *  - Bannière succès post-création (auto-dismiss 6s)
+ *  - 4 stats cards (En cours / Action requise / Arrivées mois / À payer)
+ *    avec icon coloré + tone + LiveDot orange si urgent
+ *  - Tabs (En cours / Arrivées / Tout) + filtres droite (Statut/Transitaire/Période)
+ *  - Flight board : table 8 colonnes alignées avec progression Chine→Dakar
+ *    pour chaque ligne. Highlight orange si urgent.
+ */
 export default function ExpeditionsListPage() {
   const expeditions = MOCK_EXPEDITIONS;
   const stats = computeListStats(expeditions);
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>({
-    preset: "all",
-  });
-  const [statusOpen, setStatusOpen] = useState(false);
+  /* État persisté en sessionStorage → survit à la navigation. */
+  const [tab, setTab] = useSessionStorageState<TabFilter>(
+    "expeditions.tab",
+    "action",
+  );
+  const [search, setSearch] = useSessionStorageState<string>(
+    "expeditions.search",
+    "",
+  );
+  const [dateFilter, setDateFilter] = useSessionStorageState<DateFilterValue>(
+    "expeditions.dateFilter",
+    { preset: "all" },
+  );
 
-  const currentStatusLabel =
-    STATUS_FILTERS.find((s) => s.id === statusFilter)?.label ?? "Statut";
-
-  const filtered = useMemo(() => {
-    const cutoff = presetToCutoff(dateFilter);
-    return expeditions.filter((e) => {
-      // Statut
-      if (statusFilter !== "all" && e.status !== statusFilter) return false;
-
-      // Date
-      const created = new Date(e.createdAt);
-      if (dateFilter.preset === "custom") {
-        if (dateFilter.range?.from && created < dateFilter.range.from)
-          return false;
-        if (dateFilter.range?.to && created > dateFilter.range.to)
-          return false;
-      } else if (cutoff && created < cutoff) {
-        return false;
+  /* Bannière de succès post-création (flag posé par /expeditions/nouvelle) */
+  const [justCreatedFlag, setJustCreatedFlag] = useState<{
+    colis: number;
+  } | null>(null);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("expedition.justCreated");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { colis?: number };
+        setJustCreatedFlag({ colis: parsed.colis ?? 1 });
+        sessionStorage.removeItem("expedition.justCreated");
+        const t = setTimeout(() => setJustCreatedFlag(null), 6000);
+        return () => clearTimeout(t);
       }
+    } catch {
+      // sessionStorage indispo (mode privé) — ignore
+    }
+  }, []);
 
+  /* Filtrage : tab + recherche + période */
+  const filtered = useMemo(() => {
+    const normalizedDate = normalizeDateFilter(dateFilter);
+    const byDate = filterByDateWith(
+      expeditions,
+      normalizedDate,
+      MOCK_TODAY,
+      (e) => e.createdAt,
+    );
+    return byDate.filter((e) => {
+      // Tab principal — filtrage prioritaire
+      const isActionRequired =
+        e.paymentStatus === "unpaid" && e.amountXof !== null;
+      if (tab === "action" && !isActionRequired) return false;
+      if (tab === "transit") {
+        // En transit = en route, payée (ou pas d'action urgente) et pas
+        // encore arrivée
+        if (e.status === "arrived_destination") return false;
+        if (isActionRequired) return false;
+      }
+      if (tab === "arrivees" && e.status !== "arrived_destination") return false;
       // Recherche
       if (search) {
         const q = search.toLowerCase();
@@ -89,181 +109,280 @@ export default function ExpeditionsListPage() {
       }
       return true;
     });
-  }, [expeditions, statusFilter, dateFilter, search]);
+  }, [expeditions, tab, dateFilter, search]);
 
-  const filtersActive =
-    search.length > 0 ||
-    statusFilter !== "all" ||
-    dateFilter.preset !== "all";
+  /* Tri par priorité : urgent > arrivé > attente devis > en route */
+  const sorted = useMemo(() => sortByPriority(filtered), [filtered]);
+
+  const filtersActive = search.length > 0 || dateFilter.preset !== "all";
 
   const clearFilters = () => {
     setSearch("");
-    setStatusFilter("all");
     setDateFilter({ preset: "all" });
   };
 
+  /* Counts par tab pour les badges — action requise en premier */
+  const tabCounts = useMemo(
+    () => ({
+      action: expeditions.filter(
+        (e) => e.paymentStatus === "unpaid" && e.amountXof !== null,
+      ).length,
+      transit: expeditions.filter(
+        (e) =>
+          e.status !== "arrived_destination" &&
+          !(e.paymentStatus === "unpaid" && e.amountXof !== null),
+      ).length,
+      arrivees: expeditions.filter(
+        (e) => e.status === "arrived_destination",
+      ).length,
+      all: expeditions.length,
+    }),
+    [expeditions],
+  );
+
   return (
     <div className="flex h-full flex-col">
-      {/* HEADER DE PAGE */}
-      <div className="flex items-center justify-between border-b border-line bg-white px-10 py-6">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900">
-            Mes expéditions
-          </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Suivez vos colis Chine → Sénégal en temps réel.
-          </p>
-        </div>
+      {/* PAGE HEADER — slim, juste titre + CTA. Le contexte (À traiter,
+          En transit…) est porté par les tabs et le titre contextuel
+          au-dessus de la liste. */}
+      <div className="flex items-center justify-between gap-4 border-b border-line bg-white px-4 py-3.5 sm:px-6 lg:px-7">
+        <h1
+          className="font-display text-[22px] font-extrabold tracking-tight text-ink-900"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          Mes expéditions
+        </h1>
         <Link
           href="/expeditions/nouvelle"
-          className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-kamoo-orange-600"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-kamoo-orange-500 px-3.5 text-[13px] font-bold text-white transition hover:bg-kamoo-orange-600"
         >
-          <Plus className="h-4 w-4" />
-          Nouvelle expédition
+          <Plus className="h-3.5 w-3.5" />
+          <span className="whitespace-nowrap">Nouvelle expédition</span>
         </Link>
       </div>
 
-      {/* SECTION RÉSUMÉ */}
-      <div className="px-10 pt-8">
-        <div className="grid grid-cols-4 gap-3">
-          <StatCard
-            label="En cours"
-            value={stats.enCours}
-            icon={<Ship className="h-4 w-4" />}
-            tone="blue"
-          />
-          <StatCard
-            label="En attente d'action"
-            value={stats.enAttenteAction}
-            icon={<AlertTriangle className="h-4 w-4" />}
-            tone="orange"
-            badge
-          />
-          <StatCard
-            label="Arrivées ce mois"
-            value={stats.arriveesCeMois}
-            icon={<Check className="h-4 w-4" />}
-            tone="green"
-          />
-          <StatCard
-            label="Total à payer"
-            value={formatXOF(stats.totalAPayer, false)}
-            unit="F CFA"
-            icon={<Wallet className="h-4 w-4" />}
-            tone="orange"
-            highlight={stats.totalAPayer > 0}
-          />
-        </div>
-      </div>
-
-      {/* SÉPARATEUR : barre de filtres (1 ligne, pas de wrap) */}
-      <div className="mt-8 border-y border-line bg-paper-2/60 px-10 py-3">
-        <div className="flex items-center gap-3">
-          {/* Recherche — en premier */}
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
-            <input
-              type="search"
-              placeholder="Code ou nom du produit…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-[13px] outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
-            />
-          </div>
-
-          {/* Filtre statut */}
-          <div className="relative">
-            <button
-              onClick={() => setStatusOpen(!statusOpen)}
-              className={cn(
-                "inline-flex h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[13px] font-semibold text-ink-900 hover:border-ink-300",
-                statusFilter !== "all"
-                  ? "border-kamoo-blue-600"
-                  : "border-line",
-              )}
-            >
-              <span className="text-ink-500">Statut :</span>
-              <span>{currentStatusLabel}</span>
-              <ChevronDown className="h-3 w-3 text-ink-400" />
-            </button>
-            {statusOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setStatusOpen(false)}
-                />
-                <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-56 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-kamoo-lg)]">
-                  {STATUS_FILTERS.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => {
-                        setStatusFilter(s.id);
-                        setStatusOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-[13px] hover:bg-paper-2",
-                        s.id === statusFilter
-                          ? "font-bold text-ink-900"
-                          : "font-medium text-ink-700",
-                      )}
-                    >
-                      {s.label}
-                      {s.id === statusFilter && (
-                        <Check className="h-3.5 w-3.5 text-kamoo-blue-700" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Filtre date — dropdown unique avec calendrier intégré */}
-          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-
-          {/* Effacer */}
-          {filtersActive && (
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 hover:bg-kamoo-orange-50"
-            >
-              <X className="h-3 w-3" />
-              Effacer
-            </button>
+      {/* BODY scroll */}
+      <div className="flex-1 overflow-y-auto bg-paper">
+        <div className="flex flex-col gap-4 px-4 py-6 sm:px-6 lg:px-7">
+          {/* BANNIÈRE SUCCÈS — post-création */}
+          {justCreatedFlag && (
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <Check className="h-4 w-4 shrink-0 text-emerald-700" />
+              <div className="flex-1 text-[13px] text-emerald-900">
+                <b>Expédition envoyée au transitaire.</b> Tu recevras une
+                notification dès qu&apos;elle sera réceptionnée en Chine
+                ({justCreatedFlag.colis} colis).
+              </div>
+              <button
+                type="button"
+                onClick={() => setJustCreatedFlag(null)}
+                className="text-emerald-700 hover:text-emerald-900"
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           )}
 
-          <div className="flex-1" />
 
-          {/* Compteur */}
-          <div className="whitespace-nowrap text-[12px] font-semibold text-ink-500">
-            {filtered.length} / {expeditions.length} expéditions
+          {/* TABS + FILTRES — sur mobile : tabs sur une ligne (scroll
+              horizontal si besoin), puis filtres sur la ligne suivante en
+              pleine largeur. Sur desktop : tout sur la même ligne. */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+            {/* Tabs scrollables horizontalement sur mobile */}
+            <div className="scrollbar-hide -mx-1 overflow-x-auto px-1">
+              <div className="inline-flex items-stretch gap-1 rounded-lg border border-line bg-white p-1">
+                {(
+                  [
+                    { id: "action", label: "À traiter" },
+                    { id: "transit", label: "En transit" },
+                    { id: "arrivees", label: "Arrivées" },
+                    { id: "all", label: "Toutes" },
+                  ] as const
+                ).map((t) => {
+                  const isActive = tab === t.id;
+                  const isActionTab = t.id === "action";
+                  const hasItems = tabCounts[t.id] > 0;
+                  /* Tab « Action requise » : style spécial orange quand il y
+                     a vraiment des actions à faire (sinon ton normal) */
+                  const actionHighlight = isActionTab && hasItems && !isActive;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-semibold transition",
+                        isActive
+                          ? isActionTab
+                            ? "bg-kamoo-orange-500 text-white"
+                            : "bg-kamoo-blue-900 text-white"
+                          : actionHighlight
+                            ? "text-kamoo-orange-700 hover:bg-kamoo-orange-50"
+                            : "text-ink-700 hover:bg-paper-2",
+                      )}
+                    >
+                      {t.label}
+                      <span
+                        className={cn(
+                          "rounded px-1.5 py-px font-mono-kamoo text-[10px] font-bold",
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : actionHighlight
+                              ? "bg-kamoo-orange-100 text-kamoo-orange-700"
+                              : "bg-paper-2 text-ink-500",
+                        )}
+                      >
+                        {tabCounts[t.id]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="hidden flex-1 lg:block" />
+
+            {/* Bloc filtres — pleine largeur sur mobile, à droite sur desktop */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              {/* Recherche — full width sur mobile, fixe sur sm+ */}
+              <div className="relative w-full min-w-[180px] sm:w-64">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
+                <input
+                  type="search"
+                  placeholder="Code ou produit…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-[13px] outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
+                />
+              </div>
+
+              {/* Filtre période */}
+              <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+
+              {/* Effacer */}
+              {filtersActive && (
+                <button
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50"
+                >
+                  <X className="h-3 w-3" />
+                  Effacer
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* LISTE */}
-      <div className="flex-1 overflow-y-auto px-10 py-6">
-        {filtered.length === 0 ? (
-          <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-white py-20 text-center">
-            <div className="text-3xl">🔍</div>
-            <p className="mt-3 text-sm font-semibold text-ink-700">
-              Aucune expédition ne correspond à vos filtres
-            </p>
-            <button
-              onClick={clearFilters}
-              className="mt-3 text-[13px] font-bold text-kamoo-orange-600 hover:underline"
+          {/* Titre contextuel — change selon la tab active. Donne en 1 ligne
+              ce qu'il y a dans la vue + un sous-titre orienté action. */}
+          <ContextualHeading
+            tab={tab}
+            counts={tabCounts}
+            totalAPayer={stats.totalAPayer}
+          />
+
+          {/* LISTE — table compacte (colonnes rétrécies pour tenir sans
+              déborder), scroll horizontal seulement si < min-w */}
+          {sorted.length === 0 ? (
+            <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-white py-20 text-center">
+              <div className="text-3xl">🔍</div>
+              <p className="mt-3 text-sm font-semibold text-ink-700">
+                Aucune expédition ne correspond à tes filtres
+              </p>
+              <button
+                onClick={clearFilters}
+                className="mt-3 text-[13px] font-bold text-kamoo-orange-600 hover:underline"
+              >
+                Effacer les filtres
+              </button>
+            </div>
+          ) : (
+            <div
+              className="always-show-scrollbar w-full rounded-2xl border border-line bg-white"
+              style={{
+                overflowX: "auto",
+                overflowY: "hidden",
+                scrollbarColor: "#D1D5DB #F5F5EE",
+                scrollbarWidth: "thin",
+              }}
             >
-              Effacer les filtres
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((e) => (
-              <ShipmentCard key={e.id} expedition={e} />
-            ))}
-          </div>
-        )}
+              <div className="w-full min-w-[1020px]">
+                <ExpeditionRowHeader />
+                {sorted.map((e, i) => (
+                  <ExpeditionRow key={e.id} expedition={e} isFirst={i === 0} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
+}
+
+/* ─── Titre contextuel selon la tab active ────────────────────────── */
+
+/**
+ * Affiche un mini-titre + sous-titre orienté action selon la tab active.
+ */
+function ContextualHeading({
+  tab,
+  counts,
+  totalAPayer,
+}: {
+  tab: TabFilter;
+  counts: { action: number; transit: number; arrivees: number; all: number };
+  totalAPayer: number;
+}) {
+  let title: string;
+  let sub: string;
+
+  if (tab === "action") {
+    title = "À traiter";
+    sub =
+      counts.action === 0
+        ? "Aucune expédition bloquée — tout est sous contrôle"
+        : `${formatXOF(totalAPayer, false)} F à régler · ${counts.action} expédition${counts.action > 1 ? "s" : ""} bloquée${counts.action > 1 ? "s" : ""}`;
+  } else if (tab === "transit") {
+    title = "En transit";
+    sub = `${counts.transit} colis en route Chine → Dakar`;
+  } else if (tab === "arrivees") {
+    title = "Arrivées";
+    sub = `${counts.arrivees} colis livré${counts.arrivees > 1 ? "s" : ""} à Dakar`;
+  } else {
+    title = "Toutes les expéditions";
+    sub = `${counts.all} au total`;
+  }
+
+  return (
+    <div>
+      <h2
+        className="font-display text-[17px] font-extrabold tracking-tight text-ink-900"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        {title}
+      </h2>
+      <p className="mt-0.5 text-[12.5px] text-ink-500">{sub}</p>
+    </div>
+  );
+}
+
+/* ─── Tri par priorité ─────────────────────────────────────────────── */
+
+/**
+ * Trie les expéditions par ordre d'attention requise :
+ *  0. À payer urgent (unpaid + amount défini)
+ *  1. Arrivées — colis à récupérer
+ *  2. En attente de devis — surveillance passive
+ *  3. En route (payées + en transit) — pas d'action immédiate
+ */
+function sortByPriority(
+  expeditions: import("@/lib/types/expedition").Expedition[],
+): import("@/lib/types/expedition").Expedition[] {
+  const priorityOf = (e: import("@/lib/types/expedition").Expedition) => {
+    if (e.paymentStatus === "unpaid" && e.amountXof !== null) return 0;
+    if (e.status === "arrived_destination") return 1;
+    if (e.status === "awaiting_quote") return 2;
+    return 3;
+  };
+  return [...expeditions].sort((a, b) => priorityOf(a) - priorityOf(b));
 }

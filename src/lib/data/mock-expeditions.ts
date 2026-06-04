@@ -154,16 +154,17 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
 ];
 
 export function computeListStats(expeditions: Expedition[]) {
+  const total = expeditions.length;
   const enCours = expeditions.filter(
     (e) => e.status !== "arrived_destination",
   ).length;
   const enAttenteAction = expeditions.filter((e) => e.action?.urgent).length;
-  const arriveesCeMois = expeditions.filter(
+  const arriveesTotal = expeditions.filter(
     (e) => e.status === "arrived_destination",
   ).length;
   const totalAPayer = expeditions
     .filter((e) => e.paymentStatus === "unpaid" && e.amountXof)
     .reduce((sum, e) => sum + (e.amountXof ?? 0), 0);
 
-  return { enCours, enAttenteAction, arriveesCeMois, totalAPayer };
+  return { total, enCours, enAttenteAction, arriveesTotal, totalAPayer };
 }
