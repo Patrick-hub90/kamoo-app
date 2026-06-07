@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Check,
   ChevronDown,
   LayoutDashboard,
   ListOrdered,
@@ -21,20 +22,17 @@ import {
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { MARKET_STATUS_LABELS, MARKET_STATUS_TONE } from "@/lib/types/market";
 
 /**
- * ConsoleRail — sidebar hybride 72px → 240px au hover.
+ * ConsoleRail — sidebar NAVY fixe 248px (identité validée).
  *
- * Pattern :
- *  - L'`<aside>` extérieur prend 72px dans le flow (le main content garde
- *    sa place et NE BOUGE PAS au survol).
- *  - L'inner `<div>` du rail est positionné absolument et expand à 240px
- *    au hover, en overlayant légèrement le contenu (z-30).
- *  - Délai 150ms avant expand → évite l'expand intempestif quand la souris
- *    fait juste passer en bord d'écran. Pas de délai en sortie.
+ *  - ≥ lg : sidebar navy pleine largeur (248px), toujours déployée.
+ *  - < lg : drawer slide-in piloté depuis la topbar (mobileOpen/onMobileClose).
  *
- * Sur mobile (< lg) : devient un drawer slide-in classique pilotable depuis
- * la topbar (cf. `mobileOpen` / `onMobileClose`).
+ * Le menu s'efface (navy), le contenu blanc ressort. Accent orange rationné :
+ * uniquement le CTA principal + le marqueur d'item actif.
  */
 
 type NavItem = {
@@ -57,8 +55,6 @@ type Section = {
   items: NavItem[];
 };
 
-/** Structure identique à celle de l'ancienne `Sidebar` — on garde la même
- *  source de vérité pour ne pas dériver. À terme on consolide les deux. */
 const SECTIONS: Section[] = [
   {
     label: "Tableau de bord",
@@ -74,11 +70,7 @@ const SECTIONS: Section[] = [
         label: "Marketplace",
         icon: Store,
         children: [
-          {
-            href: "/marketplace/transitaires",
-            label: "Transitaires",
-            icon: Package,
-          },
+          { href: "/marketplace/transitaires", label: "Transitaires", icon: Package },
           { href: "/marketplace/closeurs", label: "Closeurs", icon: Phone },
           { href: "/marketplace/livreurs", label: "Livreurs", icon: Truck },
         ],
@@ -112,9 +104,7 @@ const SECTIONS: Section[] = [
 ];
 
 type ConsoleRailProps = {
-  /** True quand le drawer mobile est ouvert (ignoré ≥ lg). */
   mobileOpen?: boolean;
-  /** Callback à appeler quand l'overlay mobile ou un lien est cliqué. */
   onMobileClose?: () => void;
 };
 
@@ -148,13 +138,12 @@ export function ConsoleRail({
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname === href || pathname.startsWith(href + "/");
   };
-
   const isParentActive = (item: NavItem) =>
     item.children?.some((c) => isActive(c.href)) ?? false;
 
   return (
     <>
-      {/* Overlay sombre derrière le drawer mobile */}
+      {/* Overlay mobile */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-ink-900/40 backdrop-blur-sm lg:hidden"
@@ -163,50 +152,23 @@ export function ConsoleRail({
         />
       )}
 
-      {/* Spacer : 72px réservés dans le flex parent ≥ lg.
-          < lg : le drawer est fixed donc le spacer fait 0. */}
-      <aside
-        className={cn(
-          "shrink-0",
-          "hidden lg:block lg:w-[72px]",
-        )}
-        aria-hidden={!mobileOpen}
-      />
+      {/* Spacer : 248px réservés ≥ lg */}
+      <aside className="hidden shrink-0 lg:block lg:w-[248px]" aria-hidden={!mobileOpen} />
 
-      {/* Rail réel — fixed left, overlay quand expand au hover.
-          Sur mobile : slide depuis la gauche en drawer plein 240px. */}
+      {/* Rail navy fixe */}
       <div
         className={cn(
-          "group/rail",
-          "fixed inset-y-0 left-0 z-40",
-          "flex flex-col border-r border-line bg-white",
-          // Width : drawer 240 sur mobile (toujours expand quand open),
-          // collapse 72 → expand 240 au hover sur desktop.
-          "w-60 lg:w-[72px] lg:hover:w-60",
-          // Délai sur l'expand uniquement (pas sur le collapse)
-          "transition-[width,transform] duration-200 ease-out lg:hover:delay-150",
-          // Mobile : slide quand fermé, in-flow quand ouvert
+          "fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col",
+          "transition-transform duration-200 ease-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          // Shadow quand expand (le rail flotte au-dessus du contenu)
-          "lg:hover:shadow-[var(--shadow-kamoo-md)]",
         )}
+        style={{ backgroundColor: "#0F2A52" }}
       >
-        {/* Logo — K seul collapsed / Kamoo. expanded */}
-        <div className="flex h-[68px] items-center px-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 transition-opacity"
-          >
-            {/* Logo K (toujours visible) */}
-            <svg
-              width={32}
-              height={32}
-              viewBox="0 0 40 40"
-              fill="none"
-              className="shrink-0"
-              aria-label="Kamoo"
-            >
-              <rect width="40" height="40" rx="10" fill="#0F2A52" />
+        {/* Logo */}
+        <div className="flex h-[68px] items-center px-5">
+          <Link href="/" className="flex items-center gap-2.5">
+            <svg width={30} height={30} viewBox="0 0 40 40" fill="none" aria-label="Kamoo">
+              <rect width="40" height="40" rx="10" fill="#ffffff" fillOpacity="0.12" />
               <path
                 d="M13 10 L13 30 M13 20 L23 10 M13 20 L23 30"
                 stroke="white"
@@ -216,58 +178,28 @@ export function ConsoleRail({
               />
               <circle cx="29" cy="13" r="3.5" fill="#F97316" />
             </svg>
-            {/* Wordmark — visible only when expanded */}
-            <span
-              className={cn(
-                "font-display text-lg font-extrabold tracking-tight text-kamoo-blue-900",
-                "overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-100",
-                "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                mobileOpen && "opacity-100",
-              )}
-            >
+            <span className="text-[17px] font-bold tracking-tight text-white">
               Kamoo<span className="text-kamoo-orange-500">.</span>
             </span>
           </Link>
         </div>
 
-        {/* CTA principale — + collapsed / + Nouvelle expédition expanded */}
-        <div className="px-3">
+        {/* CTA principale — seul orange plein */}
+        <div className="px-3 pb-1 pt-1">
           <Link
             href="/expeditions/nouvelle"
-            title="Nouvelle expédition"
-            className={cn(
-              "flex h-10 items-center gap-2 rounded-xl bg-kamoo-orange-500 px-3 text-white transition hover:bg-kamoo-orange-600",
-              "justify-center lg:group-hover/rail:justify-start",
-              mobileOpen && "justify-start",
-            )}
+            className="flex h-10 items-center justify-center gap-2 rounded-lg bg-kamoo-orange-500 px-3 text-[13px] font-semibold text-white transition hover:bg-kamoo-orange-600"
           >
-            <Plus className="h-4 w-4 shrink-0" />
-            <span
-              className={cn(
-                "overflow-hidden whitespace-nowrap text-sm font-bold opacity-0 transition-opacity duration-100",
-                "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                mobileOpen && "opacity-100",
-              )}
-            >
-              Nouvelle expédition
-            </span>
+            <Plus className="h-4 w-4" />
+            Nouvelle expédition
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="mt-4 flex-1 overflow-y-auto overflow-x-hidden px-2">
+        <nav className="mt-3 flex-1 overflow-y-auto overflow-x-hidden px-2.5">
           {SECTIONS.map((section, sIdx) => (
             <div key={section.label} className={cn(sIdx > 0 && "mt-4")}>
-              {/* Section label — visible only when expanded */}
-              <div
-                className={cn(
-                  "px-3 pb-1 font-mono-kamoo text-[10px] font-bold uppercase text-ink-400",
-                  "h-[18px] overflow-hidden opacity-0 transition-opacity duration-100",
-                  "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                  mobileOpen && "opacity-100",
-                )}
-                style={{ letterSpacing: "0.08em" }}
-              >
+              <div className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white/35">
                 {section.label}
               </div>
 
@@ -277,8 +209,7 @@ export function ConsoleRail({
                   const active = isActive(item.href);
                   const parentActive = isParentActive(item);
                   const hasChildren = !!item.children?.length;
-                  const isExpanded =
-                    hasChildren && !!expanded[item.href];
+                  const isExpanded = hasChildren && !!expanded[item.href];
 
                   return (
                     <div key={item.href}>
@@ -287,68 +218,45 @@ export function ConsoleRail({
                           type="button"
                           onClick={() => toggle(item.href)}
                           aria-expanded={isExpanded}
-                          title={item.label}
                           className={cn(
-                            "flex h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition",
+                            "relative flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-[13px] transition",
                             parentActive
-                              ? "bg-kamoo-blue-50 text-kamoo-blue-700 font-semibold"
-                              : "text-ink-700 hover:bg-paper-2",
-                            // Center icon when collapsed
-                            "justify-start",
+                              ? "bg-white/[0.08] font-semibold text-white"
+                              : "font-medium text-white/65 hover:bg-white/[0.05] hover:text-white",
                           )}
                         >
-                          <Icon className="h-[18px] w-[18px] shrink-0" />
-                          <span
-                            className={cn(
-                              "flex-1 overflow-hidden whitespace-nowrap text-left opacity-0 transition-opacity duration-100",
-                              "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                              mobileOpen && "opacity-100",
-                            )}
-                          >
-                            {item.label}
-                          </span>
+                          {parentActive && (
+                            <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r bg-kamoo-orange-500" />
+                          )}
+                          <Icon className="h-[17px] w-[17px] shrink-0" />
+                          <span className="flex-1 text-left">{item.label}</span>
                           <ChevronDown
                             className={cn(
-                              "h-4 w-4 shrink-0 text-ink-400 transition-transform",
+                              "h-3.5 w-3.5 shrink-0 text-white/40 transition-transform",
                               isExpanded && "rotate-180",
-                              parentActive && "text-kamoo-blue-700",
-                              // Hide chevron in collapsed state
-                              "opacity-0 lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                              mobileOpen && "opacity-100",
                             )}
                           />
                         </button>
                       ) : (
                         <Link
                           href={item.href}
-                          title={item.label}
                           className={cn(
-                            "flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition",
+                            "relative flex h-9 items-center gap-3 rounded-lg px-2.5 text-[13px] transition",
                             active
-                              ? "bg-kamoo-orange-50 text-kamoo-orange-700 font-bold"
-                              : "text-ink-700 hover:bg-paper-2",
+                              ? "bg-white/[0.08] font-semibold text-white"
+                              : "font-medium text-white/65 hover:bg-white/[0.05] hover:text-white",
                           )}
                         >
-                          <Icon className="h-[18px] w-[18px] shrink-0" />
-                          <span
-                            className={cn(
-                              "flex-1 overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-100",
-                              "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                              mobileOpen && "opacity-100",
-                            )}
-                          >
-                            {item.label}
-                          </span>
+                          {active && (
+                            <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r bg-kamoo-orange-500" />
+                          )}
+                          <Icon className="h-[17px] w-[17px] shrink-0" />
+                          <span className="flex-1">{item.label}</span>
                           {item.badge && (
                             <span
                               className={cn(
-                                "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                                active
-                                  ? "bg-kamoo-orange-500 text-white"
-                                  : "bg-ink-100 text-ink-500",
-                                // Hide badge when collapsed (would overflow)
-                                "opacity-0 lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                                mobileOpen && "opacity-100",
+                                "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                                active ? "bg-kamoo-orange-500 text-white" : "bg-white/10 text-white/80",
                               )}
                             >
                               {item.badge}
@@ -357,16 +265,8 @@ export function ConsoleRail({
                         </Link>
                       )}
 
-                      {/* Sub-menu — only visible when parent expanded AND
-                          rail is in expanded state */}
                       {hasChildren && isExpanded && (
-                        <div
-                          className={cn(
-                            "ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-line pl-2.5",
-                            "hidden lg:group-hover/rail:flex lg:group-hover/rail:delay-150",
-                            mobileOpen && "flex",
-                          )}
-                        >
+                        <div className="ml-[26px] mt-0.5 flex flex-col gap-0.5 border-l border-white/10 pl-2.5">
                           {item.children!.map((child) => {
                             const ChildIcon = child.icon;
                             const childActive = child.exact
@@ -377,10 +277,10 @@ export function ConsoleRail({
                                 key={child.href}
                                 href={child.href}
                                 className={cn(
-                                  "flex h-8 items-center gap-2 rounded-md px-2.5 text-[12.5px] font-medium transition",
+                                  "flex h-8 items-center gap-2 rounded-md px-2 text-[12px] transition",
                                   childActive
-                                    ? "bg-kamoo-orange-50 text-kamoo-orange-700 font-bold"
-                                    : "text-ink-500 hover:bg-paper-2 hover:text-ink-700",
+                                    ? "font-semibold text-white"
+                                    : "font-medium text-white/55 hover:text-white/85",
                                 )}
                               >
                                 <ChildIcon className="h-3.5 w-3.5 shrink-0" />
@@ -398,40 +298,21 @@ export function ConsoleRail({
           ))}
         </nav>
 
-        {/* Profil utilisateur en bas */}
-        <div className="border-t border-line p-2.5">
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-xl bg-paper-2 p-2",
-              "lg:group-hover/rail:px-2.5",
-            )}
-          >
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-kamoo-orange-500 to-kamoo-blue-700 text-xs font-extrabold text-white">
+        {/* Bas de sidebar : widget marché + profil */}
+        <div className="space-y-1.5 border-t border-white/10 p-2.5">
+          <MarketWidget />
+          <div className="flex items-center gap-2.5 rounded-lg bg-white/[0.06] p-2">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-kamoo-orange-500 text-xs font-bold text-white">
               AD
             </div>
-            <div
-              className={cn(
-                "min-w-0 flex-1 overflow-hidden opacity-0 transition-opacity duration-100",
-                "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                mobileOpen && "opacity-100",
-              )}
-            >
-              <div className="truncate text-xs font-bold text-ink-900">
-                Aïcha Diop
-              </div>
-              <div className="truncate text-[10px] text-ink-500">
-                Pro · Dakar
-              </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-semibold text-white">Aïcha Diop</div>
+              <div className="truncate text-[10px] text-white/55">Pro · Dakar</div>
             </div>
             <button
               type="button"
               title="Se déconnecter"
-              className={cn(
-                "rounded-md p-1.5 text-ink-400 hover:bg-white hover:text-ink-700",
-                "opacity-0 transition-opacity duration-100",
-                "lg:group-hover/rail:opacity-100 lg:group-hover/rail:delay-150",
-                mobileOpen && "opacity-100",
-              )}
+              className="rounded-md p-1.5 text-white/50 transition hover:bg-white/10 hover:text-white"
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
@@ -439,5 +320,116 @@ export function ConsoleRail({
         </div>
       </div>
     </>
+  );
+}
+
+/* ─── Widget marché (bas de sidebar, navy) ──────────────────────────
+   Remplace le sélecteur de la topbar. Affiche le marché actif et ouvre
+   un menu (popover blanc, vers le haut) pour changer de marché. */
+function MarketWidget() {
+  const { markets, currentMarket, switchToMarket } = useCurrentMarket();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 rounded-lg bg-white/[0.06] px-2.5 py-2 text-left transition hover:bg-white/[0.1]"
+      >
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 text-[16px]">
+          {currentMarket.country.flag}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[12px] font-semibold text-white">
+            Marché {currentMarket.country.name}
+          </div>
+          <div className="truncate text-[10px] text-white/55">
+            {currentMarket.country.warehouseCity}
+          </div>
+        </div>
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 text-white/40 transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-[calc(100%+8px)] left-1 z-50 w-[264px] rounded-xl border border-line bg-white p-1.5 shadow-[var(--shadow-kamoo-lg)]">
+            <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-400">
+              Vos marchés
+            </div>
+            {markets.map((m) => {
+              const selected = currentMarket.id === m.id;
+              const disabled = m.status === "inactive";
+              const tone = MARKET_STATUS_TONE[m.status];
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    if (!disabled) {
+                      switchToMarket(m.id);
+                      setOpen(false);
+                    }
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition",
+                    disabled ? "cursor-not-allowed opacity-60" : "hover:bg-paper-2",
+                    selected && "bg-kamoo-blue-50",
+                  )}
+                >
+                  <span className="text-lg">{m.country.flag}</span>
+                  <div className="flex-1 leading-tight">
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5 text-[13px] font-semibold",
+                        selected ? "text-kamoo-blue-700" : "text-ink-900",
+                      )}
+                    >
+                      {m.country.name}
+                      {m.status !== "active" && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-1.5 py-0.5 text-[9.5px] font-bold",
+                            tone.bg,
+                            tone.fg,
+                          )}
+                        >
+                          {MARKET_STATUS_LABELS[m.status]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10.5px] text-ink-500">
+                      {m.country.warehouseCity} · {m.stats.partnersCount} partenaires
+                    </div>
+                  </div>
+                  {selected && <Check className="h-4 w-4 text-kamoo-blue-700" />}
+                </button>
+              );
+            })}
+            <div className="my-1.5 h-px bg-line" />
+            <Link
+              href="/marches/nouveau"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-kamoo-orange-50"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-kamoo-orange-500 text-white">
+                <Plus className="h-4 w-4" />
+              </span>
+              <span className="text-[13px] font-bold text-kamoo-orange-700">
+                Ajouter un nouveau marché
+              </span>
+            </Link>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

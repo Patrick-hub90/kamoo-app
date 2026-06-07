@@ -1,84 +1,70 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Heart,
+  MessageCircle,
+  Phone,
+  Plus,
   Repeat,
+  RotateCcw,
   Search,
-  ShoppingBag,
-  TrendingUp,
+  StickyNote,
+  User,
   Users,
+  Wallet,
+  X,
 } from "lucide-react";
-import { StatCard } from "@/components/kamoo/stat-card";
-import {
-  DropdownItem,
-  FilterDropdown,
-} from "@/components/kamoo/filter-dropdown";
-import {
-  clientIdsHavingOrdered,
-  computeClientsStats,
-  countBySegment,
-  MOCK_CLIENTS,
-} from "@/lib/data/mock-clients";
+import { computeClientsStats, MOCK_CLIENTS } from "@/lib/data/mock-clients";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CHANNEL_LABELS,
-  daysSinceLastOrder,
+  deliveryRate,
   getClientSegment,
   getInitials,
+  getWhatsappLink,
   SEGMENT_LABELS,
-  SEGMENT_TONE,
   type Client,
+  type ClientSegment,
 } from "@/lib/types/client";
 import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type ViewKey = "all" | "client" | "prospect";
-type SortKey =
-  | "spent_desc"
-  | "recent_order"
-  | "first_order_recent"
-  | "name"
-  | "orders_desc";
+type ViewKey = "all" | "fidele" | "nouveau" | "prospect";
+type SortKey = "recent_order" | "spent_desc" | "orders_desc" | "name";
 
 const VIEW_TABS: { id: ViewKey; label: string }[] = [
   { id: "all", label: "Tous" },
-  { id: "client", label: "Clients" },
+  { id: "fidele", label: "Fidèles" },
+  { id: "nouveau", label: "Nouveaux" },
   { id: "prospect", label: "Prospects" },
 ];
 
 const SORT_OPTIONS: { id: SortKey; label: string }[] = [
-  { id: "recent_order", label: "Dernière commande la plus récente" },
+  { id: "recent_order", label: "Dernière commande" },
   { id: "spent_desc", label: "Valeur client ↓" },
-  { id: "first_order_recent", label: "Client récent" },
   { id: "orders_desc", label: "Nombre de commandes ↓" },
   { id: "name", label: "Nom A → Z" },
 ];
 
-const COUNTRY_LABEL: Record<Client["country"], string> = {
-  SN: "Sénégal",
-  CI: "Côte d'Ivoire",
-  CM: "Cameroun",
+/* Pastille segment — sobre, pastel. */
+const SEG_PILL: Record<ClientSegment, string> = {
+  fidele: "bg-emerald-50 text-emerald-700",
+  nouveau: "bg-kamoo-blue-50 text-kamoo-blue-700",
+  prospect: "bg-ink-100 text-ink-500",
 };
 
-function matchesView(c: Client, view: ViewKey): boolean {
-  if (view === "all") return true;
-  const seg = getClientSegment(c);
-  if (view === "prospect") return seg === "prospect";
-  // "client" = a payé au moins 1 fois (nouveau OU fidele)
-  return seg === "nouveau" || seg === "fidele";
-}
-
-function formatRelativeDate(iso: string, today: Date = new Date()): string {
+function formatRelative(iso: string): string {
   const d = new Date(iso);
-  const days = Math.floor(
-    (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (days === 0) return "Aujourd'hui";
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days <= 0) return "Aujourd'hui";
   if (days === 1) return "Hier";
-  if (days < 7) return `Il y a ${days} j`;
-  if (days < 30) return `Il y a ${Math.floor(days / 7)} sem.`;
+  if (days < 30) return `Il y a ${Math.floor(days / 7) || 1} sem.`;
   if (days < 365) return `Il y a ${Math.floor(days / 30)} mois`;
   return `Il y a ${Math.floor(days / 365)} an${Math.floor(days / 365) > 1 ? "s" : ""}`;
 }
@@ -86,490 +72,448 @@ function formatRelativeDate(iso: string, today: Date = new Date()): string {
 export default function ClientsPage() {
   const all = MOCK_CLIENTS;
   const stats = useMemo(() => computeClientsStats(all), [all]);
-  const segCounts = useMemo(() => countBySegment(all), [all]);
+  const fidelesCount = useMemo(() => all.filter((c) => getClientSegment(c) === "fidele").length, [all]);
 
   const [search, setSearch] = useSessionStorageState("clients.search", "");
-  const [view, setView] = useSessionStorageState<ViewKey>(
-    "clients.view",
-    "all",
-  );
-  const [sortBy, setSortBy] = useSessionStorageState<SortKey>(
-    "clients.sortBy",
-    "recent_order",
-  );
-  const [productFilter, setProductFilter] = useSessionStorageState<string>(
-    "clients.productFilter",
-    "all",
-  );
+  const [view, setView] = useSessionStorageState<ViewKey>("clients.view", "all");
+  const [sortBy, setSortBy] = useSessionStorageState<SortKey>("clients.sortBy", "recent_order");
+  const [viewOpen, setViewOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
-  const [productOpen, setProductOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(all[0]?.id ?? null);
 
-  const viewCounts: Record<ViewKey, number> = useMemo(
+  const counts = useMemo<Record<ViewKey, number>>(
     () => ({
-      all: segCounts.all,
-      client: segCounts.client,
-      prospect: segCounts.prospect,
+      all: all.length,
+      fidele: all.filter((c) => getClientSegment(c) === "fidele").length,
+      nouveau: all.filter((c) => getClientSegment(c) === "nouveau").length,
+      prospect: all.filter((c) => getClientSegment(c) === "prospect").length,
     }),
-    [segCounts],
-  );
-
-  // Set des IDs clients qui ont commandé le produit filtré
-  const productClientIds = useMemo(
-    () =>
-      productFilter === "all"
-        ? null
-        : clientIdsHavingOrdered(productFilter),
-    [productFilter],
+    [all],
   );
 
   const filtered = useMemo(() => {
     let list = all.filter((c) => {
-      if (!matchesView(c, view)) return false;
-      if (productClientIds && !productClientIds.has(c.id)) return false;
+      if (view !== "all" && getClientSegment(c) !== view) return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
-        const cleanedPhone = c.phone.replace(/\s/g, "").toLowerCase();
         if (
           !c.name.toLowerCase().includes(q) &&
-          !cleanedPhone.includes(q.replace(/\s/g, "")) &&
+          !c.phone.replace(/\s/g, "").includes(q.replace(/\s/g, "")) &&
           !c.city.toLowerCase().includes(q)
-        ) {
+        )
           return false;
-        }
       }
       return true;
     });
-
     list = [...list].sort((a, b) => {
       switch (sortBy) {
         case "spent_desc":
           return b.totalSpentXof - a.totalSpentXof;
-        case "recent_order":
-          return (
-            new Date(b.lastOrderDate).getTime() -
-            new Date(a.lastOrderDate).getTime()
-          );
-        case "first_order_recent":
-          return (
-            new Date(b.firstOrderDate).getTime() -
-            new Date(a.firstOrderDate).getTime()
-          );
         case "orders_desc":
           return b.totalOrders - a.totalOrders;
         case "name":
           return a.name.localeCompare(b.name);
+        case "recent_order":
+        default:
+          return new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime();
       }
     });
     return list;
-  }, [all, view, search, sortBy, productClientIds]);
+  }, [all, view, search, sortBy]);
 
-  const filtersActive =
-    search.length > 0 ||
-    view !== "all" ||
-    sortBy !== "recent_order" ||
-    productFilter !== "all";
-  const currentSortLabel =
-    SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Plus récent";
-  const currentProductLabel =
-    productFilter === "all"
-      ? "Tous les produits"
-      : (MOCK_PRODUITS.find((p) => p.id === productFilter)?.name ??
-        "Produit inconnu");
+  const selected = filtered.find((c) => c.id === selectedId) ?? null;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-line bg-white px-10 py-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900">
-            Clients
-          </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Tous les consommateurs qui ont commandé chez vous, leur historique
-            et leur fidélité.
-          </p>
+    <div className="min-h-full bg-paper">
+      <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
+        {/* HEADER */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[24px] font-bold tracking-tight text-ink-900">Clients</h1>
+            <p className="mt-1 text-[13px] text-ink-500">Suivez votre base client, leur fidélité et leur valeur.</p>
+          </div>
+          <button className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">
+            <Plus className="h-4 w-4" />
+            Ajouter un client
+          </button>
         </div>
-      </div>
 
-      {/* STATS */}
-      <div className="px-10 pt-5">
-        <div className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-          Aperçu de votre clientèle
+        {/* KPI */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Kpi icon={Users} tone="blue" label="Clients actifs" value={String(stats.total)} sub="Base totale" />
+          <Kpi icon={Heart} tone="red" label="Clients fidèles" value={String(fidelesCount)} sub="Achat ≥ 2" />
+          <Kpi icon={Wallet} tone="green" label="Valeur vie client" value={`${formatXOF(stats.ltv, false)} F`} sub="Moyenne / client" />
+          <Kpi icon={Repeat} tone="purple" label="Taux de réachat" value={`${stats.fidelesPct}%`} sub="Clients fidèles" />
         </div>
-        <div className="grid grid-cols-4 gap-3">
-          <StatCard
-            label="Mes clients"
-            value={stats.total.toLocaleString("fr-FR")}
-            icon={<Users className="h-4 w-4" />}
-            tone="blue"
-          />
-          <StatCard
-            label="Clients qui reviennent"
-            value={`${stats.fidelesPct}%`}
-            icon={<TrendingUp className="h-4 w-4" />}
-            tone="green"
-            highlight={stats.fidelesPct >= 60}
-          />
-          <StatCard
-            label="Valeur moyenne d'un client (LTV)"
-            value={formatXOF(stats.ltv, false)}
-            unit="F CFA"
-            icon={<ShoppingBag className="h-4 w-4" />}
-            tone="orange"
-            highlight={stats.ltv > 0}
-          />
-          <StatCard
-            label="Nbr de commande moyen / client"
-            value={stats.cmdMoyenne > 0 ? `× ${stats.cmdMoyenne}` : "—"}
-            icon={<Repeat className="h-4 w-4" />}
-            tone="green"
-            highlight={stats.cmdMoyenne >= 2}
-          />
-        </div>
-      </div>
 
-      {/* ONGLETS SEGMENTS */}
-      <div className="mt-5 border-b border-line bg-white px-10">
-        <div className="flex items-center gap-1">
-          {VIEW_TABS.map((tab) => {
-            const count = viewCounts[tab.id];
-            const isActive = view === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setView(tab.id)}
-                className={cn(
-                  "relative inline-flex shrink-0 items-center gap-2 px-4 py-3 text-[13px] font-semibold transition",
-                  isActive
-                    ? "text-ink-900"
-                    : "text-ink-500 hover:text-ink-700",
-                )}
+        {/* CONTENU : liste (gauche) + fiche (droite) */}
+        <div className="flex items-start gap-5">
+          <div className="min-w-0 flex-1">
+            {/* Toolbar */}
+            <div className="mb-4 flex flex-wrap items-center gap-2.5">
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
+                <input
+                  type="search"
+                  placeholder="Nom, téléphone ou ville…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-[12.5px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
+                />
+              </div>
+
+              <Dropdown
+                label="Segment"
+                value={VIEW_TABS.find((t) => t.id === view)?.label ?? "Tous"}
+                open={viewOpen}
+                setOpen={setViewOpen}
               >
-                <span>{tab.label}</span>
-                <span
-                  className={cn(
-                    "inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold",
-                    isActive
-                      ? "bg-kamoo-blue-50 text-kamoo-blue-700"
-                      : "bg-paper-2 text-ink-700",
-                  )}
-                >
-                  {count}
-                </span>
-                {isActive && (
-                  <span className="absolute inset-x-0 bottom-[-1px] h-[3px] rounded-t bg-kamoo-orange-500" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+                {VIEW_TABS.map((t) => (
+                  <DropdownItem key={t.id} active={view === t.id} onClick={() => { setView(t.id); setViewOpen(false); }}>
+                    <span>{t.label}</span>
+                    <span className="tabular-nums text-ink-400">{counts[t.id]}</span>
+                  </DropdownItem>
+                ))}
+              </Dropdown>
 
-      {/* RECHERCHE + FILTRES */}
-      <div className="border-b border-line bg-paper-2/60 px-10 py-3">
-        <div className="flex items-center gap-3">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
-            <input
-              type="search"
-              placeholder="Nom, téléphone ou ville…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-[13px] outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
-            />
+              <Dropdown
+                label="Trier"
+                value={SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Dernière commande"}
+                open={sortOpen}
+                setOpen={setSortOpen}
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <DropdownItem key={o.id} active={sortBy === o.id} onClick={() => { setSortBy(o.id); setSortOpen(false); }}>
+                    {o.label}
+                  </DropdownItem>
+                ))}
+              </Dropdown>
+
+              <div className="ml-auto text-[12px] font-medium text-ink-500">
+                {filtered.length} client{filtered.length > 1 ? "s" : ""}
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px]">
+                  <thead>
+                    <tr className="border-b border-line text-[10.5px] uppercase tracking-[0.05em] text-ink-400">
+                      <th className="px-4 py-3 text-left font-semibold">Client</th>
+                      <th className="px-3 py-3 text-left font-semibold">Ville</th>
+                      <th className="px-3 py-3 text-right font-semibold">Cmd.</th>
+                      <th className="px-3 py-3 text-right font-semibold">Valeur</th>
+                      <th className="px-3 py-3 text-right font-semibold">Dernière</th>
+                      <th className="px-4 py-3 text-left font-semibold">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F4F5F6]">
+                    {filtered.map((c) => {
+                      const seg = getClientSegment(c);
+                      const isSel = c.id === selectedId;
+                      return (
+                        <tr
+                          key={c.id}
+                          onClick={() => setSelectedId(c.id)}
+                          className={cn(
+                            "cursor-pointer transition",
+                            isSel ? "bg-kamoo-blue-50/60" : "hover:bg-paper-2/50",
+                          )}
+                        >
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <span
+                                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
+                                style={{ background: c.avatarBg }}
+                              >
+                                {getInitials(c.name)}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="truncate text-[12.5px] font-semibold text-ink-900">{c.name}</span>
+                                  <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", SEG_PILL[seg])}>
+                                    {SEGMENT_LABELS[seg]}
+                                  </span>
+                                </div>
+                                <div className="truncate text-[11px] tabular-nums text-ink-500">{c.phone}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-[12px] text-ink-700">{c.city}</td>
+                          <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{c.totalOrders}</td>
+                          <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-emerald-600">
+                            {c.totalSpentXof > 0 ? formatXOF(c.totalSpentXof, false) : <span className="text-ink-300">—</span>}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-[11.5px] text-ink-500">{formatRelative(c.lastOrderDate)}</td>
+                          <td className="px-4 py-2.5 text-[11.5px] text-ink-600">{CHANNEL_LABELS[c.acquisitionChannel]}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {filtered.length === 0 && (
+                <div className="px-5 py-12 text-center text-[13px] text-ink-400">Aucun client ne correspond.</div>
+              )}
+            </div>
           </div>
 
-          {/* Filtre PRODUIT */}
-          <FilterDropdown
-            label="Produit"
-            value={currentProductLabel}
-            isActive={productFilter !== "all"}
-            isOpen={productOpen}
-            onToggle={() => setProductOpen(!productOpen)}
-            onClose={() => setProductOpen(false)}
-            width="w-72"
-          >
-            <DropdownItem
-              active={productFilter === "all"}
-              onClick={() => {
-                setProductFilter("all");
-                setProductOpen(false);
-              }}
-            >
-              Tous les produits
-            </DropdownItem>
-            <div className="my-1 h-px bg-line" />
-            {MOCK_PRODUITS.map((p) => (
-              <DropdownItem
-                key={p.id}
-                active={productFilter === p.id}
-                onClick={() => {
-                  setProductFilter(p.id);
-                  setProductOpen(false);
-                }}
-              >
-                <span className="truncate">{p.name}</span>
-              </DropdownItem>
-            ))}
-          </FilterDropdown>
-
-          {/* Filtre TRI */}
-          <FilterDropdown
-            label="Tri"
-            value={currentSortLabel}
-            isActive={sortBy !== "spent_desc"}
-            isOpen={sortOpen}
-            onToggle={() => setSortOpen(!sortOpen)}
-            onClose={() => setSortOpen(false)}
-            width="w-80"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <DropdownItem
-                key={o.id}
-                active={sortBy === o.id}
-                onClick={() => {
-                  setSortBy(o.id);
-                  setSortOpen(false);
-                }}
-              >
-                {o.label}
-              </DropdownItem>
-            ))}
-          </FilterDropdown>
-
-          {filtersActive && (
-            <button
-              onClick={() => {
-                setSearch("");
-                setView("all");
-                setSortBy("recent_order");
-                setProductFilter("all");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 hover:bg-kamoo-orange-50"
-            >
-              Effacer
-            </button>
+          {/* Fiche client — affichée uniquement si un client est sélectionné.
+              Sinon le tableau occupe toute la largeur. */}
+          {selected && (
+            <aside className="sticky top-6 hidden w-[360px] shrink-0 self-start lg:block">
+              <ClientDetail client={selected} onClose={() => setSelectedId(null)} />
+            </aside>
           )}
-
-          <div className="flex-1" />
-          <div className="whitespace-nowrap text-[12px] font-semibold text-ink-500">
-            {filtered.length} sur {all.length} client
-            {all.length > 1 ? "s" : ""}
-          </div>
         </div>
       </div>
-
-      {/* TABLEAU */}
-      <div className="flex min-h-0 flex-1 items-start px-10 py-4">
-        {filtered.length === 0 ? (
-          <div className="grid w-full place-items-center rounded-2xl border border-dashed border-line bg-white py-20 text-center">
-            <Users className="h-8 w-8 text-ink-400" />
-            <p className="mt-3 text-sm font-semibold text-ink-700">
-              Aucun client ne correspond à vos filtres
-            </p>
-          </div>
-        ) : (
-          <ClientsTable clients={filtered} />
-        )}
-      </div>
     </div>
   );
 }
 
-/* ─── Tableau ──────────────────────────────────────────── */
-
-function ClientsTable({ clients }: { clients: Client[] }) {
-  const router = useRouter();
-  return (
-    <div
-      className="always-show-scrollbar w-full rounded-2xl border border-line bg-white"
-      style={{
-        maxHeight: "100%",
-        overflowX: "scroll",
-        overflowY: "auto",
-        scrollbarColor: "#D1D5DB #F5F5EE",
-        scrollbarWidth: "thin",
-      }}
-    >
-        <table className="w-full min-w-[1100px] table-fixed text-[13px]">
-          <colgroup>
-            <col style={{ width: "360px" }} />
-            <col style={{ width: "240px" }} />
-            <col style={{ width: "110px" }} />
-            <col style={{ width: "150px" }} />
-            <col style={{ width: "150px" }} />
-            <col style={{ width: "140px" }} />
-          </colgroup>
-          <thead className="sticky top-0 z-10 bg-paper-2/95 backdrop-blur-sm">
-            <tr className="border-b border-line text-left">
-              <Th>Client</Th>
-              <Th>Adresse</Th>
-              <Th align="center">Cmd.</Th>
-              <Th align="right">Valeur client</Th>
-              <Th align="right">Dernière cmd.</Th>
-              <Th align="left">Source</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((c) => (
-              <ClientRow
-                key={c.id}
-                client={c}
-                onClick={() => router.push(`/clients/${c.id}`)}
-              />
-            ))}
-          </tbody>
-        </table>
-    </div>
-  );
-}
-
-function ClientRow({
-  client: c,
-  onClick,
-}: {
-  client: Client;
-  onClick: () => void;
-}) {
-  const segment = getClientSegment(c);
-  const tone = SEGMENT_TONE[segment];
+/* ─── Fiche détail ──────────────────────────────────────────────── */
+function ClientDetail({ client: c, onClose }: { client: Client; onClose: () => void }) {
+  const seg = getClientSegment(c);
+  const preferred = c.preferredProductIds
+    .map((id) => MOCK_PRODUITS.find((p) => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p)
+    .slice(0, 3);
 
   return (
-    <tr
-      onClick={onClick}
-      className="cursor-pointer border-b border-line last:border-0 transition hover:bg-paper-2/30"
-    >
-      {/* Avatar + Nom + Badge segment inline */}
-      <Td>
+    <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
+      {/* En-tête */}
+      <div className="relative border-b border-line p-4">
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900"
+          aria-label="Fermer"
+        >
+          <X className="h-4 w-4" />
+        </button>
         <div className="flex items-center gap-3">
-          <div
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[13px] font-bold text-white shadow-sm"
+          <span
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-[15px] font-bold text-white"
             style={{ background: c.avatarBg }}
           >
             {getInitials(c.name)}
-          </div>
+          </span>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-ink-900">{c.name}</span>
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset",
-                  tone.bg,
-                  tone.fg,
-                  tone.ring,
-                )}
-              >
-                {SEGMENT_LABELS[segment]}
+              <span className="truncate text-[15px] font-bold text-ink-900">{c.name}</span>
+              <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", SEG_PILL[seg])}>
+                {SEGMENT_LABELS[seg]}
               </span>
             </div>
-            <div className="font-mono-kamoo mt-0.5 text-[11px] text-ink-500">
-              {c.phone}
-            </div>
+            <div className="mt-0.5 text-[12px] tabular-nums text-ink-500">{c.phone}</div>
+            <div className="text-[11.5px] text-ink-400">{c.zone ? `${c.zone}, ${c.city}` : c.city}</div>
           </div>
         </div>
-      </Td>
+      </div>
 
-      {/* Adresse */}
-      <Td>
-        <div className="text-[12.5px] text-ink-700">
-          <div className="font-semibold">
-            {c.zone ? `${c.zone}, ${c.city}` : c.city}
-          </div>
-          <div className="text-[11px] text-ink-500">
-            {COUNTRY_LABEL[c.country]}
-          </div>
-        </div>
-      </Td>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-px border-b border-line bg-[#F1F2F4]">
+        <MiniStat value={String(c.totalOrders)} label="Commandes" />
+        <MiniStat value={`${formatXOF(c.totalSpentXof, false)} F`} label="Dépensé" />
+        <MiniStat value={formatRelative(c.lastOrderDate)} label="Dernière" />
+      </div>
 
-      {/* Commandes */}
-      <Td align="center">
-        <div>
-          <span className="font-bold text-ink-900">{c.totalOrders}</span>
-          {c.totalCancelledOrders > 0 && (
-            <span className="ml-1 text-[10.5px] font-semibold text-red-600">
-              ({c.totalCancelledOrders} ann.)
-            </span>
-          )}
-        </div>
-      </Td>
+      {/* Détails */}
+      <div className="flex flex-col gap-2.5 border-b border-line p-4 text-[12.5px]">
+        <DetailRow label="Client depuis" value={new Date(c.firstOrderDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} />
+        <DetailRow label="Source" value={CHANNEL_LABELS[c.acquisitionChannel]} />
+        <DetailRow label="Taux de réachat" value={`${deliveryRate(c)}%`} />
+      </div>
 
-      {/* Valeur client */}
-      <Td align="right">
-        {c.totalSpentXof > 0 ? (
-          <span className="font-bold text-emerald-700">
-            {formatXOF(c.totalSpentXof)}
-          </span>
-        ) : (
-          <span className="text-ink-400">—</span>
-        )}
-      </Td>
-
-      {/* Dernière commande */}
-      <Td align="right">
-        <div>
-          <div
-            className={cn(
-              "font-semibold",
-              daysSinceLastOrder(c) > 60 ? "text-amber-700" : "text-ink-900",
-            )}
-          >
-            {formatRelativeDate(c.lastOrderDate)}
-          </div>
-          <div className="text-[10.5px] text-ink-500">
-            {new Date(c.lastOrderDate).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-            })}
+      {/* Produits préférés */}
+      {preferred.length > 0 && (
+        <div className="border-b border-line p-4">
+          <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">Produits préférés</div>
+          <div className="flex flex-col gap-1.5">
+            {preferred.map((p) => (
+              <div key={p.id} className="flex items-center gap-2.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: p.bg }}>
+                  {p.emoji}
+                </span>
+                <span className="truncate text-[12.5px] font-medium text-ink-900">{p.name}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </Td>
+      )}
 
-      {/* Source */}
-      <Td>
-        <span className="inline-flex items-center rounded-full bg-paper-2 px-2.5 py-0.5 text-[11px] font-semibold text-ink-700">
-          {CHANNEL_LABELS[c.acquisitionChannel]}
-        </span>
-      </Td>
-    </tr>
+      {/* Actions */}
+      <div className="flex flex-col gap-1.5 p-3">
+        <Link
+          href={`/clients/${c.id}`}
+          className="flex h-10 items-center justify-center gap-2 rounded-lg bg-kamoo-blue-900 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        >
+          <User className="h-4 w-4" />
+          Voir le profil complet
+        </Link>
+        <Action href={`/clients/${c.id}`} icon={ArrowRight} label={`Voir les commandes (${c.totalOrders})`} />
+        <Action
+          href={getWhatsappLink(c.whatsapp ?? c.phone)}
+          external
+          icon={MessageCircle}
+          label="Envoyer un WhatsApp"
+        />
+        <Action href={`tel:${c.phone.replace(/\s/g, "")}`} external icon={Phone} label="Appeler le client" />
+        <Action icon={StickyNote} label="Ajouter une note" />
+        <button className="flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold text-red-600 transition hover:bg-red-50">
+          <RotateCcw className="h-4 w-4" />
+          Marquer à relancer
+        </button>
+      </div>
+    </div>
   );
 }
 
-function Th({
-  children,
-  align = "left",
+/* ─── Sous-composants ──────────────────────────────────────────── */
+function Kpi({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  sub,
 }: {
-  children: React.ReactNode;
-  align?: "left" | "center" | "right";
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "blue" | "red" | "green" | "purple";
+  label: string;
+  value: string;
+  sub: string;
 }) {
+  const tones: Record<string, string> = {
+    blue: "bg-kamoo-blue-50 text-kamoo-blue-700",
+    red: "bg-red-50 text-red-600",
+    green: "bg-emerald-50 text-emerald-700",
+    purple: "bg-purple-50 text-purple-700",
+  };
   return (
-    <th
-      className={cn(
-        "px-3 py-2.5 text-[10.5px] font-bold uppercase tracking-wider text-ink-500",
-        align === "right" && "text-right",
-        align === "center" && "text-center",
-      )}
-    >
-      {children}
-    </th>
+    <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-3.5 shadow-kamoo-sm">
+      <div className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", tones[tone])}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <div className="truncate text-[11px] font-medium text-ink-500">{label}</div>
+        <div className="text-[19px] font-bold leading-tight tracking-tight tabular-nums text-ink-900">{value}</div>
+        <div className="truncate text-[10.5px] text-ink-400">{sub}</div>
+      </div>
+    </div>
   );
 }
 
-function Td({
+function Dropdown({
+  label,
+  value,
+  open,
+  setOpen,
   children,
-  align = "left",
 }: {
+  label: string;
+  value: string;
+  open: boolean;
+  setOpen: (v: boolean) => void;
   children: React.ReactNode;
-  align?: "left" | "center" | "right";
 }) {
   return (
-    <td
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[12.5px] font-medium text-ink-700 transition hover:bg-paper-2"
+      >
+        <span className="text-ink-500">{label}</span>
+        <span className="text-ink-300">·</span>
+        <span className="font-semibold">{value}</span>
+        <ChevronDown className="h-3.5 w-3.5 text-ink-400" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-60 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-kamoo-lg)]">
+            {children}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function DropdownItem({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "px-3 py-3 align-middle text-[13px]",
-        align === "right" && "text-right",
-        align === "center" && "text-center",
+        "flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-[12.5px] transition hover:bg-paper-2",
+        active ? "font-semibold text-ink-900" : "font-medium text-ink-700",
       )}
     >
       {children}
-    </td>
+      {active && <Check className="h-3.5 w-3.5 shrink-0 text-kamoo-blue-700" />}
+    </button>
   );
+}
+
+function MiniStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 bg-white py-3 text-center">
+      <span className="text-[14px] font-bold tabular-nums text-ink-900">{value}</span>
+      <span className="text-[10.5px] text-ink-400">{label}</span>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-ink-500">{label}</span>
+      <span className="font-semibold text-ink-900">{value}</span>
+    </div>
+  );
+}
+
+function Action({
+  icon: Icon,
+  label,
+  href,
+  external,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  href?: string;
+  external?: boolean;
+}) {
+  const cls =
+    "flex h-10 items-center gap-2.5 rounded-lg border border-line bg-white px-3 text-[12.5px] font-medium text-ink-700 transition hover:bg-paper-2";
+  const inner = (
+    <>
+      <Icon className="h-4 w-4 text-ink-400" />
+      <span className="flex-1 text-left">{label}</span>
+    </>
+  );
+  if (href && external) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={cls}>
+        {inner}
+      </a>
+    );
+  }
+  if (href) {
+    return (
+      <Link href={href} className={cls}>
+        {inner}
+      </Link>
+    );
+  }
+  return <button className={cls}>{inner}</button>;
 }

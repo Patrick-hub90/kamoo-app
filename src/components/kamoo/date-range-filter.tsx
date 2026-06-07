@@ -237,87 +237,86 @@ export function DateRangeFilter({ value, onChange }: Props) {
       </PopoverTrigger>
 
       <PopoverContent
-        align="start"
+        align="end"
+        sideOffset={6}
         className={cn(
-          /* Largeur dynamique : 220px en mode compact (juste les presets),
-              560px quand le calendrier est ouvert. Compact partout pour
-              réduire l'espace inutile. */
-          "rounded-xl border border-line bg-white p-0 shadow-[0_16px_40px_rgba(16,24,40,0.14)] transition-[width] duration-150",
+          "overflow-hidden rounded-xl border border-line bg-white p-0 shadow-[0_16px_40px_rgba(16,24,40,0.14)] transition-[width] duration-150",
           showCalendar
-            ? "grid w-[min(560px,calc(100vw-32px))] grid-cols-[220px_1fr]"
-            : "w-[220px]",
+            ? "grid w-[min(580px,calc(100vw-32px))] grid-cols-[200px_1fr]"
+            : "w-[210px]",
         )}
       >
-        {/* COLONNE 1 : Menu vertical des presets — police normale (Inter)
-            comme le trigger, items séparés par une hairline. */}
-        <div className="flex flex-col py-1">
-          {PRESETS.map((p, i) => {
+        {/* COLONNE 1 : presets — items arrondis, une seule coche (l'appliqué) */}
+        <div className="flex flex-col p-1.5">
+          <div className="px-2 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+            Période
+          </div>
+          {PRESETS.map((p) => {
             const isSelected = value.preset === p.id;
             return (
               <button
                 key={p.id}
                 onClick={() => handleSelectPreset(p.id)}
                 className={cn(
-                  "flex h-9 items-center justify-between px-3 text-left text-[13px] font-semibold transition",
-                  i < PRESETS.length - 1 && "border-b border-line/40",
+                  "flex h-8 items-center justify-between rounded-md px-2.5 text-left text-[13px] transition",
                   isSelected
-                    ? "bg-kamoo-blue-50 text-kamoo-blue-900"
-                    : "text-ink-700 hover:bg-paper-2",
+                    ? "bg-kamoo-blue-50 font-semibold text-kamoo-blue-900"
+                    : "font-medium text-ink-700 hover:bg-paper-2",
                 )}
               >
                 <span>{p.label}</span>
-                {isSelected && (
-                  <Check className="h-3 w-3 text-kamoo-blue-700" />
-                )}
+                {isSelected && <Check className="h-3.5 w-3.5 text-kamoo-blue-700" />}
               </button>
             );
           })}
 
-          {/* Séparateur plus marqué avant Personnalisé / Effacer */}
           <div className="my-1 h-px bg-line" />
 
           <button
             onClick={handleOpenCustom}
             className={cn(
-              "flex h-9 items-center justify-between px-3 text-left text-[13px] font-semibold transition",
-              value.preset === "custom" || showCalendar
-                ? "bg-kamoo-blue-50 text-kamoo-blue-900"
-                : "text-ink-700 hover:bg-paper-2",
+              "flex h-8 items-center justify-between rounded-md px-2.5 text-left text-[13px] transition",
+              showCalendar || value.preset === "custom"
+                ? "bg-kamoo-blue-50 font-semibold text-kamoo-blue-900"
+                : "font-medium text-ink-700 hover:bg-paper-2",
             )}
           >
             <span>Personnalisé</span>
-            {value.preset === "custom" || showCalendar ? (
-              <Check className="h-3 w-3 text-kamoo-blue-700" />
+            {value.preset === "custom" ? (
+              <Check className="h-3.5 w-3.5 text-kamoo-blue-700" />
             ) : (
-              <ChevronRight className="h-3 w-3 text-ink-400" />
+              <ChevronRight className="h-3.5 w-3.5 text-ink-400" />
             )}
           </button>
 
           {isActive && (
             <button
               onClick={handleClear}
-              className="flex h-9 items-center justify-between px-3 text-left text-[13px] font-semibold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50"
+              className="mt-0.5 flex h-8 items-center rounded-md px-2.5 text-left text-[13px] font-medium text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
             >
-              <span>Effacer</span>
+              Effacer le filtre
             </button>
           )}
         </div>
 
-        {/* COLONNE 2 : Calendrier (visible uniquement en mode custom) */}
+        {/* COLONNE 2 : Calendrier (mode custom) */}
         {showCalendar && (
-          <div className="flex flex-col border-l border-line p-3">
-            {/* En-tête compact : titre + range sélectionnée (police normale) */}
-            <div className="mb-2">
-              <h4 className="text-[12px] font-semibold text-ink-500">
-                Personnalisé
-              </h4>
-              <p className="mt-0.5 text-[13px] font-semibold text-ink-900">
-                {draftFrom && draftTo
-                  ? isSameDay(draftFrom, draftTo)
-                    ? formatDateShort(draftFrom)
-                    : `${formatDateShort(draftFrom)} - ${formatDateShort(draftTo)}`
-                  : "Sélectionnez un jour ou une plage"}
-              </p>
+          <div className="flex flex-col border-l border-line p-3.5">
+            <div className="mb-2.5">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+                Plage personnalisée
+              </div>
+              <div className="mt-1 text-[14px] font-semibold tabular-nums text-ink-900">
+                {draftFrom && draftTo ? (
+                  isSameDay(draftFrom, draftTo) ? (
+                    formatDateShort(draftFrom)
+                  ) : (
+                    `${formatDateShort(draftFrom)} – ${formatDateShort(draftTo)}`
+                  )
+                ) : (
+                  <span className="font-medium text-ink-400">Sélectionnez un jour ou une plage</span>
+                )}
+              </div>
             </div>
 
             <Calendar
@@ -350,11 +349,10 @@ export function DateRangeFilter({ value, onChange }: Props) {
               className="bg-transparent p-0 [--cell-size:--spacing(8)]"
             />
 
-            {/* Footer Annuler / Appliquer (police normale) */}
-            <div className="mt-2 flex items-center justify-end gap-2 border-t border-line pt-2">
+            <div className="mt-2.5 flex items-center justify-end gap-2 border-t border-line pt-2.5">
               <button
                 onClick={handleCancel}
-                className="rounded-md border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-ink-700 transition hover:bg-paper-2"
+                className="h-8 rounded-lg border border-line bg-white px-3 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2"
               >
                 Annuler
               </button>
@@ -362,7 +360,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
                 onClick={handleApply}
                 disabled={!canApply}
                 className={cn(
-                  "rounded-md bg-kamoo-blue-900 px-3.5 py-1.5 text-[12px] font-semibold text-white transition hover:bg-kamoo-blue-800",
+                  "h-8 rounded-lg bg-kamoo-blue-900 px-3.5 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800",
                   !canApply && "cursor-not-allowed opacity-40",
                 )}
               >

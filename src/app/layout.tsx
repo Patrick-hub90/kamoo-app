@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans, JetBrains_Mono, Poppins } from "next/font/google";
 import { BitdefenderHydrationFix } from "@/components/bitdefender-hydration-fix";
 import "./globals.css";
 
@@ -21,6 +21,15 @@ const jetBrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// Police d'identité Kamoo (choix user) — appliquée globalement via les tokens
+// --font-sans / --font-display dans globals.css.
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Kamoo — Vends. On s'occupe du reste.",
   description:
@@ -35,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${plusJakarta.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${plusJakarta.variable} ${jetBrainsMono.variable} ${poppins.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body

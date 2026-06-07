@@ -6,6 +6,10 @@ import { ConsoleRail } from "@/components/console/console-rail";
 import { Topbar } from "@/components/layout/topbar";
 import { TopbarSlotProvider } from "@/components/layout/topbar-slot";
 
+/** Routes déjà reprises à l'identité refonte (header propre intégré → pas de
+ *  Topbar global). On étend cette liste au fur et à mesure. */
+const HIDE_GLOBAL_TOPBAR = ["/dashboard", "/boutique", "/expeditions", "/clients", "/closing"];
+
 /**
  * Layout vendeur — englobe toutes les routes (vendor).
  *
@@ -58,7 +62,12 @@ export default function VendorLayout({
           className="flex min-w-0 flex-1 flex-col"
           suppressHydrationWarning
         >
-          <Topbar onMobileMenuToggle={() => setMobileOpen((v) => !v)} />
+          {/* Écrans repris à l'identité refonte : header propre intégré à la
+              page (un seul bandeau, façon /apercu). On masque donc le Topbar
+              global. La liste s'étend au fur et à mesure de la propagation. */}
+          {!HIDE_GLOBAL_TOPBAR.some((p) => pathname === p || pathname.startsWith(p + "/")) && (
+            <Topbar onMobileMenuToggle={() => setMobileOpen((v) => !v)} />
+          )}
           <main
             className="flex-1 overflow-y-auto"
             suppressHydrationWarning

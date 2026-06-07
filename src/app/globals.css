@@ -65,9 +65,10 @@
   --color-kamoo-orange-600: #EA580C;
   --color-kamoo-orange-700: #C2410C;
 
-  --color-paper: #FAFAF7;
-  --color-paper-2: #F5F5EE;
-  --color-line: #E8E6DD;
+  /* Identité Kamoo — canvas gris froid + cartes blanches (refonte validée) */
+  --color-paper: #F6F8FA;
+  --color-paper-2: #EEF0F3;
+  --color-line: #ECEEF1;
 
   --color-ink-100: #F3F4F6;
   --color-ink-200: #E5E7EB;
@@ -86,11 +87,11 @@
   --color-status-cancelled: #6B7280;   /* gris — annulé */
   --color-status-error: #DC2626;       /* rouge — refusé/litige */
 
-  /* Typographies */
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-plus-jakarta);
+  /* Typographies — Poppins en police d'identité (choix user) */
+  --font-sans: var(--font-poppins);
+  --font-display: var(--font-poppins);
   --font-mono: var(--font-jetbrains-mono);
-  --font-heading: var(--font-plus-jakarta);
+  --font-heading: var(--font-poppins);
 
   /* Radius */
   --radius-sm: calc(var(--radius) * 0.6);
@@ -102,8 +103,8 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* Ombres Kamoo */
-  --shadow-kamoo-sm: 0 1px 2px rgba(10, 31, 61, 0.05);
-  --shadow-kamoo-md: 0 4px 16px rgba(10, 31, 61, 0.08);
+  --shadow-kamoo-sm: 0 1px 1px rgba(16, 24, 40, 0.03);
+  --shadow-kamoo-md: 0 2px 8px rgba(16, 24, 40, 0.05);
   --shadow-kamoo-lg: 0 12px 32px rgba(10, 31, 61, 0.10);
   --shadow-kamoo-xl: 0 24px 60px rgba(10, 31, 61, 0.16);
   --shadow-glow-orange: 0 8px 24px rgba(249, 115, 22, 0.32);
@@ -116,8 +117,8 @@
 :root {
   --radius: 0.75rem;
 
-  /* Fond paper warm */
-  --background: #FAFAF7;
+  /* Fond canvas gris froid (identité) */
+  --background: #F6F8FA;
   --foreground: #0A0E1A;
 
   /* Cards blanches sur fond paper */
@@ -136,19 +137,19 @@
   --secondary-foreground: #FFFFFF;
 
   /* Muted = paper-2 */
-  --muted: #F5F5EE;
+  --muted: #EEF0F3;
   --muted-foreground: #6B7280;
 
   /* Accent (hover discret) */
-  --accent: #F5F5EE;
+  --accent: #EEF0F3;
   --accent-foreground: #0A0E1A;
 
   /* Destructive */
   --destructive: #DC2626;
 
-  /* Bordures */
-  --border: #E8E6DD;
-  --input: #E5E7EB;
+  /* Bordures (filets cool) */
+  --border: #ECEEF1;
+  --input: #E4E7EC;
   --ring: #2563EB;
 
   /* Sidebar Kamoo */
@@ -158,7 +159,7 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #FFF7ED;
   --sidebar-accent-foreground: #C2410C;
-  --sidebar-border: #E8E6DD;
+  --sidebar-border: #ECEEF1;
   --sidebar-ring: #F97316;
 
   /* Charts */
@@ -246,20 +247,27 @@
   /* Scrollbar horizontale toujours visible (boutique table). Sur macOS,
      les scrollbars sont auto-cachées par défaut — on force l'affichage
      via WebKit pour signaler le scroll horizontal. */
+  .always-show-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD2DA #F1F2F4;
+  }
   .always-show-scrollbar::-webkit-scrollbar {
+    width: 10px;
     height: 10px;
     -webkit-appearance: none;
   }
   .always-show-scrollbar::-webkit-scrollbar-thumb {
-    background: #D1D5DB;
+    background: #CBD2DA;
     border-radius: 5px;
+    border: 2px solid #F1F2F4;
   }
   .always-show-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #9CA3AF;
+    background: #AEB6C0;
   }
   .always-show-scrollbar::-webkit-scrollbar-track {
-    background: #F5F5EE;
-    border-radius: 5px;
+    background: #F1F2F4;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
   }
 
   /* Scrollbar masquée (rows d'onglets responsive). Le scroll fonctionne

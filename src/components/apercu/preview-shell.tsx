@@ -36,7 +36,7 @@ export type Variant = "navy" | "orange";
 /* ── tokens partagés ── */
 export const CANVAS = "#F6F8FA";
 export const CARD =
-  "rounded-xl border border-[#ECEEF1] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.05)]";
+  "rounded-xl border border-[#ECEEF1] bg-white shadow-[0_1px_1px_rgba(16,24,40,0.03)]";
 export const LABEL = "text-[11px] font-medium uppercase tracking-[0.06em] text-[#8A92A0]";
 
 /* ── thème du shell ── */
