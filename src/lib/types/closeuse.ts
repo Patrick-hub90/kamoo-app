@@ -117,7 +117,19 @@ export type Closeuse = {
   schedule: WorkingSchedule;
   /** Date d'inscription Kamoo (ISO) — sert au "Partenaire depuis…" */
   joinedAt: string;
+  /** Compétences / spécialités (Télévente B2C, Prise de RDV, Relance…) */
+  skills?: string[];
+  /** Disponible immédiatement (filtre "Disponible maintenant") */
+  availableNow?: boolean;
 };
+
+/** Liste de référence des spécialités closeuse (pour les filtres). */
+export const CLOSEUSE_SKILLS = [
+  "Télévente B2C",
+  "Prise de RDV",
+  "Relance & Fidélisation",
+  "SAV & Support",
+] as const;
 
 export const STATUS_LABELS: Record<CloseuseStatus, string> = {
   new: "Nouveau",

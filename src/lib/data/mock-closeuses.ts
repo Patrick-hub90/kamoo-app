@@ -5,7 +5,7 @@ import type { Closeuse } from "@/lib/types/closeuse";
  * Mocks Marketplace Closeuses — 8 profils variés pour la démo.
  * Mix : sexe, dispo, niveau de KPI, langues, commissions, ancienneté.
  */
-export const MOCK_CLOSEUSES: Closeuse[] = [
+const RAW_CLOSEUSES: Closeuse[] = [
   {
     slug: "aicha-diop",
     name: "Aïcha Diop",
@@ -397,6 +397,34 @@ export const MOCK_CLOSEUSES: Closeuse[] = [
     joinedAt: "2025-09-30",
   },
 ];
+
+/**
+ * Données complémentaires par closeuse : spécialités, disponibilité, et photo
+ * de profil téléchargée (Unsplash, licence libre) servie depuis
+ * /public/closeuses/{slug}.jpg.
+ */
+const EXTRA: Record<string, { skills: string[]; availableNow: boolean }> = {
+  "aicha-diop": { skills: ["Télévente B2C", "Prise de RDV"], availableNow: true },
+  "moussa-fall": { skills: ["Télévente B2C", "Relance & Fidélisation"], availableNow: false },
+  "fatou-niang": { skills: ["Relance & Fidélisation", "SAV & Support"], availableNow: true },
+  "babacar-sow": { skills: ["Télévente B2C"], availableNow: true },
+  "marie-kouassi": { skills: ["Télévente B2C", "Prise de RDV", "Relance & Fidélisation"], availableNow: true },
+  "yves-mballa": { skills: ["Télévente B2C", "SAV & Support"], availableNow: false },
+  "ngoné-thiam": { skills: ["Prise de RDV", "SAV & Support"], availableNow: true },
+  "amina-kone": { skills: ["Télévente B2C", "Relance & Fidélisation"], availableNow: true },
+};
+
+export const MOCK_CLOSEUSES: Closeuse[] = RAW_CLOSEUSES.map((c) => ({
+  ...c,
+  photoUrl: `/closeuses/${c.slug}.jpg`,
+  skills: EXTRA[c.slug]?.skills ?? [],
+  availableNow: EXTRA[c.slug]?.availableNow ?? false,
+}));
+
+/** Une closeuse est "top performer" si son taux de confirmation est élevé. */
+export function isTopPerformer(c: Closeuse): boolean {
+  return c.kpi.confirmationRate >= 85;
+}
 
 export function getCloseuse(slug: string): Closeuse | undefined {
   return MOCK_CLOSEUSES.find((c) => c.slug === slug);
