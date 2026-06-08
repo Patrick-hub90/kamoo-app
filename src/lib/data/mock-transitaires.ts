@@ -354,10 +354,22 @@ const EXTRA: Record<
   },
 };
 
+/** Nombre de pays de destination desservis (Afrique de l'Ouest & Centrale). */
+const COUNTRIES_SERVED: Record<string, number> = {
+  "trust-transit-services": 9,
+  "liang-wei-trading": 12,
+  "pearl-river-logistics": 12,
+  "shanghai-express-cargo": 8,
+  "yiwu-global-freight": 10,
+  "hong-kong-cargo-pro": 14,
+  "shenzhen-tech-logistics": 7,
+};
+
 export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => ({
   ...t,
   coverImageUrl: `/transitaires/${t.slug}.jpg`,
   logoImageUrl: undefined,
+  countriesServed: COUNTRIES_SERVED[t.slug] ?? 10,
   ...EXTRA[t.slug],
 }));
 

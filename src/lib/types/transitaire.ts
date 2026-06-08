@@ -66,6 +66,8 @@ export type Transitaire = {
   onTimePct?: number;
   /** Exemples de corridors desservis (carte) */
   exampleRoutes?: { label: string; delay: string }[];
+  /** Nombre de pays de destination desservis (Afrique) */
+  countriesServed?: number;
   /** Avis vendeurs (max 5 affichés sur le profil, lien vers tous) */
   reviews: Review[];
 };
