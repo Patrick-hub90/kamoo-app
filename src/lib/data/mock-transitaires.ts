@@ -70,7 +70,7 @@ const ABOUT_NEW =
 const ABOUT_ESTABLISHED =
   "Transitaire établi avec une forte expertise sur les corridors maritimes longue durée. Service client en mandarin et en français.";
 
-export const MOCK_TRANSITAIRES: Transitaire[] = [
+const RAW_TRANSITAIRES: Transitaire[] = [
   {
     id: "tr_trust",
     slug: "trust-transit-services",
@@ -279,6 +279,87 @@ export const MOCK_TRANSITAIRES: Transitaire[] = [
     reviews: REVIEWS_POOL.slice(1, 4),
   },
 ];
+
+/**
+ * Données complémentaires par transitaire (réponse, fiabilité, corridors),
+ * + image de couverture téléchargée (Unsplash, licence libre) servie depuis
+ * /public/transitaires/{slug}.jpg. Le logo reste en initiales (fallback).
+ */
+const EXTRA: Record<
+  string,
+  { responseTime: string; onTimePct: number; exampleRoutes: { label: string; delay: string }[] }
+> = {
+  "trust-transit-services": {
+    responseTime: "1h",
+    onTimePct: 98,
+    exampleRoutes: [
+      { label: "CN → CM", delay: "2–3 j" },
+      { label: "CN → SN", delay: "3–4 j" },
+      { label: "CN → CI", delay: "4–5 j" },
+    ],
+  },
+  "liang-wei-trading": {
+    responseTime: "1h",
+    onTimePct: 95,
+    exampleRoutes: [
+      { label: "CN → CM", delay: "18–22 j" },
+      { label: "CN → CI", delay: "20–25 j" },
+      { label: "CN → SN", delay: "22–28 j" },
+    ],
+  },
+  "pearl-river-logistics": {
+    responseTime: "2h",
+    onTimePct: 97,
+    exampleRoutes: [
+      { label: "CN → SN", delay: "8–11 j" },
+      { label: "CN → CI", delay: "9–12 j" },
+      { label: "CN → CM", delay: "10–14 j" },
+    ],
+  },
+  "shanghai-express-cargo": {
+    responseTime: "3h",
+    onTimePct: 93,
+    exampleRoutes: [
+      { label: "CN → SN", delay: "9–13 j" },
+      { label: "CN → CI", delay: "12–16 j" },
+      { label: "CN → CM", delay: "38–48 j" },
+    ],
+  },
+  "yiwu-global-freight": {
+    responseTime: "2h",
+    onTimePct: 91,
+    exampleRoutes: [
+      { label: "CN → SN", delay: "10–14 j" },
+      { label: "CN → CI", delay: "12–16 j" },
+      { label: "CN → CM", delay: "40–50 j" },
+    ],
+  },
+  "hong-kong-cargo-pro": {
+    responseTime: "1h",
+    onTimePct: 96,
+    exampleRoutes: [
+      { label: "HK → SN", delay: "6–9 j" },
+      { label: "HK → CI", delay: "7–10 j" },
+      { label: "HK → CM", delay: "32–42 j" },
+    ],
+  },
+  "shenzhen-tech-logistics": {
+    responseTime: "2h",
+    onTimePct: 90,
+    exampleRoutes: [
+      { label: "CN → SN", delay: "8–11 j" },
+      { label: "CN → CI", delay: "10–13 j" },
+      { label: "CN → CM", delay: "35–45 j" },
+    ],
+  },
+};
+
+export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => ({
+  ...t,
+  coverImageUrl: `/transitaires/${t.slug}.jpg`,
+  logoImageUrl: undefined,
+  ...EXTRA[t.slug],
+}));
 
 export function getTransitaireBySlug(slug: string) {
   return MOCK_TRANSITAIRES.find((t) => t.slug === slug);

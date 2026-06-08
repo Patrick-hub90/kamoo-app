@@ -60,6 +60,12 @@ export type Transitaire = {
   modes: ModeOffer[];
   activeVendors: number;
   partnerSince: number;
+  /** Délai de réponse moyen (ex: "1h", "2h") */
+  responseTime?: string;
+  /** % de livraisons à temps */
+  onTimePct?: number;
+  /** Exemples de corridors desservis (carte) */
+  exampleRoutes?: { label: string; delay: string }[];
   /** Avis vendeurs (max 5 affichés sur le profil, lien vers tous) */
   reviews: Review[];
 };
