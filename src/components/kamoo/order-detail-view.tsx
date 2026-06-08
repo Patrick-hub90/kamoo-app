@@ -186,9 +186,11 @@ type Props = {
   a: ClosingAssignment;
   backHref: string;
   breadcrumbLabel: string;
+  /** Mise en page pleine largeur, une seule colonne (pas de panneau latéral) */
+  fullWidth?: boolean;
 };
 
-export function OrderDetailView({ a, backHref }: Props) {
+export function OrderDetailView({ a, backHref, fullWidth = false }: Props) {
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
   const history = buildClosingHistory(a, closeuse.name);
 
@@ -228,8 +230,8 @@ export function OrderDetailView({ a, backHref }: Props) {
         </div>
       )}
 
-      {/* Deux colonnes indépendantes : alignées en haut, flux libre dessous. */}
-      <div className="grid grid-cols-[1.55fr_1fr] items-start gap-5">
+      {/* 2 colonnes (closing) OU pleine largeur 1 colonne (livraisons). */}
+      <div className={cn("gap-5", fullWidth ? "flex flex-col" : "grid grid-cols-[1.55fr_1fr] items-start")}>
         {/* ── COLONNE GAUCHE : Articles + Activité ── */}
         <div className="flex flex-col gap-5">
           {/* Articles + finance */}
@@ -394,8 +396,8 @@ export function OrderDetailView({ a, backHref }: Props) {
           </Card>
         </div>
 
-        {/* ── COLONNE DROITE : Client + Livreur ── */}
-        <div className="flex flex-col gap-5">
+        {/* ── Client + Livreur ── */}
+        <div className={cn("gap-5", fullWidth ? "grid items-start md:grid-cols-2" : "flex flex-col")}>
           {/* Client */}
           <Card title="Client" icon={<User className="h-3.5 w-3.5" />}>
             <div className="flex items-center gap-3">

@@ -38,6 +38,7 @@ export default async function LivraisonDetailPage({
       a={a}
       backHref={back.href}
       breadcrumbLabel={back.label}
+      fullWidth
     />
   );
 }
