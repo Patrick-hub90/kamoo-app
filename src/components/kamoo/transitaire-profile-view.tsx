@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -22,6 +25,7 @@ import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
 
 export function TransitaireProfileView({ transitaire: t }: { transitaire: Transitaire }) {
+  const [tab, setTab] = useState<"avis" | "faq">("avis");
   const firstName = t.name.split(" ")[0];
 
   return (
@@ -70,7 +74,7 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
                     <span className="text-ink-500">{t.reviewsCount} avis</span>
                   </span>
                   <span className="text-ink-300">·</span>
-                  <span className="text-ink-500">{t.activeVendors} vendeurs actifs</span>
+                  <span className="text-ink-500">{t.activeVendors} e-commerçants actifs</span>
                   {t.status === "certified" ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-kamoo-orange-200 bg-kamoo-orange-50 px-2.5 py-0.5 text-[11.5px] font-semibold text-kamoo-orange-700">
                       <BadgeCheck className="h-3.5 w-3.5" /> Certifié Kamoo
@@ -126,15 +130,34 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
             </p>
           </section>
 
-          {/* Avis */}
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-            <Reviews t={t} preview />
-          </section>
-
-          {/* FAQ */}
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-            <h2 className="mb-3 text-[15px] font-bold text-ink-900">Questions fréquentes</h2>
-            <Faq t={t} />
+          {/* Avis + FAQ (onglets) */}
+          <section className="overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm">
+            <div className="flex gap-1 border-b border-line px-3">
+              {(
+                [
+                  { id: "avis", label: "Avis des e-commerçants" },
+                  { id: "faq", label: "Questions fréquentes" },
+                ] as const
+              ).map((tb) => {
+                const active = tab === tb.id;
+                return (
+                  <button
+                    key={tb.id}
+                    onClick={() => setTab(tb.id)}
+                    className={cn(
+                      "relative inline-flex shrink-0 items-center px-3 py-3 text-[13px] font-semibold transition",
+                      active ? "text-kamoo-orange-600" : "text-ink-500 hover:text-ink-900",
+                    )}
+                  >
+                    {tb.label}
+                    {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-t bg-kamoo-orange-500" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="p-5">
+              {tab === "avis" ? <Reviews t={t} preview /> : <Faq t={t} />}
+            </div>
           </section>
         </div>
 
@@ -196,7 +219,7 @@ function StatsRow({ t }: { t: Transitaire }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <StatCard icon={Clock} tone="bg-kamoo-orange-50 text-kamoo-orange-600" value={t.responseTime ?? "—"} label="Répond en moyenne" />
       <StatCard icon={CheckCircle2} tone="bg-emerald-50 text-emerald-700" value={`${t.onTimePct ?? "—"}%`} label="Livraisons à temps" />
-      <StatCard icon={Users} tone="bg-kamoo-blue-50 text-kamoo-blue-700" value={String(t.activeVendors)} label="Vendeurs actifs" />
+      <StatCard icon={Users} tone="bg-kamoo-blue-50 text-kamoo-blue-700" value={String(t.activeVendors)} label="E-commerçants actifs" />
       <StatCard icon={Globe} tone="bg-purple-50 text-purple-700" value={`${t.countriesServed ?? "—"} pays`} label="Destinations desservies" />
     </div>
   );
@@ -230,12 +253,13 @@ function Reviews({ t, preview }: { t: Transitaire; preview?: boolean }) {
   const list = preview ? t.reviews.slice(0, 4) : t.reviews;
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[14px] font-bold text-ink-900">Avis des vendeurs</h3>
-        {preview && (
-          <span className="text-[12px] font-semibold text-kamoo-blue-700">Voir tous les avis ({t.reviewsCount})</span>
-        )}
-      </div>
+      {preview && (
+        <div className="mb-3 flex justify-end">
+          <button className="text-[12px] font-semibold text-kamoo-blue-700 hover:underline">
+            Voir tous les avis ({t.reviewsCount})
+          </button>
+        </div>
+      )}
       <div className={cn("grid gap-3", preview ? "sm:grid-cols-2" : "grid-cols-1")}>
         {list.map((r) => (
           <div key={r.id} className="rounded-xl border border-line bg-paper-2/30 p-3.5">
