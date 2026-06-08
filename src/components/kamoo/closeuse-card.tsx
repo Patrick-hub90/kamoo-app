@@ -39,23 +39,29 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
           : "border-line hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]",
       )}
     >
-      {/* Sélection + top performer */}
-      <div className="mb-2 flex items-start justify-between">
-        <label className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-ink-400">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={onToggle}
-            className="h-4 w-4 rounded border-line accent-kamoo-blue-700"
-          />
-          Comparer
-        </label>
-        {top && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
-            <Crown className="h-3 w-3" /> Top performer
-          </span>
-        )}
-      </div>
+      {/* Sélection (si comparateur) + top performer */}
+      {(onToggle || top) && (
+        <div className="mb-2 flex items-start justify-between">
+          {onToggle ? (
+            <label className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-ink-400">
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={onToggle}
+                className="h-4 w-4 rounded border-line accent-kamoo-blue-700"
+              />
+              Comparer
+            </label>
+          ) : (
+            <span />
+          )}
+          {top && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
+              <Crown className="h-3 w-3" /> Top performer
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Identité */}
       <div className="flex gap-3">
