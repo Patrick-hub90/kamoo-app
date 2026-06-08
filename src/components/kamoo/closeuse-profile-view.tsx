@@ -54,53 +54,48 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
         </Link>
       </div>
 
-      {/* COVER (portrait floué en fond) */}
-      <div className="relative h-44 w-full overflow-hidden bg-kamoo-blue-900">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={c.photoUrl} alt="" className="h-full w-full scale-110 object-cover opacity-50 blur-2xl" />
-        <div className="absolute inset-0 bg-gradient-to-r from-kamoo-blue-900/90 to-kamoo-blue-900/50" />
-      </div>
-
-      {/* IDENTITÉ */}
-      <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1320px] px-6">
-          <div className="flex flex-wrap items-end gap-4 pb-5">
-            <div className="relative z-10 -mt-14 h-28 w-28 shrink-0 overflow-hidden rounded-full border-4 border-white shadow-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.photoUrl} alt={c.name} className="h-full w-full object-cover" />
+      {/* HERO — bandeau navy de marque + portrait net (pas de fausse bannière) */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-kamoo-blue-900 to-kamoo-blue-800">
+        <div
+          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.22) 0%, transparent 70%)" }}
+        />
+        <div className="relative mx-auto flex max-w-[1320px] flex-wrap items-center gap-6 px-6 py-8">
+          <div className="h-32 w-32 shrink-0 overflow-hidden rounded-2xl border-4 border-white/15 shadow-xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={c.photoUrl} alt={c.name} className="h-full w-full object-cover" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-[28px] font-extrabold tracking-tight text-white">{c.name}</h1>
+            <div className="mt-1 inline-flex items-center gap-1 text-[13px] text-white/70">
+              <MapPin className="h-3.5 w-3.5" /> {c.city}, {COUNTRY[c.countryCode] ?? c.countryCode} · Closeuse Kamoo depuis {new Date(c.joinedAt).getFullYear()}
             </div>
-            <div className="pb-1">
-              <h1 className="text-[26px] font-extrabold tracking-tight text-ink-900">{c.name}</h1>
-              <div className="mt-0.5 inline-flex items-center gap-1 text-[13px] text-ink-500">
-                <MapPin className="h-3.5 w-3.5" /> {c.city}, {COUNTRY[c.countryCode] ?? c.countryCode} · Closeuse Kamoo depuis {new Date(c.joinedAt).getFullYear()}
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
-                <span className="inline-flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <b className="text-ink-900">{c.rating}</b>
-                  <span className="text-ink-500">{c.reviewsCount} avis</span>
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px]">
+              <span className="inline-flex items-center gap-1 text-white">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                <b>{c.rating}</b>
+                <span className="text-white/60">{c.reviewsCount} avis</span>
+              </span>
+              <span className="text-white/25">·</span>
+              <span className="text-white/70">{c.activePartners} partenaires actifs</span>
+              {top && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[11.5px] font-semibold text-amber-200 ring-1 ring-inset ring-amber-300/30">
+                  <Crown className="h-3.5 w-3.5" /> Top performer
                 </span>
-                <span className="text-ink-300">·</span>
-                <span className="text-ink-500">{c.activePartners} partenaires actifs</span>
-                {top && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11.5px] font-semibold text-amber-600">
-                    <Crown className="h-3.5 w-3.5" /> Top performer
-                  </span>
-                )}
-                {c.status === "certified" ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-kamoo-orange-200 bg-kamoo-orange-50 px-2.5 py-0.5 text-[11.5px] font-semibold text-kamoo-orange-700">
-                    <BadgeCheck className="h-3.5 w-3.5" /> Certifié Kamoo
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-kamoo-blue-200 bg-kamoo-blue-50 px-2.5 py-0.5 text-[11.5px] font-semibold text-kamoo-blue-700">
-                    <Sparkles className="h-3.5 w-3.5" /> Nouveau
-                  </span>
-                )}
-              </div>
+              )}
+              {c.status === "certified" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-kamoo-orange-500 px-2.5 py-0.5 text-[11.5px] font-bold text-white">
+                  <BadgeCheck className="h-3.5 w-3.5" /> Certifié Kamoo
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11.5px] font-semibold text-white">
+                  <Sparkles className="h-3.5 w-3.5" /> Nouveau
+                </span>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* BODY */}
       <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[1.7fr_1fr]">
