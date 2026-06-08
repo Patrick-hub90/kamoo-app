@@ -32,8 +32,6 @@ const STATUS: Record<DeliveryProgress, { label: string; group: string; pill: str
   effectue: { label: "Effectuée", group: "Effectuées", pill: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
   alerte: { label: "Alerte", group: "Alertes", pill: "bg-red-50 text-red-600", dot: "bg-red-500" },
 };
-const GROUP_ORDER: DeliveryProgress[] = ["alerte", "en_attente", "effectue"];
-
 const VIEW_TABS: { id: ViewKey; label: string }[] = [
   { id: "all", label: "Toutes" },
   { id: "en_attente", label: "En cours" },
@@ -58,8 +56,10 @@ export default function LivraisonsPage() {
   const all = useMemo(() => getDeliveryItems(), []);
   const stats = useMemo(() => computeDeliveryStats(all), [all]);
 
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewKey>("all");
+  const [viewOpen, setViewOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("urgent");
   const [sortOpen, setSortOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
@@ -107,14 +107,6 @@ export default function LivraisonsPage() {
   const safePage = Math.min(page, totalPages);
   const shown = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  // Groupes (par statut) pour la page courante
-  const groups = useMemo(() => {
-    return GROUP_ORDER.map((g) => ({
-      key: g,
-      items: shown.filter((a) => a.delivery?.progress === g),
-    })).filter((grp) => grp.items.length > 0);
-  }, [shown]);
-
   return (
     <div className="min-h-full bg-paper">
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
@@ -139,29 +131,8 @@ export default function LivraisonsPage() {
           <Kpi icon={Wallet} tone="amber" label="CA encaissé" value={`${formatXOF(stats.revenueCollected, false)} F`} sub="sur livraisons effectuées" />
         </div>
 
-        {/* ONGLETS */}
-        <div className="border-b border-line">
-          <div className="flex items-center gap-1">
-            {VIEW_TABS.map((tb) => {
-              const active = view === tb.id;
-              const isAlerte = tb.id === "alerte" && counts.alerte > 0;
-              return (
-                <button
-                  key={tb.id}
-                  onClick={() => { setView(tb.id); setPage(1); }}
-                  className={cn("relative inline-flex items-center gap-2 px-3.5 py-2.5 text-[13px] font-semibold transition", active ? "text-ink-900" : "text-ink-500 hover:text-ink-800")}
-                >
-                  {tb.label}
-                  <span className={cn("inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold", isAlerte ? "bg-red-500 text-white" : active ? "bg-kamoo-blue-50 text-kamoo-blue-700" : "bg-paper-2 text-ink-600")}>{counts[tb.id]}</span>
-                  {active && <span className={cn("absolute inset-x-0 bottom-[-1px] h-[2px] rounded-t", isAlerte ? "bg-red-500" : "bg-kamoo-orange-500")} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* TOOLBAR */}
-        <div className="-mt-1 flex flex-wrap items-center gap-2.5">
+        {/* TOOLBAR — façon Closing (menu déroulant Statut, pas d'onglets) */}
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative w-full sm:w-80">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
             <input
@@ -172,6 +143,14 @@ export default function LivraisonsPage() {
               className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-[12.5px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
             />
           </div>
+          <Dropdown label="Statut" value={VIEW_TABS.find((t) => t.id === view)?.label ?? "Toutes"} open={viewOpen} setOpen={setViewOpen}>
+            {VIEW_TABS.map((t) => (
+              <DropdownItem key={t.id} active={view === t.id} onClick={() => { setView(t.id); setViewOpen(false); setPage(1); }}>
+                <span className="flex-1">{t.label}</span>
+                <span className="tabular-nums text-ink-400">{counts[t.id]}</span>
+              </DropdownItem>
+            ))}
+          </Dropdown>
           <Dropdown label="Trier" value={SORT_LABELS[sortBy]} open={sortOpen} setOpen={setSortOpen}>
             {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
               <DropdownItem key={k} active={sortBy === k} onClick={() => { setSortBy(k); setSortOpen(false); }}>{SORT_LABELS[k]}</DropdownItem>
@@ -206,15 +185,13 @@ export default function LivraisonsPage() {
                   <th className="px-2 py-3" />
                 </tr>
               </thead>
-              <tbody>
-                {groups.length === 0 ? (
+              <tbody className="divide-y divide-[#F4F5F6]">
+                {shown.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-ink-400">Aucune livraison ne correspond.</td>
                   </tr>
                 ) : (
-                  groups.map((grp) => (
-                    <GroupRows key={grp.key} progress={grp.key} items={grp.items} />
-                  ))
+                  shown.map((a) => <Row key={a.id} a={a} onClick={() => router.push(`/livraisons/${a.id}`)} />)
                 )}
               </tbody>
             </table>
@@ -255,61 +232,45 @@ export default function LivraisonsPage() {
   );
 }
 
-/* ─── Groupe de statut + lignes ───────────────────────────────── */
-function GroupRows({ progress, items }: { progress: DeliveryProgress; items: ClosingAssignment[] }) {
-  const router = useRouter();
+/* ─── Ligne de livraison ───────────────────────────────── */
+function Row({ a, onClick }: { a: ClosingAssignment; onClick: () => void }) {
+  const progress = a.delivery!.progress;
   const st = STATUS[progress];
+  const d = a.delivery!;
+  const isAlerte = progress === "alerte";
+  const note = d.livreurNote ?? a.comment ?? null;
   return (
-    <>
-      <tr className="bg-paper-2/50">
-        <td colSpan={8} className="px-4 py-2 text-[10.5px] font-bold uppercase tracking-[0.05em]">
-          <span className="inline-flex items-center gap-1.5" style={{}}>
-            <span className={cn("h-1.5 w-1.5 rounded-full", st.dot)} />
-            <span className={progress === "alerte" ? "text-red-600" : "text-ink-500"}>{st.group}</span>
-            <span className="font-medium normal-case text-ink-400">· {items.length}</span>
+    <tr
+      onClick={onClick}
+      className={cn("cursor-pointer transition", isAlerte ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-paper-2/40")}
+    >
+      <td className="px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{a.id}</td>
+      <td className="px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: a.items[0].productBg }}>{a.items[0].productEmoji}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[12.5px] font-medium text-ink-900">{a.items[0].productName}</span>
+            {a.items.length > 1 && <span className="text-[10.5px] text-ink-400">+{a.items.length - 1} autre{a.items.length > 2 ? "s" : ""}</span>}
           </span>
-        </td>
-      </tr>
-      {items.map((a) => {
-        const d = a.delivery!;
-        const isAlerte = progress === "alerte";
-        const note = d.livreurNote ?? a.comment ?? null;
-        return (
-          <tr
-            key={a.id}
-            onClick={() => router.push(`/livraisons/${a.id}`)}
-            className={cn("cursor-pointer border-b border-[#F4F5F6] transition last:border-0", isAlerte ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-paper-2/40")}
-          >
-            <td className="px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{a.id}</td>
-            <td className="px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: a.items[0].productBg }}>{a.items[0].productEmoji}</span>
-                <span className="min-w-0">
-                  <span className="block truncate text-[12.5px] font-medium text-ink-900">{a.items[0].productName}</span>
-                  {a.items.length > 1 && <span className="text-[10.5px] text-ink-400">+{a.items.length - 1} autre{a.items.length > 2 ? "s" : ""}</span>}
-                </span>
-              </div>
-            </td>
-            <td className="px-3 py-2.5">
-              <div className="truncate text-[12.5px] font-medium text-ink-900">{a.client.name}</div>
-              <div className="truncate text-[11px] tabular-nums text-ink-500">{a.client.phone}</div>
-            </td>
-            <td className="px-3 py-2.5 text-[12px] text-ink-700">{a.client.zone}</td>
-            <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(orderTotalXof(a), false)} <span className="text-[10px] text-ink-400">F</span></td>
-            <td className="px-3 py-2.5">
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", st.pill)}>
-                {isAlerte && <AlertTriangle className="h-3 w-3" />}
-                {st.label}
-              </span>
-            </td>
-            <td className="px-4 py-2.5 text-[11.5px]">
-              {note ? <span className={cn("line-clamp-1 italic", isAlerte ? "text-red-600" : "text-ink-500")} title={note}>{note}</span> : <span className="text-ink-300">—</span>}
-            </td>
-            <td className="px-2 py-2.5 text-right"><ChevronRight className="ml-auto h-4 w-4 text-ink-300" /></td>
-          </tr>
-        );
-      })}
-    </>
+        </div>
+      </td>
+      <td className="px-3 py-2.5">
+        <div className="truncate text-[12.5px] font-medium text-ink-900">{a.client.name}</div>
+        <div className="truncate text-[11px] tabular-nums text-ink-500">{a.client.phone}</div>
+      </td>
+      <td className="px-3 py-2.5 text-[12px] text-ink-700">{a.client.zone}</td>
+      <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(orderTotalXof(a), false)} <span className="text-[10px] text-ink-400">F</span></td>
+      <td className="px-3 py-2.5">
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", st.pill)}>
+          {isAlerte && <AlertTriangle className="h-3 w-3" />}
+          {st.label}
+        </span>
+      </td>
+      <td className="px-4 py-2.5 text-[11.5px]">
+        {note ? <span className={cn("line-clamp-1 italic", isAlerte ? "text-red-600" : "text-ink-500")} title={note}>{note}</span> : <span className="text-ink-300">—</span>}
+      </td>
+      <td className="px-2 py-2.5 text-right"><ChevronRight className="ml-auto h-4 w-4 text-ink-300" /></td>
+    </tr>
   );
 }
 
