@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -28,16 +25,6 @@ import type { TransportMode } from "@/lib/types/expedition";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
 
-type Tab = "apercu" | "tarifs" | "modes" | "avis" | "faq";
-
-const TABS: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "apercu", label: "Aperçu", icon: BadgeCheck },
-  { id: "tarifs", label: "Tarifs", icon: Tag },
-  { id: "modes", label: "Modes", icon: Ship },
-  { id: "avis", label: "Avis", icon: Star },
-  { id: "faq", label: "FAQ", icon: Headphones },
-];
-
 const MODE_STYLE: Record<TransportMode, { icon: React.ComponentType<{ className?: string }>; tone: string }> = {
   sea: { icon: Ship, tone: "bg-kamoo-blue-50 text-kamoo-blue-700" },
   air_standard: { icon: Plane, tone: "bg-emerald-50 text-emerald-700" },
@@ -47,7 +34,6 @@ const MODE_STYLE: Record<TransportMode, { icon: React.ComponentType<{ className?
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 
 export function TransitaireProfileView({ transitaire: t }: { transitaire: Transitaire }) {
-  const [tab, setTab] = useState<Tab>("apercu");
   const firstName = t.name.split(" ")[0];
 
   return (
@@ -137,55 +123,35 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
             </div>
           </section>
 
-          {/* Onglets + contenu */}
-          <section className="overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm">
-            <div className="flex gap-1 overflow-x-auto border-b border-line px-3">
-              {TABS.map((tb) => {
-                const active = tab === tb.id;
-                return (
-                  <button
-                    key={tb.id}
-                    onClick={() => setTab(tb.id)}
-                    className={cn(
-                      "relative inline-flex shrink-0 items-center gap-1.5 px-3 py-3 text-[13px] font-semibold transition",
-                      active ? "text-kamoo-orange-600" : "text-ink-500 hover:text-ink-900",
-                    )}
-                  >
-                    <tb.icon className="h-3.5 w-3.5" />
-                    {tb.label}
-                    {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-t bg-kamoo-orange-500" />}
-                  </button>
-                );
-              })}
+          {/* Tarifs + indicateurs */}
+          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+            <RatesGrid t={t} />
+            <p className="mt-3 text-[12px] text-ink-400">
+              Tarifs indicatifs hors taxes/douane. Le devis exact est calculé après votre demande, selon le volume et la catégorie.
+            </p>
+            <div className="mt-4 border-t border-line pt-4">
+              <StatsRow t={t} />
             </div>
+          </section>
 
-            <div className="p-5">
-              {tab === "apercu" && (
-                <div className="flex flex-col gap-6">
-                  <RatesGrid t={t} />
-                  <StatsRow t={t} />
-                  <Reviews t={t} preview />
-                </div>
-              )}
-              {tab === "tarifs" && (
-                <div className="flex flex-col gap-3">
-                  <RatesGrid t={t} />
-                  <p className="text-[12px] text-ink-400">
-                    Tarifs indicatifs hors taxes/douane. Le devis exact est calculé après votre demande, selon le volume et la catégorie.
-                  </p>
-                </div>
-              )}
-              {tab === "modes" && (
-                <div>
-                  <p className="mb-3 text-[12.5px] text-ink-500">
-                    Cliquez sur un mode pour voir les délais, produits acceptés et refusés.
-                  </p>
-                  <ModeAccordion modes={t.modes} />
-                </div>
-              )}
-              {tab === "avis" && <Reviews t={t} />}
-              {tab === "faq" && <Faq t={t} />}
-            </div>
+          {/* Modes & catégories */}
+          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+            <h2 className="text-[15px] font-bold text-ink-900">Modes &amp; catégories acceptées</h2>
+            <p className="mb-3 mt-1 text-[12.5px] text-ink-500">
+              Cliquez sur un mode pour voir les délais, produits acceptés et refusés.
+            </p>
+            <ModeAccordion modes={t.modes} />
+          </section>
+
+          {/* Avis */}
+          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+            <Reviews t={t} preview />
+          </section>
+
+          {/* FAQ */}
+          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+            <h2 className="mb-3 text-[15px] font-bold text-ink-900">Questions fréquentes</h2>
+            <Faq t={t} />
           </section>
         </div>
 
