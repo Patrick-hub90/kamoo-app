@@ -5,7 +5,7 @@ import type { Livreur } from "@/lib/types/livreur";
  * Mix volontaire : particuliers / agences, marchés (SN/CI/CM), véhicules,
  * niveaux de KPI, anciennetés.
  */
-export const MOCK_LIVREURS: Livreur[] = [
+const RAW_LIVREURS: Livreur[] = [
   /* ─── PARTICULIERS ─────────────────────────────────────── */
   {
     slug: "moussa-sow",
@@ -404,6 +404,16 @@ export const MOCK_LIVREURS: Livreur[] = [
     joinedAt: "2025-02-10",
   },
 ];
+
+/**
+ * Photo de profil téléchargée (Unsplash, licence libre) pour les livreurs
+ * INDÉPENDANTS uniquement, servie depuis /public/livreurs/{slug}.jpg.
+ * Les AGENCES gardent leur avatar à initiales (placeholder logo).
+ */
+export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => ({
+  ...l,
+  photoUrl: l.type === "particulier" ? `/livreurs/${l.slug}.jpg` : undefined,
+}));
 
 export function getLivreur(slug: string): Livreur | undefined {
   return MOCK_LIVREURS.find((l) => l.slug === slug);

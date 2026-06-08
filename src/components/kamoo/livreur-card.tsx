@@ -1,128 +1,100 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, MapPin, Sparkles, Star } from "lucide-react";
+import {
+  BadgeCheck,
+  Bike,
+  Building2,
+  Clock,
+  MapPin,
+  MessageCircle,
+  Sparkles,
+  Star,
+} from "lucide-react";
 import type { Livreur } from "@/lib/types/livreur";
+import { cn } from "@/lib/utils";
 
-type Props = {
-  livreur: Livreur;
-};
+const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
+const fmt = (n: number) => n.toLocaleString("fr-FR");
 
-/**
- * Card livreur — épurée, scannable en 1s.
- * 3 infos prioritaires (selon l'usage vendeur) :
- *   1. Note + nb d'avis            (réputation)
- *   2. Régions / zones desservies  (couverture — info clé pour livraison)
- *   3. Marge de prix               (combien ça va me coûter)
- *
- * Tout le reste (dispo, grille tarifaire détaillée, description, type
- * agence/perso, partenariats, avis) est sur la page profil.
- */
-export function LivreurCard({ livreur: l }: Props) {
-  const prices = l.zones.map((z) => z.priceXof);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-
-  // Aperçu des zones : 3 premières + count des autres
-  const previewZones = l.zones.slice(0, 3).map((z) => z.name);
-  const extraZones = l.zones.length - previewZones.length;
-
+export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
+  const minPrice = Math.min(...l.zones.map((z) => z.priceXof));
+  const isAgence = l.type === "agence";
   return (
-    <Link
-      href={`/marketplace/livreurs/${l.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]"
-    >
-      {/* Bannière + badge statut */}
-      <div className="relative">
-        <div
-          className="h-24 w-full"
-          style={!l.coverImageUrl ? { background: l.coverBg } : undefined}
-        >
-          {l.coverImageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={l.coverImageUrl}
-              alt={`${l.name} - bannière`}
-              className="h-full w-full object-cover"
-            />
-          )}
-        </div>
-
-        {l.status === "new" ? (
-          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-kamoo-blue-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-            <Sparkles className="h-2.5 w-2.5" />
-            Nouveau
-          </span>
+    <div className="flex flex-col rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]">
+      {/* Identité */}
+      <div className="flex gap-3">
+        {l.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={l.photoUrl} alt={l.name} className="h-16 w-16 shrink-0 rounded-xl object-cover" />
         ) : (
-          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-kamoo-orange-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-            <BadgeCheck className="h-2.5 w-2.5" />
-            Certifié
-          </span>
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl text-[16px] font-extrabold text-white" style={{ background: l.avatarBg }}>
+            {l.initials}
+          </div>
         )}
-
-        {/* Photo / Logo overlay */}
-        <div
-          className="absolute left-4 top-[60px] z-20 grid h-16 w-16 place-items-center overflow-hidden rounded-full border-[3px] border-white text-base font-extrabold text-white shadow-md"
-          style={!l.photoUrl ? { background: l.avatarBg } : undefined}
-        >
-          {l.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={l.photoUrl}
-              alt={l.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            l.initials
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-2">
-        {/* Note alignée à droite (la photo prend la gauche) */}
-        <div className="flex h-7 items-start justify-end">
-          <div className="flex items-center gap-1 text-[12px]">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-            <span className="font-bold text-ink-900">{l.rating}</span>
-            <span className="text-ink-500">({l.reviewsCount} avis)</span>
-          </div>
-        </div>
-
-        {/* Nom + ville */}
-        <div className="mt-1">
-          <h3 className="font-display truncate text-[17px] font-extrabold leading-tight text-ink-900">
-            {l.name}
-          </h3>
-          <div className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-500">
-            <MapPin className="h-3 w-3" />
-            {l.city}
-          </div>
-        </div>
-
-        {/* RÉGIONS DESSERVIES — info clé */}
-        <div className="mt-5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-            {l.zones.length} zone{l.zones.length > 1 ? "s" : ""} desservie
-            {l.zones.length > 1 ? "s" : ""}
-          </div>
-          <div className="mt-1 text-[13px] font-semibold text-ink-700">
-            {previewZones.join(" · ")}
-            {extraZones > 0 && (
-              <span className="text-ink-500"> +{extraZones}</span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h3 className="truncate text-[14px] font-bold text-ink-900">{l.name}</h3>
+            {l.status === "certified" ? (
+              <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+            ) : (
+              <Sparkles className="h-4 w-4 shrink-0 text-kamoo-blue-600" />
             )}
           </div>
+          <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-paper-2 px-2 py-0.5 text-[10.5px] font-semibold text-ink-600">
+            {isAgence ? <Building2 className="h-3 w-3" /> : <Bike className="h-3 w-3" />}
+            {isAgence ? "Agence" : "Indépendant"}
+          </span>
+          <div className="mt-1 inline-flex items-center gap-1 text-[11.5px] text-ink-500">
+            <MapPin className="h-3 w-3 shrink-0" />
+            {l.city}, {COUNTRY[l.countryCode] ?? l.countryCode}
+          </div>
         </div>
-
-        {/* Footer : marge de prix + CTA */}
-        <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
-          <span className="font-display text-[15px] font-extrabold leading-none text-ink-900">
-            {minPrice.toLocaleString("fr-FR")} – {maxPrice.toLocaleString("fr-FR")}{" "}
-            <span className="text-[11px] font-bold text-ink-500">F</span>
-          </span>
-          <span className="inline-flex items-center gap-1 text-[12px] font-bold text-ink-500 transition group-hover:text-kamoo-blue-700">
-            Voir
-            <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
-          </span>
+        <div className="ml-auto inline-flex shrink-0 items-center gap-1 text-[12px]">
+          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+          <b className="text-ink-900">{l.rating}</b>
+          <span className="text-ink-500">({l.reviewsCount})</span>
         </div>
       </div>
-    </Link>
+
+      {/* Bio */}
+      <p className="mt-2.5 line-clamp-2 text-[12px] leading-relaxed text-ink-600">{l.bio}</p>
+
+      {/* Stats */}
+      <div className="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper-2/40 py-2.5 text-center">
+        <Stat value={`${l.kpi.deliverySuccessRate}%`} label="Réussite" />
+        <Stat value={`${l.kpi.avgDeliveryMin} min`} label="Délai moyen" />
+        <Stat value={fmt(l.kpi.deliveriesHandled)} label="Livraisons" />
+      </div>
+
+      {/* Zones + tarif */}
+      <div className="mt-2.5 flex items-center justify-between text-[11.5px]">
+        <span className="inline-flex items-center gap-1 text-ink-500">
+          <MapPin className="h-3 w-3" /> {l.zones.length} zones desservies
+        </span>
+        <span className="font-semibold text-ink-900">dès {fmt(minPrice)} <span className="text-[10px] font-medium text-ink-500">F CFA</span></span>
+      </div>
+
+      {/* Actions */}
+      <div className="mt-3 flex gap-2">
+        <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2">
+          <MessageCircle className="h-3.5 w-3.5" />
+          Contacter
+        </button>
+        <Link
+          href={`/marketplace/livreurs/${l.slug}`}
+          className="flex flex-1 items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        >
+          Voir le profil
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="px-1">
+      <div className="text-[13px] font-bold tabular-nums text-ink-900">{value}</div>
+      <div className="text-[10px] text-ink-400">{label}</div>
+    </div>
   );
 }
