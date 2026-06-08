@@ -87,15 +87,6 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
                 </div>
               </div>
             </div>
-            <div className="flex shrink-0 gap-2 pb-1">
-              <button className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2">
-                <MessageCircle className="h-4 w-4" />
-                Discuter
-              </button>
-              <button className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-2.5 text-[13px] font-bold text-white transition hover:bg-kamoo-orange-600">
-                Choisir ce transitaire
-              </button>
-            </div>
           </div>
         </div>
       </div>
