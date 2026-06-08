@@ -109,6 +109,9 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
               <Feature icon={Camera} label="Suivi photo systématique" />
               <Feature icon={Tag} label="Tarification transparente" />
             </div>
+            <div className="mt-4 border-t border-line pt-4">
+              <StatsRow t={t} />
+            </div>
           </section>
 
           {/* Tarifs & modes (fusionnés) + indicateurs */}
@@ -121,9 +124,6 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
             <p className="mt-3 text-[12px] text-ink-400">
               Hors taxes / douane. Le devis exact est calculé après votre demande, selon le volume et la catégorie.
             </p>
-            <div className="mt-4 border-t border-line pt-4">
-              <StatsRow t={t} />
-            </div>
           </section>
 
           {/* Avis */}
