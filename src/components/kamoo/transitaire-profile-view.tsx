@@ -9,29 +9,17 @@ import {
   Headphones,
   Lock,
   MessageCircle,
-  Plane,
   Route,
   ShieldCheck,
-  Ship,
   Sparkles,
   Star,
   Tag,
   Users,
-  Zap,
 } from "lucide-react";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import type { Transitaire } from "@/lib/types/transitaire";
-import type { TransportMode } from "@/lib/types/expedition";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
-
-const MODE_STYLE: Record<TransportMode, { icon: React.ComponentType<{ className?: string }>; tone: string }> = {
-  sea: { icon: Ship, tone: "bg-kamoo-blue-50 text-kamoo-blue-700" },
-  air_standard: { icon: Plane, tone: "bg-emerald-50 text-emerald-700" },
-  air_express: { icon: Zap, tone: "bg-purple-50 text-purple-700" },
-};
-
-const fmt = (n: number) => n.toLocaleString("fr-FR");
 
 export function TransitaireProfileView({ transitaire: t }: { transitaire: Transitaire }) {
   const firstName = t.name.split(" ")[0];
@@ -123,24 +111,19 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
             </div>
           </section>
 
-          {/* Tarifs + indicateurs */}
+          {/* Tarifs & modes (fusionnés) + indicateurs */}
           <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-            <RatesGrid t={t} />
+            <h2 className="text-[15px] font-bold text-ink-900">Tarifs détaillés par mode</h2>
+            <p className="mb-3 mt-1 text-[12.5px] text-ink-500">
+              Tarifs indicatifs par mode de transport. Cliquez sur un mode pour voir les délais et les catégories acceptées / refusées.
+            </p>
+            <ModeAccordion modes={t.modes} />
             <p className="mt-3 text-[12px] text-ink-400">
-              Tarifs indicatifs hors taxes/douane. Le devis exact est calculé après votre demande, selon le volume et la catégorie.
+              Hors taxes / douane. Le devis exact est calculé après votre demande, selon le volume et la catégorie.
             </p>
             <div className="mt-4 border-t border-line pt-4">
               <StatsRow t={t} />
             </div>
-          </section>
-
-          {/* Modes & catégories */}
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-            <h2 className="text-[15px] font-bold text-ink-900">Modes &amp; catégories acceptées</h2>
-            <p className="mb-3 mt-1 text-[12.5px] text-ink-500">
-              Cliquez sur un mode pour voir les délais, produits acceptés et refusés.
-            </p>
-            <ModeAccordion modes={t.modes} />
           </section>
 
           {/* Avis */}
@@ -205,37 +188,6 @@ function Feature({ icon: Icon, label }: { icon: React.ComponentType<{ className?
       <Icon className="h-4 w-4 text-ink-400" />
       {label}
     </span>
-  );
-}
-
-function RatesGrid({ t }: { t: Transitaire }) {
-  return (
-    <div>
-      <h3 className="mb-3 text-[14px] font-bold text-ink-900">Tarifs détaillés par mode</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {t.modes.map((m) => {
-          const st = MODE_STYLE[m.mode];
-          const Icon = st.icon;
-          return (
-            <div key={m.mode} className="rounded-xl border border-line p-4">
-              <div className="flex items-center gap-2.5">
-                <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", st.tone)}>
-                  <Icon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0">
-                  <div className="truncate text-[13px] font-semibold text-ink-900">{TRANSPORT_MODE_LABELS[m.mode]}</div>
-                  <div className="text-[11px] text-ink-400">{m.delay}</div>
-                </div>
-              </div>
-              <div className="mt-3 text-[17px] font-bold tabular-nums text-ink-900">
-                {fmt(m.fromXof)} – {fmt(m.toXof)}
-              </div>
-              <div className="text-[11px] text-ink-400">F CFA / {m.unit === "cbm" ? "CBM" : "kg"}</div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
