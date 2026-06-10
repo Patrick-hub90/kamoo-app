@@ -32,12 +32,34 @@ const ACTIVE_CLOSEUSE_COMMISSION =
  */
 
 /**
- * Date de référence "aujourd'hui" pour tous les calculs financiers mock.
- * Exportée pour que les pages puissent filtrer par période avec un repère
- * cohérent (l'app est en démo, donc on fait comme si on était en mai 2026).
+ * Date de référence "aujourd'hui" — désormais l'horloge réelle centralisée
+ * dans lib/clock (re-exportée ici pour compat avec les imports legacy).
  */
-export const MOCK_TODAY = new Date("2026-05-04T12:00:00Z");
+import { MOCK_TODAY, shiftToNow } from "@/lib/clock";
+export { MOCK_TODAY };
 const TODAY = MOCK_TODAY;
+
+/** PRNG déterministe (même sortie serveur/client — pas de mismatch d'hydratation). */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Hash simple et stable d'une string (seed PRNG par produit). */
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
 const PAID_THRESHOLD_DAYS = 7; // au-delà de 7j, on marque comme "payé"
 /**
  * Seuil livreur : sous 3 jours après livraison, le cash est encore chez
@@ -365,17 +387,23 @@ function generateMovements(): FinanceMovement[] {
         : 0;
 
     // Étalement intra-mois : 4 dates par mois (≈ une par semaine)
-    // pour éviter les "valleys" sur le graphe quand on bucket par semaine.
-    // Le total mensuel reste rigoureusement le même : monthly / 4 × 4.
-    const SPREAD_DAYS = [5, 12, 19, 26];
-    const splitRevenue = Math.round(monthlyRevenue / SPREAD_DAYS.length);
-    const splitCogs = Math.round(monthlyCogs / SPREAD_DAYS.length);
+    // Étalement intra-mois LISSÉ : chaque produit vend sur ~10 jours du mois,
+    // tirés pseudo-aléatoirement PAR PRODUIT (déterministe). Les produits ne
+    // tombent donc pas tous les mêmes jours → le cumul quotidien forme une
+    // courbe naturelle, sans pics artificiels. Le total mensuel est inchangé.
+    const rndP = mulberry32(hashStr(p.id));
+    const spreadDays = Array.from(
+      new Set(Array.from({ length: 10 }, () => 1 + Math.floor(rndP() * 27))),
+    ).sort((a, b) => a - b);
+    const splitRevenue = Math.round(monthlyRevenue / spreadDays.length);
+    const splitCogs = Math.round(monthlyCogs / spreadDays.length);
 
     for (let i = 1; i <= monthsToFill; i++) {
-      for (const dayOfMonth of SPREAD_DAYS) {
+      for (const dayOfMonth of spreadDays) {
         const d = new Date(TODAY);
         d.setUTCMonth(d.getUTCMonth() - i);
         d.setUTCDate(dayOfMonth);
+        d.setUTCHours(9 + Math.floor(rndP() * 9), 0, 0, 0);
         const monthLabel = d.toLocaleDateString("fr-FR", {
           month: "long",
           year: "numeric",
@@ -466,7 +494,8 @@ function generateMovements(): FinanceMovement[] {
     for (const s of day.sales) {
       const product = MOCK_PRODUITS.find((p) => p.id === s.productId);
       if (!product) continue;
-      const dateIso = `${day.date}T14:00:00Z`; // après-midi UTC
+      // Dates legacy (ancrées 2026-05-04) recalées sur aujourd'hui.
+      const dateIso = shiftToNow(`${day.date}T14:00:00Z`);
       const revenue = product.priceXof * s.qty;
       const livreur = LIVREURS_POOL[s.livreurIdx];
       const livreurFee =

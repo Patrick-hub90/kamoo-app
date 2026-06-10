@@ -6,6 +6,7 @@ import {
   type ClosingHistoryEvent,
   type DeliveryProgress,
 } from "@/lib/types/closing";
+import { shiftToNow } from "@/lib/clock";
 
 export const MOCK_ACTIVE_CLOSEUSE: ActiveCloseuse = {
   id: "cl_aicha",
@@ -15,12 +16,13 @@ export const MOCK_ACTIVE_CLOSEUSE: ActiveCloseuse = {
   rating: 4.8,
   reviewsCount: 47,
   startedAt: "2024-09-15",
-  // Quelques minutes avant MOCK_TODAY (2026-05-04 12:00) → « il y a 4 min ».
-  lastSeenAt: "2026-05-04T11:56:00Z",
+  // Quelques minutes avant midi le jour de l'ancre → « il y a X min » aujourd'hui.
+  lastSeenAt: shiftToNow("2026-05-04T11:56:00Z"),
 };
 
-/* Date de référence pour les mocks : 2026-05-02 12:00 UTC ("aujourd'hui") */
-export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
+/* Fixtures écrites autour de l'ancre 2026-05-04 — toutes les dates sont
+ * décalées vers AUJOURD'HUI via shiftToNow() à l'export (voir bas de fichier). */
+const RAW_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
   /* ─── Nouvelles fraîches ─────────────────────────────────── */
   {
     id: "ORD-SN-00132",
@@ -568,6 +570,39 @@ export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
     },
   },
 ];
+
+/**
+ * Export public : fixtures recalées sur AUJOURD'HUI. Chaque date legacy est
+ * décalée du même nombre de jours entiers (heures préservées), si bien que
+ * « créée le jour de l'ancre à 12:30 » devient « créée aujourd'hui à 12:30 ».
+ */
+export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] =
+  RAW_CLOSING_ASSIGNMENTS.map((a) => ({
+    ...a,
+    createdAt: shiftToNow(a.createdAt),
+    lastActivityAt: shiftToNow(a.lastActivityAt),
+    callbackAt: a.callbackAt ? shiftToNow(a.callbackAt) : undefined,
+    scheduledDeliveryAt: a.scheduledDeliveryAt
+      ? shiftToNow(a.scheduledDeliveryAt)
+      : undefined,
+    delivery: a.delivery
+      ? {
+          ...a.delivery,
+          scheduledAt: a.delivery.scheduledAt
+            ? shiftToNow(a.delivery.scheduledAt)
+            : undefined,
+          pickedUpAt: a.delivery.pickedUpAt
+            ? shiftToNow(a.delivery.pickedUpAt)
+            : undefined,
+          deliveredAt: a.delivery.deliveredAt
+            ? shiftToNow(a.delivery.deliveredAt)
+            : undefined,
+          alertRaisedAt: a.delivery.alertRaisedAt
+            ? shiftToNow(a.delivery.alertRaisedAt)
+            : undefined,
+        }
+      : undefined,
+  }));
 
 export function computeClosingStats(assignments: ClosingAssignment[]) {
   const total = assignments.length;

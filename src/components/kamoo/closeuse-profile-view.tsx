@@ -146,7 +146,6 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
             <div className="mt-2.5 flex items-center justify-center gap-2 rounded-lg bg-paper-2/50 py-2 text-[13px] font-semibold text-ink-800">
               <Clock className="h-3.5 w-3.5 text-ink-500" />
               {formatHour(c.schedule.startTime)} — {formatHour(c.schedule.endTime)}
-              {c.availableNow && <span className="ml-2 inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Disponible maintenant</span>}
             </div>
             {/* Langues */}
             <div className="mt-4 flex flex-wrap gap-2">

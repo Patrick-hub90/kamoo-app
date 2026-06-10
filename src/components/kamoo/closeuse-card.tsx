@@ -107,33 +107,18 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
         {c.languages.map((l) => l.name).join(" · ")}
       </div>
 
-      {/* Prix + dispo */}
-      <div className="mt-2 flex items-center justify-between">
-        <div className="text-[13px] font-bold text-ink-900">
-          {fmt(c.commissionXof)} <span className="text-[11px] font-medium text-ink-500">FCFA /commande</span>
-        </div>
-        {c.availableNow ? (
-          <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Disponible
-          </span>
-        ) : (
-          <span className="text-[11.5px] text-ink-400">Sur réservation</span>
-        )}
+      {/* Prix */}
+      <div className="mt-2 text-[13px] font-bold text-ink-900">
+        {fmt(c.commissionXof)} <span className="text-[11px] font-medium text-ink-500">FCFA /commande</span>
       </div>
 
-      {/* Actions */}
-      <div className="mt-3 flex gap-2">
-        <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2">
-          <MessageCircle className="h-3.5 w-3.5" />
-          Contacter
-        </button>
-        <Link
-          href={`/marketplace/closeurs/${c.slug}`}
-          className="flex flex-1 items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-        >
-          Voir le profil
-        </Link>
-      </div>
+      {/* Action — le contact passe par le profil */}
+      <Link
+        href={`/marketplace/closeurs/${c.slug}`}
+        className="mt-3 flex w-full items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+      >
+        Voir le profil
+      </Link>
     </div>
   );
 }

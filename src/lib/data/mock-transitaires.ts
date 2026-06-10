@@ -365,11 +365,23 @@ const COUNTRIES_SERVED: Record<string, number> = {
   "shenzhen-tech-logistics": 7,
 };
 
+/** Expéditions traitées via Kamoo (tri « Commandes traitées »). */
+const ORDERS_HANDLED: Record<string, number> = {
+  "trust-transit-services": 1840,
+  "liang-wei-trading": 3260,
+  "pearl-river-logistics": 2120,
+  "shanghai-express-cargo": 1430,
+  "yiwu-global-freight": 1980,
+  "hong-kong-cargo-pro": 1610,
+  "shenzhen-tech-logistics": 740,
+};
+
 export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => ({
   ...t,
   coverImageUrl: `/transitaires/${t.slug}.jpg`,
   logoImageUrl: undefined,
   countriesServed: COUNTRIES_SERVED[t.slug] ?? 10,
+  ordersHandled: ORDERS_HANDLED[t.slug] ?? 1000,
   ...EXTRA[t.slug],
 }));
 

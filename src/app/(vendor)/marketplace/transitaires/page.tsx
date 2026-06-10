@@ -5,72 +5,50 @@ import {
   BadgeCheck,
   Check,
   ChevronDown,
-  Headphones,
-  MapPin,
-  Scale,
   Search,
   ShieldCheck,
-  Ship,
   Star,
-  Tag,
   Users,
-  Wallet,
-  X,
 } from "lucide-react";
 import { TransitaireCard } from "@/components/kamoo/transitaire-card";
 import { MOCK_TRANSITAIRES } from "@/lib/data/mock-transitaires";
-import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
+import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { cn } from "@/lib/utils";
 
-type SortKey = "rating" | "reviews" | "ontime" | "price" | "fastest";
+type SortKey = "rating" | "reviews" | "price" | "orders";
 
 const SORT_LABELS: Record<SortKey, string> = {
   rating: "Meilleure note",
   reviews: "Plus d'avis",
-  ontime: "Plus fiable",
   price: "Tarif le plus bas",
-  fastest: "Plus rapide",
+  orders: "Commandes traitées",
 };
-
-const MODES: TransportMode[] = ["air_express", "air_standard", "sea"];
 
 function minPrice(t: Transitaire): number {
   return Math.min(...t.modes.map((m) => m.fromXof));
-}
-function minDelayDays(t: Transitaire): number {
-  return Math.min(
-    ...t.modes.map((m) => {
-      const n = m.delay.match(/\d+/);
-      return n ? parseInt(n[0], 10) : 999;
-    }),
-  );
 }
 
 export default function MarketplaceTransitairesPage() {
   const all = MOCK_TRANSITAIRES;
 
   const [search, setSearch] = useState("");
-  const [specialty, setSpecialty] = useState<string>("all");
-  const [mode, setMode] = useState<"all" | TransportMode>("all");
-  const [city, setCity] = useState<string>("all");
-  const [payment, setPayment] = useState<"all" | "upfront" | "on_arrival">("all");
   const [minRating, setMinRating] = useState(0);
   const [certifiedOnly, setCertifiedOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("rating");
   const [open, setOpen] = useState<string | null>(null);
+  const [saved, setSaved] = useSessionStorageState<string[]>(
+    "marketplace.transitaires.saved",
+    [],
+  );
 
-  const specialties = useMemo(
-    () => Array.from(new Set(all.flatMap((t) => t.specialties))).sort((a, b) => a.localeCompare(b)),
-    [all],
-  );
-  const cities = useMemo(
-    () => Array.from(new Set(all.map((t) => t.city))).sort((a, b) => a.localeCompare(b)),
-    [all],
-  );
+  const toggleSaved = (slug: string) =>
+    setSaved(saved.includes(slug) ? saved.filter((s) => s !== slug) : [...saved, slug]);
 
   const filtered = useMemo(() => {
     const list = all.filter((t) => {
+      if (certifiedOnly && t.status !== "certified") return false;
+      if (t.rating < minRating) return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
@@ -81,56 +59,32 @@ export default function MarketplaceTransitairesPage() {
         )
           return false;
       }
-      if (specialty !== "all" && !t.specialties.includes(specialty)) return false;
-      if (mode !== "all" && !t.modes.some((m) => m.mode === mode)) return false;
-      if (city !== "all" && t.city !== city) return false;
-      if (payment !== "all" && t.paymentPolicy !== payment) return false;
-      if (certifiedOnly && t.status !== "certified") return false;
-      if (t.rating < minRating) return false;
       return true;
     });
-    return [...list].sort((a, b) => {
+    const sorted = [...list].sort((a, b) => {
       switch (sortBy) {
         case "reviews":
           return b.reviewsCount - a.reviewsCount;
-        case "ontime":
-          return (b.onTimePct ?? 0) - (a.onTimePct ?? 0);
         case "price":
           return minPrice(a) - minPrice(b);
-        case "fastest":
-          return minDelayDays(a) - minDelayDays(b);
+        case "orders":
+          return (b.ordersHandled ?? 0) - (a.ordersHandled ?? 0);
         case "rating":
         default:
           return b.rating - a.rating;
       }
     });
-  }, [all, search, specialty, mode, city, payment, certifiedOnly, minRating, sortBy]);
+    // Les transitaires enregistrés remontent en tête de liste.
+    return [...sorted.filter((t) => saved.includes(t.slug)), ...sorted.filter((t) => !saved.includes(t.slug))];
+  }, [all, search, certifiedOnly, minRating, sortBy, saved]);
 
-  const filtersActive =
-    search.trim() !== "" ||
-    specialty !== "all" ||
-    mode !== "all" ||
-    city !== "all" ||
-    payment !== "all" ||
-    certifiedOnly ||
-    minRating > 0;
+  const filtersActive = search.trim() !== "" || certifiedOnly || minRating > 0;
 
   function reset() {
     setSearch("");
-    setSpecialty("all");
-    setMode("all");
-    setCity("all");
-    setPayment("all");
     setMinRating(0);
     setCertifiedOnly(false);
   }
-
-  const ratingOptions = [
-    { v: 0, label: "Toutes les notes" },
-    { v: 4.0, label: "4,0 et +" },
-    { v: 4.5, label: "4,5 et +" },
-    { v: 4.8, label: "4,8 et +" },
-  ];
 
   return (
     <div className="min-h-full bg-paper">
@@ -171,7 +125,7 @@ export default function MarketplaceTransitairesPage() {
       <div className="mx-auto max-w-[1320px] px-6 py-6">
         {/* BARRE DE FILTRES */}
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-2 shadow-kamoo-sm">
-          <div className="relative min-w-[180px] flex-1">
+          <div className="relative min-w-[200px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
             <input
               type="search"
@@ -182,40 +136,22 @@ export default function MarketplaceTransitairesPage() {
             />
           </div>
 
-          <Select id="spec" icon={Tag} label="Spécialité" value={specialty === "all" ? null : specialty} open={open} setOpen={setOpen}>
-            <Opt active={specialty === "all"} onClick={() => { setSpecialty("all"); setOpen(null); }}>Toutes les spécialités</Opt>
+          <Select
+            id="note"
+            icon={Star}
+            label="Note"
+            value={minRating === 0 ? null : `Au moins ${minRating}`}
+            open={open}
+            setOpen={setOpen}
+          >
+            <Opt active={minRating === 0} onClick={() => { setMinRating(0); setOpen(null); }}>Toutes les notes</Opt>
             <div className="my-1 h-px bg-line" />
-            {specialties.map((s) => (
-              <Opt key={s} active={specialty === s} onClick={() => { setSpecialty(s); setOpen(null); }}>{s}</Opt>
-            ))}
-          </Select>
-
-          <Select id="mode" icon={Ship} label="Mode" value={mode === "all" ? null : TRANSPORT_MODE_LABELS[mode]} open={open} setOpen={setOpen}>
-            <Opt active={mode === "all"} onClick={() => { setMode("all"); setOpen(null); }}>Tous les modes</Opt>
-            <div className="my-1 h-px bg-line" />
-            {MODES.map((m) => (
-              <Opt key={m} active={mode === m} onClick={() => { setMode(m); setOpen(null); }}>{TRANSPORT_MODE_LABELS[m]}</Opt>
-            ))}
-          </Select>
-
-          <Select id="city" icon={MapPin} label="Hub Chine" value={city === "all" ? null : city} open={open} setOpen={setOpen}>
-            <Opt active={city === "all"} onClick={() => { setCity("all"); setOpen(null); }}>Tous les hubs</Opt>
-            <div className="my-1 h-px bg-line" />
-            {cities.map((c) => (
-              <Opt key={c} active={city === c} onClick={() => { setCity(c); setOpen(null); }}>{c}</Opt>
-            ))}
-          </Select>
-
-          <Select id="pay" icon={Wallet} label="Paiement" value={payment === "all" ? null : payment === "upfront" ? "À l'avance" : "À l'arrivée"} open={open} setOpen={setOpen}>
-            <Opt active={payment === "all"} onClick={() => { setPayment("all"); setOpen(null); }}>Toutes modalités</Opt>
-            <div className="my-1 h-px bg-line" />
-            <Opt active={payment === "on_arrival"} onClick={() => { setPayment("on_arrival"); setOpen(null); }}>Paiement à l&apos;arrivée</Opt>
-            <Opt active={payment === "upfront"} onClick={() => { setPayment("upfront"); setOpen(null); }}>Paiement à l&apos;avance</Opt>
-          </Select>
-
-          <Select id="note" icon={Star} label="Note" value={minRating === 0 ? null : `${minRating.toString().replace(".", ",")}+`} open={open} setOpen={setOpen}>
-            {ratingOptions.map((o) => (
-              <Opt key={o.v} active={minRating === o.v} onClick={() => { setMinRating(o.v); setOpen(null); }}>{o.label}</Opt>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Opt key={n} active={minRating === n} onClick={() => { setMinRating(n); setOpen(null); }}>
+                <span className="inline-flex items-center gap-1.5">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Au moins {n}
+                </span>
+              </Opt>
             ))}
           </Select>
 
@@ -238,7 +174,6 @@ export default function MarketplaceTransitairesPage() {
               onClick={reset}
               className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[12.5px] font-semibold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50"
             >
-              <X className="h-3.5 w-3.5" />
               Effacer
             </button>
           )}
@@ -264,7 +199,12 @@ export default function MarketplaceTransitairesPage() {
         {filtered.length > 0 ? (
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((t) => (
-              <TransitaireCard key={t.id} transitaire={t} />
+              <TransitaireCard
+                key={t.id}
+                transitaire={t}
+                saved={saved.includes(t.slug)}
+                onToggleSave={() => toggleSaved(t.slug)}
+              />
             ))}
           </div>
         ) : (
@@ -277,19 +217,6 @@ export default function MarketplaceTransitairesPage() {
             </button>
           </div>
         )}
-
-        {/* BANDEAU DE CONFIANCE */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 rounded-xl border border-line bg-white px-6 py-4 text-[12.5px] font-medium text-ink-600">
-          <span className="inline-flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Paiements sécurisés via Kamoo
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <Scale className="h-4 w-4 text-kamoo-blue-700" /> Litiges traités par notre équipe
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <Headphones className="h-4 w-4 text-kamoo-orange-500" /> Service client dédié 7j/7
-          </span>
-        </div>
       </div>
     </div>
   );

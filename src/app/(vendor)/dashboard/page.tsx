@@ -137,11 +137,11 @@ export default function DashboardPage() {
       const t = new Date(iso).getTime();
       return bounds.findIndex((b) => t >= b.start && t < b.end);
     };
-    for (const a of MOCK_CLOSING_ASSIGNMENTS) {
-      if (a.delivery?.progress === "effectue" && a.delivery.deliveredAt) {
-        const idx = findBucket(a.delivery.deliveredAt);
-        if (idx >= 0) buckets[idx].in += a.delivery.amountCollected ?? orderTotalXof(a);
-      }
+    // Encaissements = mouvements finance (fixtures dérivées + historique 12 mois)
+    for (const m of MOCK_FINANCE_MOVEMENTS) {
+      if (m.type !== "vente_encaissee") continue;
+      const idx = findBucket(m.date);
+      if (idx >= 0) buckets[idx].in += m.amountXof;
     }
     return buckets;
   }, [bucketing, chartEndDate]);
@@ -401,8 +401,9 @@ function computeDashboardData(args: {
     aPayerMvts.map((m) => m.partner?.ref ?? m.partner?.name).filter((x): x is string => !!x),
   ).size;
 
-  const nbLivre = MOCK_CLOSING_ASSIGNMENTS.filter(
-    (a) => a.delivery?.progress === "effectue" && inRange(a.delivery.deliveredAt),
+  // 1 vente encaissée = 1 commande livrée (fixtures dérivées + historique)
+  const nbLivre = MOCK_FINANCE_MOVEMENTS.filter(
+    (m) => m.type === "vente_encaissee" && inRange(m.date),
   ).length;
 
   /* Période précédente → deltas */
@@ -431,8 +432,8 @@ function computeDashboardData(args: {
       sumPrev("frais_livreur") -
       sumPrev("frais_transit");
     margeNettePrev = margeBrutePrev - sumPrev("depense_pub");
-    nbLivrePrev = MOCK_CLOSING_ASSIGNMENTS.filter(
-      (a) => a.delivery?.progress === "effectue" && inPrev(a.delivery.deliveredAt),
+    nbLivrePrev = MOCK_FINANCE_MOVEMENTS.filter(
+      (m) => m.type === "vente_encaissee" && inPrev(m.date),
     ).length;
   }
 
@@ -457,6 +458,21 @@ function computeDashboardData(args: {
       cur.ca += item.quantity * item.unitPriceXof;
       salesByProductPeriod.set(item.productId, cur);
     }
+  }
+  // + ventes issues du livre de comptes (historique mensuel lissé + ventes
+  // récentes). Les fixtures (orderId "ORD-…") sont déjà comptées via les
+  // assignments ci-dessus → exclues pour éviter le double comptage. La
+  // quantité est estimée depuis le prix unitaire du produit.
+  for (const m of MOCK_FINANCE_MOVEMENTS) {
+    if (m.type !== "vente_encaissee" || !m.productId) continue;
+    if (m.orderId?.startsWith("ORD-")) continue;
+    if (!inRange(m.date)) continue;
+    const price = MOCK_PRODUITS.find((p) => p.id === m.productId)?.priceXof;
+    const qty = price ? Math.max(1, Math.round(m.amountXof / price)) : 1;
+    const cur = salesByProductPeriod.get(m.productId) ?? { sales: 0, ca: 0 };
+    cur.sales += qty;
+    cur.ca += m.amountXof;
+    salesByProductPeriod.set(m.productId, cur);
   }
 
   /* Recent ops */

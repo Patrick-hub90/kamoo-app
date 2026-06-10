@@ -109,7 +109,7 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-600">{l.bio}</p>
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4 sm:grid-cols-4">
               <Stat icon={CheckCircle2} tone="bg-emerald-50 text-emerald-700" value={`${l.kpi.deliverySuccessRate}%`} label="Taux de réussite" />
-              <Stat icon={Clock} tone="bg-kamoo-orange-50 text-kamoo-orange-600" value={`${l.kpi.avgDeliveryMin} min`} label="Délai moyen" />
+              <Stat icon={Clock} tone="bg-kamoo-orange-50 text-kamoo-orange-600" value={`${l.kpi.avgDeliveryMin} min`} label="Délai de réponse" />
               <Stat icon={Package} tone="bg-kamoo-blue-50 text-kamoo-blue-700" value={fmt(l.kpi.deliveriesHandled)} label="Livraisons" />
               <Stat icon={Users} tone="bg-purple-50 text-purple-700" value={String(l.activePartners)} label="Partenaires actifs" />
             </div>
@@ -205,7 +205,7 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
               <h3 className="mb-3 text-[13px] font-bold text-ink-900">En bref</h3>
               <div className="flex flex-col gap-3 text-[12.5px]">
                 <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Taux de réussite" value={`${l.kpi.deliverySuccessRate}%`} />
-                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Délai moyen" value={`${l.kpi.avgDeliveryMin} min`} />
+                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Délai de réponse" value={`${l.kpi.avgDeliveryMin} min`} />
                 <BriefRow icon={Calendar} tone="text-kamoo-blue-700" label="Ancienneté" value={`${l.kpi.monthsOnPlatform} mois`} />
                 <BriefRow icon={MapPin} tone="text-purple-700" label="Zone principale" value={`${l.city}, ${COUNTRY[l.countryCode] ?? l.countryCode}`} />
               </div>

@@ -68,6 +68,8 @@ export type Transitaire = {
   exampleRoutes?: { label: string; delay: string }[];
   /** Nombre de pays de destination desservis (Afrique) */
   countriesServed?: number;
+  /** Nombre total d'expéditions/commandes traitées via Kamoo */
+  ordersHandled?: number;
   /** Avis vendeurs (max 5 affichés sur le profil, lien vers tous) */
   reviews: Review[];
 };

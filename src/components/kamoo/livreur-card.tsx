@@ -47,11 +47,11 @@ export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
             <MapPin className="h-3 w-3 shrink-0" />
             {l.city}, {COUNTRY[l.countryCode] ?? l.countryCode}
           </div>
-        </div>
-        <div className="ml-auto inline-flex shrink-0 items-center gap-1 text-[12px]">
-          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-          <b className="text-ink-900">{l.rating}</b>
-          <span className="text-ink-500">({l.reviewsCount})</span>
+          <div className="mt-1 inline-flex items-center gap-1 text-[12px]">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <b className="text-ink-900">{l.rating}</b>
+            <span className="text-ink-500">({l.reviewsCount} avis)</span>
+          </div>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
       {/* Stats */}
       <div className="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper-2/40 py-2.5 text-center">
         <Stat value={`${l.kpi.deliverySuccessRate}%`} label="Réussite" />
-        <Stat value={`${l.kpi.avgDeliveryMin} min`} label="Délai moyen" />
+        <Stat value={`${l.kpi.avgDeliveryMin} min`} label="Délai de réponse" />
         <Stat value={fmt(l.kpi.deliveriesHandled)} label="Livraisons" />
       </div>
 
@@ -73,19 +73,13 @@ export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
         <span className="font-semibold text-ink-900">dès {fmt(minPrice)} <span className="text-[10px] font-medium text-ink-500">F CFA</span></span>
       </div>
 
-      {/* Actions */}
-      <div className="mt-3 flex gap-2">
-        <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2">
-          <MessageCircle className="h-3.5 w-3.5" />
-          Contacter
-        </button>
-        <Link
-          href={`/marketplace/livreurs/${l.slug}`}
-          className="flex flex-1 items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-        >
-          Voir le profil
-        </Link>
-      </div>
+      {/* Action — le contact passe par le profil */}
+      <Link
+        href={`/marketplace/livreurs/${l.slug}`}
+        className="mt-3 flex w-full items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+      >
+        Voir le profil
+      </Link>
     </div>
   );
 }

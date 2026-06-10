@@ -53,10 +53,8 @@ export default function MarketplaceCloseursPage() {
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("all");
   const [lang, setLang] = useState("all");
-  const [skill, setSkill] = useState("all");
   const [status, setStatus] = useState<StatusKey>("all");
   const [minRating, setMinRating] = useState(0);
-  const [availableNow, setAvailableNow] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("rating");
   const [open, setOpen] = useState<string | null>(null);
 
@@ -64,8 +62,6 @@ export default function MarketplaceCloseursPage() {
     const list = all.filter((c) => {
       if (country !== "all" && c.countryCode !== country) return false;
       if (lang !== "all" && !c.languages.some((l) => l.code === lang)) return false;
-      if (skill !== "all" && !c.skills?.includes(skill)) return false;
-      if (availableNow && !c.availableNow) return false;
       if (minRating > 0 && c.rating < minRating) return false;
       if (status !== "all") {
         if (status === "verified" && c.status !== "certified") return false;
@@ -97,18 +93,12 @@ export default function MarketplaceCloseursPage() {
           return b.rating - a.rating || b.reviewsCount - a.reviewsCount;
       }
     });
-  }, [all, country, lang, skill, status, minRating, availableNow, search, sortBy]);
+  }, [all, country, lang, status, minRating, search, sortBy]);
 
-  const filtersActive = !!search || country !== "all" || lang !== "all" || skill !== "all" || status !== "all" || minRating > 0 || availableNow;
+  const filtersActive = !!search || country !== "all" || lang !== "all" || status !== "all" || minRating > 0;
   function reset() {
-    setSearch(""); setCountry("all"); setLang("all"); setSkill("all"); setStatus("all"); setMinRating(0); setAvailableNow(false);
+    setSearch(""); setCountry("all"); setLang("all"); setStatus("all"); setMinRating(0);
   }
-
-  const ratingOptions = [
-    { v: 0, label: "Toutes les notes" },
-    { v: 4.5, label: "4,5 et +" },
-    { v: 4.8, label: "4,8 et +" },
-  ];
 
   return (
     <div className="min-h-full bg-paper">
@@ -159,31 +149,19 @@ export default function MarketplaceCloseursPage() {
             {languages.map((l) => <Opt key={l.code} active={lang === l.code} onClick={() => { setLang(l.code); setOpen(null); }}>{l.name}</Opt>)}
           </Select>
 
-          <Select id="skill" icon={Tag} label="Spécialité" value={skill === "all" ? null : skill} open={open} setOpen={setOpen}>
-            <Opt active={skill === "all"} onClick={() => { setSkill("all"); setOpen(null); }}>Toutes les spécialités</Opt>
-            <div className="my-1 h-px bg-line" />
-            {CLOSEUSE_SKILLS.map((s) => <Opt key={s} active={skill === s} onClick={() => { setSkill(s); setOpen(null); }}>{s}</Opt>)}
-          </Select>
-
           <Select id="status" icon={BadgeCheck} label="Statut" value={status === "all" ? null : STATUS_LABELS[status]} open={open} setOpen={setOpen}>
             {(Object.keys(STATUS_LABELS) as StatusKey[]).map((s) => <Opt key={s} active={status === s} onClick={() => { setStatus(s); setOpen(null); }}>{STATUS_LABELS[s]}</Opt>)}
           </Select>
 
-          <Select id="note" icon={Star} label="Note" value={minRating === 0 ? null : `${minRating.toString().replace(".", ",")}+`} open={open} setOpen={setOpen}>
-            {ratingOptions.map((o) => <Opt key={o.v} active={minRating === o.v} onClick={() => { setMinRating(o.v); setOpen(null); }}>{o.label}</Opt>)}
+          <Select id="note" icon={Star} label="Note" value={minRating === 0 ? null : `Au moins ${minRating}`} open={open} setOpen={setOpen}>
+            <Opt active={minRating === 0} onClick={() => { setMinRating(0); setOpen(null); }}>Toutes les notes</Opt>
+            <div className="my-1 h-px bg-line" />
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Opt key={n} active={minRating === n} onClick={() => { setMinRating(n); setOpen(null); }}>
+                <span className="inline-flex items-center gap-1.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Au moins {n}</span>
+              </Opt>
+            ))}
           </Select>
-
-          <button
-            onClick={() => setAvailableNow((v) => !v)}
-            className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-medium transition",
-              availableNow ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-line bg-white text-ink-700 hover:bg-paper-2",
-            )}
-          >
-            <span className={cn("h-1.5 w-1.5 rounded-full", availableNow ? "bg-emerald-500" : "bg-ink-300")} />
-            Disponible
-            {availableNow && <Check className="h-3 w-3" />}
-          </button>
 
           {filtersActive && (
             <button onClick={reset} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[12.5px] font-semibold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50">
@@ -218,12 +196,6 @@ export default function MarketplaceCloseursPage() {
           </div>
         )}
 
-        {/* BANDEAU DE CONFIANCE */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 rounded-xl border border-line bg-white px-6 py-4 text-[12.5px] font-medium text-ink-600">
-          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-600" /> Paiement sécurisé via Kamoo</span>
-          <span className="inline-flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-kamoo-blue-700" /> Satisfaction garantie</span>
-          <span className="inline-flex items-center gap-2"><Headphones className="h-4 w-4 text-kamoo-orange-500" /> Support client dédié 7j/7</span>
-        </div>
       </div>
     </div>
   );
