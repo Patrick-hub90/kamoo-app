@@ -39,6 +39,8 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
   const [tab, setTab] = useState<TabKey>("vue");
   const [modal, setModal] = useState<"none" | "pay" | "proof" | "proofSent">("none");
   const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [proofFileName, setProofFileName] = useState<string | null>(null);
+  const [proofRef, setProofRef] = useState("");
 
   const isUnpaid = exp.paymentStatus === "unpaid";
   const hasQuote = exp.quote !== null;
@@ -463,21 +465,40 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
           <p className="text-[12.5px] text-ink-500">
             Ajoutez la capture du virement / paiement mobile. Kamoo vérifie et libère l&apos;expédition.
           </p>
-          <label className="mt-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line bg-paper-2/40 px-4 py-8 text-center transition hover:border-kamoo-blue-300 hover:bg-paper-2">
-            <ImageUp className="h-7 w-7 text-ink-400" />
-            <div className="text-[13px] font-semibold text-ink-900">Glissez une image ou cliquez pour téléverser</div>
+          <label
+            className={cn(
+              "mt-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition",
+              proofFileName
+                ? "border-emerald-300 bg-emerald-50/50"
+                : "border-line bg-paper-2/40 hover:border-kamoo-blue-300 hover:bg-paper-2",
+            )}
+          >
+            <ImageUp className={cn("h-7 w-7", proofFileName ? "text-emerald-600" : "text-ink-400")} />
+            <div className="text-[13px] font-semibold text-ink-900">
+              {proofFileName ?? "Glissez une image ou cliquez pour téléverser"}
+            </div>
             <div className="text-[11px] text-ink-400">PNG, JPG · 10 Mo max</div>
-            <input type="file" accept="image/*" className="hidden" />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setProofFileName(e.target.files?.[0]?.name ?? null)}
+            />
           </label>
           <div className="mt-3">
             <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ink-400">
-              Référence de transaction (optionnel)
+              Référence de transaction
             </label>
             <input
               type="text"
+              value={proofRef}
+              onChange={(e) => setProofRef(e.target.value)}
               placeholder="Ex. Wave · TXN-48213"
               className="mt-1 h-10 w-full rounded-lg border border-line bg-white px-3 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
             />
+            <p className="mt-1 text-[10.5px] text-ink-400">
+              Une capture OU une référence est requise pour que Kamoo puisse vérifier.
+            </p>
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <button
@@ -487,11 +508,12 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
               Annuler
             </button>
             <button
+              disabled={!proofFileName && proofRef.trim() === ""}
               onClick={() => {
                 setProofSubmitted(true);
                 setModal("proofSent");
               }}
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800 disabled:opacity-40"
             >
               <Upload className="h-3.5 w-3.5" />
               Envoyer la preuve

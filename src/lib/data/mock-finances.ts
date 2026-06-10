@@ -105,7 +105,7 @@ function nextId(): string {
 /* ─── Numéros wallets/téléphones des partenaires (mock) ─── */
 const PARTNER_PHONES: Record<string, string> = {
   // Closeuse
-  "Aïcha Diop": "+221 77 123 45 67",
+  "Aminata Sène": "+221 77 123 45 67",
   // Transitaires (numéros locaux pour leurs représentants Dakar)
   "Shanghai Express Cargo": "+221 33 821 45 09",
   "Pearl River Logistics": "+221 33 825 11 88",

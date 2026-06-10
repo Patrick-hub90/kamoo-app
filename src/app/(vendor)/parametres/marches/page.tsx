@@ -90,14 +90,16 @@ function MarketRow({ market }: { market: Market }) {
         </div>
       </div>
 
-      <Link
-        href={`/parametres/marches/${market.id}`}
-        className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-bold text-ink-700 hover:border-kamoo-blue-600 hover:text-kamoo-blue-700 sm:ml-0"
+      {/* La page de configuration par marché n'existe pas encore (404) :
+          bouton désactivé avec mention, plutôt qu'un lien cassé. */}
+      <button
+        disabled
+        title="Bientôt disponible"
+        className="ml-auto inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg border border-line bg-paper-2/60 px-3 py-1.5 text-[12px] font-bold text-ink-400 sm:ml-0"
       >
         <Settings2 className="h-3 w-3" />
-        Configurer
-        <ArrowRight className="h-3 w-3" />
-      </Link>
+        Configurer · Bientôt
+      </button>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { shiftToNow } from "@/lib/clock";
 
 export const MOCK_ACTIVE_CLOSEUSE: ActiveCloseuse = {
   id: "cl_aicha",
-  name: "Aïcha Diop",
+  name: "Aminata Sène",
   phone: "+221 77 123 45 67",
   avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
   rating: 4.8,

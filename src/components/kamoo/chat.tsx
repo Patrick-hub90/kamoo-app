@@ -85,10 +85,10 @@ const SEED_CONVERSATIONS: Conversation[] = [
   },
   {
     partner: {
-      id: "closeuse:aicha-diop",
-      name: "Aïcha Diop",
+      id: "closeuse:aminata-sene",
+      name: "Aminata Sène",
       role: "closeuse",
-      photoUrl: "/closeuses/aicha-diop.jpg",
+      photoUrl: "/closeuses/aminata-sene.jpg",
     },
     messages: [
       {
@@ -100,7 +100,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
       {
         id: "c2",
         from: "me",
-        text: "Parfait, je préviens le livreur. Merci Aïcha 🙏",
+        text: "Parfait, je préviens le livreur. Merci Aminata 🙏",
         at: shiftToNow("2026-05-04T10:22:00Z"),
       },
     ],

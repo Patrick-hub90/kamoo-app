@@ -171,10 +171,10 @@ function OrderHeader({
           <button
             onClick={() =>
               openChat({
-                id: "closeuse:aicha-diop",
+                id: "closeuse:aminata-sene",
                 name: MOCK_ACTIVE_CLOSEUSE.name,
                 role: "closeuse",
-                photoUrl: "/closeuses/aicha-diop.jpg",
+                photoUrl: "/closeuses/aminata-sene.jpg",
               })
             }
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
@@ -505,11 +505,8 @@ export function OrderDetailView({ a, backHref, fullWidth = false }: Props) {
                         : "En course"}
                   </span>
                 </div>
-                <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
-                  <Field label="Téléphone">
-                    <span className="font-mono-kamoo">{a.delivery.phone}</span>
-                  </Field>
-                </div>
+                {/* Pas de téléphone : les partenaires Kamoo se contactent
+                    exclusivement via le chat in-app. */}
                 <button
                   onClick={() =>
                     a.delivery &&

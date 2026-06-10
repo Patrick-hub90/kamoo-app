@@ -263,7 +263,7 @@ export default function FinancesOverviewPage() {
             icon={<ArrowDownRight className="h-4 w-4" />}
             tone="orange"
             highlight={lifetimeStats.soldeDu > 0}
-            badge
+            badge={lifetimeStats.soldeDu > 0}
           />
         </div>
 
@@ -272,7 +272,7 @@ export default function FinancesOverviewPage() {
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="font-display text-lg font-extrabold text-ink-900">
-                Chiffre d&apos;affaire
+                Flux de trésorerie
               </h2>
               <p className="mt-0.5 text-[12.5px] text-ink-500">
                 {bucketingSubtitle(granularity, count)}

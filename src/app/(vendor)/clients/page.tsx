@@ -30,6 +30,7 @@ import {
   getInitials,
   getWhatsappLink,
   SEGMENT_LABELS,
+  SEGMENT_TONE,
   type Client,
   type ClientSegment,
 } from "@/lib/types/client";
@@ -53,19 +54,22 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: "name", label: "Nom A → Z" },
 ];
 
-/* Pastille segment — sobre, pastel. */
-const SEG_PILL: Record<ClientSegment, string> = {
-  fidele: "bg-emerald-50 text-emerald-700",
-  nouveau: "bg-kamoo-blue-50 text-kamoo-blue-700",
-  prospect: "bg-ink-100 text-ink-500",
-};
+/* Pastille segment — dérivée du tone partagé SEGMENT_TONE (mêmes couleurs
+ * que la page détail client : un segment = une couleur, partout). */
+const SEG_PILL: Record<ClientSegment, string> = Object.fromEntries(
+  (Object.keys(SEGMENT_TONE) as ClientSegment[]).map((k) => [
+    k,
+    `${SEGMENT_TONE[k].bg} ${SEGMENT_TONE[k].fg}`,
+  ]),
+) as Record<ClientSegment, string>;
 
 function formatRelative(iso: string): string {
   const d = new Date(iso);
   const days = Math.floor((Date.now() - d.getTime()) / 86400000);
   if (days <= 0) return "Aujourd'hui";
   if (days === 1) return "Hier";
-  if (days < 30) return `Il y a ${Math.floor(days / 7) || 1} sem.`;
+  if (days < 7) return `Il y a ${days} j`;
+  if (days < 30) return `Il y a ${Math.floor(days / 7)} sem.`;
   if (days < 365) return `Il y a ${Math.floor(days / 30)} mois`;
   return `Il y a ${Math.floor(days / 365)} an${Math.floor(days / 365) > 1 ? "s" : ""}`;
 }
@@ -326,7 +330,7 @@ function ClientDetail({ client: c, onClose }: { client: Client; onClose: () => v
       <div className="flex flex-col gap-2.5 border-b border-line p-4 text-[12.5px]">
         <DetailRow label="Client depuis" value={new Date(c.firstOrderDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} />
         <DetailRow label="Source" value={CHANNEL_LABELS[c.acquisitionChannel]} />
-        <DetailRow label="Taux de réachat" value={`${deliveryRate(c)}%`} />
+        <DetailRow label="Taux de livraison" value={`${deliveryRate(c)}%`} />
       </div>
 
       {/* Produits préférés */}

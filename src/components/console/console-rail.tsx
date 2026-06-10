@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { MARKET_STATUS_LABELS, MARKET_STATUS_TONE } from "@/lib/types/market";
+import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 
 /**
  * ConsoleRail — sidebar NAVY fixe 248px (identité validée).
@@ -81,7 +82,7 @@ const SECTIONS: Section[] = [
   {
     label: "Mon activité",
     items: [
-      { href: "/expeditions", label: "Expéditions", icon: Package, badge: 12 },
+      { href: "/expeditions", label: "Expéditions", icon: Package, badge: MOCK_EXPEDITIONS.filter((e) => e.status !== "arrived_destination").length },
       { href: "/boutique", label: "Catalogue", icon: ShoppingBag },
       { href: "/clients", label: "Clients", icon: Users },
       { href: "/closing", label: "Closing", icon: Phone },
@@ -167,7 +168,7 @@ export function ConsoleRail({
       >
         {/* Logo */}
         <div className="flex h-[68px] items-center px-5">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
             <svg width={30} height={30} viewBox="0 0 40 40" fill="none" aria-label="Kamoo">
               <rect width="40" height="40" rx="10" fill="#ffffff" fillOpacity="0.12" />
               <path

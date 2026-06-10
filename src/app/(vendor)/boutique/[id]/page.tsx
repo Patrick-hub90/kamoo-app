@@ -190,9 +190,12 @@ export default async function ProduitDetailPage({ params }: PageProps) {
                       <span className="font-bold">Marge non calculée.</span>{" "}
                       Renseignez votre prix d&apos;achat moyen, ou créez une
                       expédition avec coût pour le calcul automatique.{" "}
-                      <button className="font-bold text-amber-900 underline hover:text-amber-700">
+                      <Link
+                        href={`/boutique/${p.id}/edit`}
+                        className="font-bold text-amber-900 underline hover:text-amber-700"
+                      >
                         Ajouter le prix d&apos;achat
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 )}

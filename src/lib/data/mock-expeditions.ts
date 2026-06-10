@@ -1,4 +1,5 @@
 import type { Expedition } from "@/lib/types/expedition";
+import { shiftToNow } from "@/lib/clock";
 
 /**
  * Données mockées pour les expéditions — usage UI uniquement.
@@ -36,7 +37,7 @@ const TRANSITAIRES = {
   },
 };
 
-export const MOCK_EXPEDITIONS: Expedition[] = [
+const RAW_EXPEDITIONS: Expedition[] = [
   {
     id: "exp_01",
     publicCode: "KMO-SN-78421",
@@ -152,6 +153,16 @@ export const MOCK_EXPEDITIONS: Expedition[] = [
     action: null,
   },
 ];
+
+/**
+ * Export public : les createdAt legacy (ancrés oct-nov 2025) sont recalés
+ * sur aujourd'hui (même écart relatif) pour que les filtres de période
+ * fonctionnent en permanence. Les `eta` restent des libellés d'affichage.
+ */
+export const MOCK_EXPEDITIONS: Expedition[] = RAW_EXPEDITIONS.map((e) => ({
+  ...e,
+  createdAt: shiftToNow(e.createdAt),
+}));
 
 export function computeListStats(expeditions: Expedition[]) {
   const total = expeditions.length;

@@ -406,7 +406,7 @@ export default function BoutiquePage() {
             <p className="mt-1 max-w-sm text-[13px] text-ink-500">
               {search ? `Aucun résultat pour « ${search} ».` : "Aucun produit ne correspond à vos filtres."}
             </p>
-            {filtersActive && (
+            {filtersActive ? (
               <button
                 onClick={() => {
                   setSearch("");
@@ -418,6 +418,14 @@ export default function BoutiquePage() {
               >
                 Réinitialiser les filtres
               </button>
+            ) : (
+              <Link
+                href="/boutique/nouveau"
+                className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter votre premier produit
+              </Link>
             )}
           </div>
         ) : (

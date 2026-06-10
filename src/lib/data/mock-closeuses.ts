@@ -7,12 +7,11 @@ import type { Closeuse } from "@/lib/types/closeuse";
  */
 const RAW_CLOSEUSES: Closeuse[] = [
   {
-    slug: "aicha-diop",
-    name: "Aïcha Diop",
+    slug: "aminata-sene",
+    name: "Aminata Sène",
     gender: "F",
-    initials: "AD",
+    initials: "AS",
     avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
-    photoUrl: "/closeuses/aicha-diop.webp",
     city: "Dakar",
     countryCode: "SN",
     countryFlag: "🇸🇳",
@@ -32,7 +31,7 @@ const RAW_CLOSEUSES: Closeuse[] = [
         vendorCountryCode: "SN",
         rating: 5,
         comment:
-          "Aïcha a sauvé mon shop. Taux de confirmation passé de 50 à 85% en 2 mois.",
+          "Aminata a sauvé mon shop. Taux de confirmation passé de 50 à 85% en 2 mois.",
         at: "2026-04-15T10:00:00Z",
       },
       {
@@ -404,7 +403,7 @@ const RAW_CLOSEUSES: Closeuse[] = [
  * /public/closeuses/{slug}.jpg.
  */
 const EXTRA: Record<string, { skills: string[]; availableNow: boolean }> = {
-  "aicha-diop": { skills: ["Télévente B2C", "Prise de RDV"], availableNow: true },
+  "aminata-sene": { skills: ["Télévente B2C", "Prise de RDV"], availableNow: true },
   "moussa-fall": { skills: ["Télévente B2C", "Relance & Fidélisation"], availableNow: false },
   "fatou-niang": { skills: ["Relance & Fidélisation", "SAV & Support"], availableNow: true },
   "babacar-sow": { skills: ["Télévente B2C"], availableNow: true },

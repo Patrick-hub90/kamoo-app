@@ -3,6 +3,7 @@ import type {
   Dispute,
   Versement,
 } from "@/lib/types/finance";
+import { shiftToNow } from "@/lib/clock";
 
 /**
  * Réglage vendeur — mode de versement choisi.
@@ -31,7 +32,7 @@ export const MOCK_VENDOR_CASH_FLOW_MODEL: CashFlowModel = "direct";
  *
  * Dates récentes (~mai 2026) cohérentes avec MOCK_TODAY.
  */
-export const MOCK_VERSEMENTS: Versement[] = [
+const RAW_VERSEMENTS: Versement[] = [
   // ── Versements en attente de validation (action requise) ──
   // Variété de cas pour tester l'UI : différents wallets, avec/sans capture,
   // avec/sans ID transaction, montants variés, heures variées, multi-versements
@@ -187,7 +188,7 @@ export const MOCK_VERSEMENTS: Versement[] = [
  * Disputes mock — minimal : juste l'objet, le montant si pertinent, les parties.
  * Pas de longue description — en prod c'est généré automatiquement par l'app.
  */
-export const MOCK_DISPUTES: Dispute[] = [
+const RAW_DISPUTES: Dispute[] = [
   {
     id: "dsp_001",
     type: "versement_partiel",
@@ -208,6 +209,18 @@ export const MOCK_DISPUTES: Dispute[] = [
     createdAt: "2026-05-02T19:00:00Z",
   },
 ];
+
+/** Exports publics : dates legacy recalées sur aujourd'hui (cf. lib/clock). */
+export const MOCK_VERSEMENTS: Versement[] = RAW_VERSEMENTS.map((v) => ({
+  ...v,
+  date: shiftToNow(v.date),
+  validatedAt: v.validatedAt ? shiftToNow(v.validatedAt) : undefined,
+}));
+
+export const MOCK_DISPUTES: Dispute[] = RAW_DISPUTES.map((d) => ({
+  ...d,
+  createdAt: shiftToNow(d.createdAt),
+}));
 
 export function getVersementById(id: string): Versement | undefined {
   return MOCK_VERSEMENTS.find((v) => v.id === id);

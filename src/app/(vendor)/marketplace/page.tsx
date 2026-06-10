@@ -1,11 +1,6 @@
-import { StubPage } from "@/components/kamoo/stub-page";
+import { redirect } from "next/navigation";
 
+/** /marketplace n'a pas de contenu propre : on atterrit sur les transitaires. */
 export default function MarketplaceOverviewPage() {
-  return (
-    <StubPage
-      title="Marketplace"
-      subtitle="Découvre les transitaires, closeurs et livreurs partenaires de Kamoo."
-      emoji="🛒"
-    />
-  );
+  redirect("/marketplace/transitaires");
 }
