@@ -19,14 +19,22 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+import { useChat } from "@/components/kamoo/chat";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
 
 export function TransitaireProfileView({ transitaire: t }: { transitaire: Transitaire }) {
+  const { openChat } = useChat();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
   const firstName = t.name.split(" ")[0];
+  const chatPartner = {
+    id: `transitaire:${t.slug}`,
+    name: t.name,
+    role: "transitaire" as const,
+    avatarBg: t.avatarBg,
+  };
 
   return (
     <div className="min-h-full bg-paper">
@@ -167,7 +175,10 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
               <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600">
                 Choisir ce transitaire
               </button>
-              <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2">
+              <button
+                onClick={() => openChat(chatPartner)}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+              >
                 <MessageCircle className="h-3.5 w-3.5" />
                 Discuter avant de décider
               </button>

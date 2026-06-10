@@ -21,6 +21,7 @@ import {
   Truck,
   Users,
 } from "lucide-react";
+import { useChat } from "@/components/kamoo/chat";
 import { ALL_DAYS } from "@/lib/types/closeuse";
 import { LIVREUR_TYPE_LABELS, type Livreur } from "@/lib/types/livreur";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,15 @@ function formatHour(hhmm: string) {
 }
 
 export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
+  const { openChat } = useChat();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
+  const chatPartner = {
+    id: `livreur:${l.slug}`,
+    name: l.name,
+    role: "livreur" as const,
+    photoUrl: l.photoUrl,
+    avatarBg: l.avatarBg,
+  };
   const isAgence = l.type === "agence";
   const cta = isAgence ? l.name : l.name.split(" ")[0];
   const minPrice = Math.min(...l.zones.map((z) => z.priceXof));
@@ -189,7 +198,10 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
               <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600">
                 Choisir ce livreur
               </button>
-              <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2">
+              <button
+                onClick={() => openChat(chatPartner)}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+              >
                 <MessageCircle className="h-3.5 w-3.5" />
                 Discuter avant de décider
               </button>

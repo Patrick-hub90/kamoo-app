@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ConsoleRail } from "@/components/console/console-rail";
+import { ChatProvider } from "@/components/kamoo/chat";
+import { GlobalSearch } from "@/components/kamoo/global-search";
 import { Topbar } from "@/components/layout/topbar";
 import { TopbarSlotProvider } from "@/components/layout/topbar-slot";
 
@@ -47,10 +49,14 @@ export default function VendorLayout({
   }, [mobileOpen]);
 
   return (
+    <ChatProvider>
     <div
       className="flex h-screen w-full min-w-[1100px] bg-paper"
       suppressHydrationWarning
     >
+      {/* Recherche globale (Ctrl+K) — montée une seule fois pour toute l'app */}
+      <GlobalSearch />
+
       {/* ConsoleRail — slim 72px ≥ lg (expand 240px au hover), drawer < lg */}
       <ConsoleRail
         mobileOpen={mobileOpen}
@@ -77,5 +83,6 @@ export default function VendorLayout({
         </div>
       </TopbarSlotProvider>
     </div>
+    </ChatProvider>
   );
 }

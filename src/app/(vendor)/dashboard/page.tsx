@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { Bell } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import {
   KpiRow,
   CaChart,
@@ -63,6 +63,15 @@ export default function DashboardPage() {
   const { products: liveProducts } = useProductsState();
   const searchParams = useSearchParams();
   void searchParams; // réservé (deep-link période à venir)
+  const router = useRouter();
+
+  /* Onboarding 1ʳᵉ connexion : tant que le wizard n'a pas été terminé (ou
+   * passé), on y emmène l'utilisateur. */
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("kamoo.onboarded")) router.replace("/bienvenue");
+    } catch {}
+  }, [router]);
 
   /* ─── Période (synchronisée avec /finances) ─── */
   const [dateFilter, setDateFilter] = useSessionStorageState<DateFilterValue>(
@@ -232,14 +241,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative grid h-9 w-9 place-items-center rounded-lg border border-line bg-white text-ink-500 transition hover:bg-paper-2"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-kamoo-orange-500 ring-2 ring-white" />
-          </button>
+          <NotificationsBell />
         </div>
         </div>
       </header>
@@ -305,16 +307,13 @@ function formatLastActivity(iso: string): string {
 }
 
 function formatTodayLabel(d: Date): string {
-  const day = d.toLocaleDateString("fr-FR", {
+  // Date seule (pas d'heure) : MOCK_TODAY est ancré à midi UTC pour la
+  // stabilité d'hydratation — afficher cette heure serait trompeur.
+  return d.toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const time = d.toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return `${day} · ${time}`;
 }
 
 /* ─── Compute dashboard data ────────────────────────────────────── */

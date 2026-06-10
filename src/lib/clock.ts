@@ -20,10 +20,15 @@
 /** Ancre historique des fixtures (ne plus l'utiliser ailleurs). */
 const LEGACY_ANCHOR = new Date("2026-05-04T12:00:00Z");
 
-/** Date courante, arrondie à l'heure (stabilité d'hydratation). */
+/**
+ * Date courante, ancrée à MIDI UTC du jour réel. L'ancrage au jour (et non
+ * à l'heure) garantit que serveur et client calculent exactement la même
+ * valeur pendant toute la journée → pas de mismatch d'hydratation. Midi
+ * (et non minuit) pour rester cohérent avec l'ancre 12:00 des fixtures.
+ */
 export const MOCK_TODAY: Date = (() => {
   const d = new Date();
-  d.setMinutes(0, 0, 0);
+  d.setUTCHours(12, 0, 0, 0);
   return d;
 })();
 

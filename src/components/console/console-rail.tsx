@@ -14,6 +14,7 @@ import {
   Phone,
   PieChart,
   Plus,
+  Search,
   Settings,
   ShoppingBag,
   Store,
@@ -193,6 +194,21 @@ export function ConsoleRail({
             <Plus className="h-4 w-4" />
             Nouvelle expédition
           </Link>
+        </div>
+
+        {/* Recherche globale (Ctrl+K) */}
+        <div className="px-3 pb-1">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("kamoo:open-search"))}
+            className="flex h-9 w-full items-center gap-2 rounded-lg bg-white/[0.06] px-3 text-[12.5px] font-medium text-white/55 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.1] hover:text-white/80"
+          >
+            <Search className="h-3.5 w-3.5" />
+            Rechercher…
+            <kbd className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-white/45">
+              Ctrl K
+            </kbd>
+          </button>
         </div>
 
         {/* Navigation */}

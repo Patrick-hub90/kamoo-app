@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
+import { useChat } from "@/components/kamoo/chat";
 import { STATUS_LABELS, TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import type { ExpeditionDetail } from "@/lib/types/expedition-detail";
 import { formatXOF } from "@/lib/format";
@@ -34,6 +35,7 @@ const PHASE_LABELS = ["Soumis", "Reçu en Chine", "En transit", "Arrivé à dest
 type TabKey = "vue" | "description" | "devis";
 
 export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
+  const { openChat } = useChat();
   const [tab, setTab] = useState<TabKey>("vue");
   const [modal, setModal] = useState<"none" | "pay" | "proof" | "proofSent">("none");
   const [proofSubmitted, setProofSubmitted] = useState(false);
@@ -406,6 +408,9 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
                 name="Support KAMOO"
                 line="Lun. – Ven. 08h – 18h"
                 action="Ouvrir le chat"
+                onAction={() =>
+                  openChat({ id: "support", name: "Support Kamoo", role: "support" })
+                }
               />
               <ContactRow
                 avatar={<span className="text-[10px] font-bold text-ink-700">{exp.transitaire.avatar}</span>}
@@ -413,6 +418,13 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
                 name={exp.transitaire.name}
                 line="Transitaire assigné"
                 action="Contacter"
+                onAction={() =>
+                  openChat({
+                    id: `transitaire:${exp.transitaire.name.toLowerCase().replace(/\s+/g, "-")}`,
+                    name: exp.transitaire.name,
+                    role: "transitaire",
+                  })
+                }
               />
             </div>
           </div>
@@ -567,12 +579,14 @@ function ContactRow({
   name,
   line,
   action,
+  onAction,
 }: {
   avatar: React.ReactNode;
   avatarClass: string;
   name: string;
   line: string;
   action: string;
+  onAction?: () => void;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
@@ -581,7 +595,10 @@ function ContactRow({
         <div className="truncate text-[12.5px] font-semibold text-ink-900">{name}</div>
         <div className="truncate text-[11px] text-ink-500">{line}</div>
       </div>
-      <button className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 text-[12px] font-semibold text-ink-700 transition hover:bg-paper-2">
+      <button
+        onClick={onAction}
+        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 text-[12px] font-semibold text-ink-700 transition hover:bg-paper-2"
+      >
         <MessageSquare className="h-3.5 w-3.5" />
         {action}
       </button>

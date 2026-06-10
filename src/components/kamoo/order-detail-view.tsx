@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
+import { useChat } from "@/components/kamoo/chat";
 import {
   buildClosingHistory,
   MOCK_ACTIVE_CLOSEUSE,
@@ -133,6 +134,7 @@ function OrderHeader({
   a: ClosingAssignment;
   backHref: string;
 }) {
+  const { openChat } = useChat();
   return (
     <header className="mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -166,7 +168,17 @@ function OrderHeader({
               Marquer livrée
             </button>
           )}
-          <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2">
+          <button
+            onClick={() =>
+              openChat({
+                id: "closeuse:aicha-diop",
+                name: MOCK_ACTIVE_CLOSEUSE.name,
+                role: "closeuse",
+                photoUrl: "/closeuses/aicha-diop.jpg",
+              })
+            }
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+          >
             <MessageSquare className="h-3.5 w-3.5" />
             Contacter la closeuse
           </button>
@@ -191,6 +203,7 @@ type Props = {
 };
 
 export function OrderDetailView({ a, backHref, fullWidth = false }: Props) {
+  const { openChat } = useChat();
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
   const history = buildClosingHistory(a, closeuse.name);
 
@@ -497,7 +510,18 @@ export function OrderDetailView({ a, backHref, fullWidth = false }: Props) {
                     <span className="font-mono-kamoo">{a.delivery.phone}</span>
                   </Field>
                 </div>
-                <button className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-bold text-ink-900 transition hover:bg-paper-2">
+                <button
+                  onClick={() =>
+                    a.delivery &&
+                    openChat({
+                      id: `livreur:${a.delivery.id}`,
+                      name: a.delivery.name,
+                      role: "livreur",
+                      avatarBg: a.delivery.avatarBg,
+                    })
+                  }
+                  className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-bold text-ink-900 transition hover:bg-paper-2"
+                >
                   <MessageSquare className="h-3.5 w-3.5" />
                   Contacter {a.delivery.name.split(" ")[0]}
                 </button>

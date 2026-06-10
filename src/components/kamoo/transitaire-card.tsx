@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,6 +16,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useChat } from "@/components/kamoo/chat";
 import type { Transitaire } from "@/lib/types/transitaire";
 import type { TransportMode } from "@/lib/types/expedition";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
@@ -35,6 +38,7 @@ type Props = {
 };
 
 export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }: Props) {
+  const { openChat } = useChat();
   return (
     <div
       className={cn(
@@ -161,6 +165,14 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
           </Link>
           <button
             title="Discuter sur Kamoo"
+            onClick={() =>
+              openChat({
+                id: `transitaire:${t.slug}`,
+                name: t.name,
+                role: "transitaire",
+                avatarBg: t.avatarBg,
+              })
+            }
             className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
           >
             <MessageCircle className="h-4 w-4" />

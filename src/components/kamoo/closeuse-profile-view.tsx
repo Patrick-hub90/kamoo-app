@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { useChat } from "@/components/kamoo/chat";
 import { isTopPerformer } from "@/lib/data/mock-closeuses";
 import {
   ALL_DAYS,
@@ -40,9 +41,16 @@ function formatHour(hhmm: string) {
 }
 
 export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
+  const { openChat } = useChat();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
   const firstName = c.name.split(" ")[0];
   const top = isTopPerformer(c);
+  const chatPartner = {
+    id: `closeuse:${c.slug}`,
+    name: c.name,
+    role: "closeuse" as const,
+    photoUrl: c.photoUrl,
+  };
 
   return (
     <div className="min-h-full bg-paper">
@@ -206,7 +214,10 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
               <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600">
                 Choisir cette closeuse
               </button>
-              <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2">
+              <button
+                onClick={() => openChat(chatPartner)}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+              >
                 <MessageCircle className="h-3.5 w-3.5" />
                 Discuter avant de décider
               </button>

@@ -28,6 +28,7 @@ import {
   MOCK_CLOSING_ASSIGNMENTS,
   formatDuration,
 } from "@/lib/data/mock-closing";
+import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CANCELLATION_REASON_LABELS,
@@ -76,7 +77,16 @@ function fmtDateTime(iso: string): string {
 }
 
 export default function ClosingPage() {
-  const all = MOCK_CLOSING_ASSIGNMENTS;
+  /* Commandes créées à la main (démo) — persistées en sessionStorage et
+   * affichées en tête de liste avec les fixtures. */
+  const [extraOrders, setExtraOrders] = useSessionStorageState<ClosingAssignment[]>(
+    "closing.extraOrders",
+    [],
+  );
+  const all = useMemo(
+    () => [...extraOrders, ...MOCK_CLOSING_ASSIGNMENTS],
+    [extraOrders],
+  );
   const stats = useMemo(() => computeClosingStats(all), [all]);
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
 
@@ -85,6 +95,7 @@ export default function ClosingPage() {
   const [sortBy, setSortBy] = useSessionStorageState<SortKey>("closing.sortBy", "recent");
   const [viewOpen, setViewOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(all[0]?.id ?? null);
@@ -154,7 +165,10 @@ export default function ClosingPage() {
                 </div>
               </div>
             </div>
-            <button className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+            >
               <Plus className="h-4 w-4" />
               Nouvelle commande
             </button>
@@ -350,6 +364,171 @@ export default function ClosingPage() {
               <ClosingDetail assignment={selected} closeuseName={closeuse.name} onClose={() => setSelectedId(null)} />
             </aside>
           )}
+        </div>
+      </div>
+
+      {/* Modale Nouvelle commande */}
+      {createOpen && (
+        <CreateOrderModal
+          existingIds={all.map((a) => a.id)}
+          onClose={() => setCreateOpen(false)}
+          onCreate={(order) => {
+            setExtraOrders([order, ...extraOrders]);
+            setCreateOpen(false);
+            setSelectedId(order.id);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Modale « Nouvelle commande » ──────────────────────────────── */
+function CreateOrderModal({
+  existingIds,
+  onClose,
+  onCreate,
+}: {
+  existingIds: string[];
+  onClose: () => void;
+  onCreate: (order: ClosingAssignment) => void;
+}) {
+  const [productId, setProductId] = useState(MOCK_PRODUITS[0]?.id ?? "");
+  const [qty, setQty] = useState(1);
+  const [clientName, setClientName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [city, setCity] = useState("Dakar");
+  const [zone, setZone] = useState("");
+  const [source, setSource] = useState("WhatsApp");
+
+  const product = MOCK_PRODUITS.find((p) => p.id === productId);
+  const total = product ? product.priceXof * qty : 0;
+  const valid = !!product && qty > 0 && clientName.trim() !== "" && phone.trim() !== "";
+
+  function submit() {
+    if (!valid || !product) return;
+    // Prochain numéro ORD-SN-00xxx (au-dessus du max existant)
+    const maxNum = existingIds.reduce((max, id) => {
+      const m = id.match(/(\d+)$/);
+      return m ? Math.max(max, parseInt(m[1], 10)) : max;
+    }, 0);
+    const id = `ORD-SN-${String(maxNum + 1).padStart(5, "0")}`;
+    const nowIso = new Date().toISOString();
+    onCreate({
+      id,
+      items: [
+        {
+          productId: product.id,
+          productName: product.name,
+          productEmoji: product.emoji,
+          productBg: product.bg,
+          quantity: qty,
+          unitPriceXof: product.priceXof,
+        },
+      ],
+      client: {
+        id: `cli_new_${maxNum + 1}`,
+        name: clientName.trim(),
+        phone: phone.trim(),
+        city: city.trim() || "Dakar",
+        zone: zone.trim() || city.trim() || "—",
+        isReturning: false,
+      },
+      status: "nouvelle",
+      lastActivityAt: nowIso,
+      createdAt: nowIso,
+      callAttempts: 0,
+      source,
+    });
+  }
+
+  const inputCls =
+    "h-10 w-full rounded-lg border border-line bg-white px-3 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600";
+  const labelCls = "mb-1 block text-[11.5px] font-semibold text-ink-600";
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h2 className="text-[15px] font-bold text-ink-900">Nouvelle commande</h2>
+          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3.5 px-5 py-4">
+          {/* Produit + quantité */}
+          <div className="grid grid-cols-[1fr_88px] gap-2.5">
+            <div>
+              <label className={labelCls}>Produit</label>
+              <select value={productId} onChange={(e) => setProductId(e.target.value)} className={inputCls}>
+                {MOCK_PRODUITS.filter((p) => p.isActive).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.priceXof.toLocaleString("fr-FR")} F
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Quantité</label>
+              <input type="number" min={1} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value)))} className={inputCls} />
+            </div>
+          </div>
+
+          {/* Client */}
+          <div>
+            <label className={labelCls}>Nom du client</label>
+            <input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Ex : Awa Ndiaye" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className={labelCls}>Téléphone</label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+221 77 …" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Source</label>
+              <select value={source} onChange={(e) => setSource(e.target.value)} className={inputCls}>
+                {["WhatsApp", "Instagram", "TikTok", "Facebook", "Appel direct"].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className={labelCls}>Ville</label>
+              <input value={city} onChange={(e) => setCity(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Quartier / zone</label>
+              <input value={zone} onChange={(e) => setZone(e.target.value)} placeholder="Ex : Médina" className={inputCls} />
+            </div>
+          </div>
+
+          {/* Récap */}
+          <div className="flex items-center justify-between rounded-xl bg-paper-2/60 px-3.5 py-2.5">
+            <span className="text-[12.5px] text-ink-500">Total à encaisser (COD)</span>
+            <span className="text-[16px] font-bold tabular-nums text-ink-900">
+              {total.toLocaleString("fr-FR")} <span className="text-[11px] font-semibold text-ink-500">F CFA</span>
+            </span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-ink-400">
+            La commande sera créée au statut <b className="text-ink-600">Nouvelle</b> et apparaîtra
+            dans la file d&apos;appels de votre closeuse.
+          </p>
+        </div>
+
+        <div className="flex gap-2 border-t border-line px-5 py-3.5">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2">
+            Annuler
+          </button>
+          <button
+            onClick={submit}
+            disabled={!valid}
+            className="flex-1 rounded-lg bg-kamoo-blue-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800 disabled:opacity-40"
+          >
+            Créer la commande
+          </button>
         </div>
       </div>
     </div>
