@@ -25,6 +25,7 @@ import {
 import { ProductSelector } from "@/components/kamoo/product-selector";
 import { MOCK_TRANSITAIRES } from "@/lib/data/mock-transitaires";
 import { useExpeditionsState } from "@/lib/hooks/use-expeditions-state";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { usePartners } from "@/lib/hooks/use-partners";
 import { COUNTRIES } from "@/lib/data/countries";
 import { TRANSPORT_MODES_DATA } from "@/lib/data/transport-modes";
@@ -104,8 +105,9 @@ export default function NewExpeditionPage() {
 
   const { addExpedition } = useExpeditionsState();
 
-  // Pays actif (à remplacer par un context global plus tard)
-  const country = COUNTRIES[0]; // SN
+  // Pays de destination = marché courant (un marché = un pays)
+  const { currentMarket } = useCurrentMarket();
+  const country = currentMarket.country;
 
   // Modes proposés par LE transitaire connecté
   const isModeAllowed = (m: TransportMode) =>

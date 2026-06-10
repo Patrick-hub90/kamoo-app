@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { use } from "react";
+import { useClientsState } from "@/lib/hooks/use-clients-state";
 import {
   ArrowLeft,
   Calendar,
@@ -85,10 +88,20 @@ function formatShortDate(iso: string): string {
   });
 }
 
-export default async function ClientDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const client = getClient(id);
-  if (!client) notFound();
+export default function ClientDetailPage({ params }: PageProps) {
+  const { id } = use(params);
+  const { getById } = useClientsState();
+  const client = getById(id);
+  if (!client) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center bg-paper px-6 text-center">
+        <div>
+          <p className="text-[15px] font-semibold text-ink-900">Client introuvable</p>
+          <Link href="/clients" className="mt-4 inline-flex rounded-lg bg-kamoo-blue-900 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">Retour aux clients</Link>
+        </div>
+      </div>
+    );
+  }
 
   const orders = MOCK_CLOSING_ASSIGNMENTS.filter(
     (o) => o.client.id === client.id,

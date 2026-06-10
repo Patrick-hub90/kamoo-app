@@ -19,9 +19,11 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { computeClientsStats, MOCK_CLIENTS } from "@/lib/data/mock-clients";
+import { useRouter } from "next/navigation";
+import { computeClientsStats } from "@/lib/data/mock-clients";
+import { useClientsState } from "@/lib/hooks/use-clients-state";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CHANNEL_LABELS,
@@ -38,7 +40,7 @@ import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type ViewKey = "all" | "fidele" | "nouveau" | "prospect";
-type SortKey = "recent_order" | "spent_desc" | "orders_desc" | "name";
+type SortKey = "recent_order" | "spent_desc" | "orders_desc" | "delivered_desc" | "name";
 
 const VIEW_TABS: { id: ViewKey; label: string }[] = [
   { id: "all", label: "Tous" },
@@ -51,6 +53,7 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: "recent_order", label: "Dernière commande" },
   { id: "spent_desc", label: "Valeur client ↓" },
   { id: "orders_desc", label: "Nombre de commandes ↓" },
+  { id: "delivered_desc", label: "Commandes livrées ↓" },
   { id: "name", label: "Nom A → Z" },
 ];
 
@@ -75,16 +78,32 @@ function formatRelative(iso: string): string {
 }
 
 export default function ClientsPage() {
-  const all = MOCK_CLIENTS;
+  const router = useRouter();
+  /* Fixtures + clients ajoutés via la modale (sessionStorage) */
+  const { all, addClient } = useClientsState();
   const stats = useMemo(() => computeClientsStats(all), [all]);
   const fidelesCount = useMemo(() => all.filter((c) => getClientSegment(c) === "fidele").length, [all]);
 
   const [search, setSearch] = useSessionStorageState("clients.search", "");
   const [view, setView] = useSessionStorageState<ViewKey>("clients.view", "all");
   const [sortBy, setSortBy] = useSessionStorageState<SortKey>("clients.sortBy", "recent_order");
+  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [viewOpen, setViewOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(all[0]?.id ?? null);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+
+  /* Options de filtres dérivées des données */
+  const cityOptions = useMemo(
+    () => [...new Set(all.map((c) => c.city))].sort((a, b) => a.localeCompare(b)),
+    [all],
+  );
+  const sourceOptions = useMemo(
+    () => [...new Set(all.map((c) => c.acquisitionChannel))],
+    [all],
+  );
 
   const counts = useMemo<Record<ViewKey, number>>(
     () => ({
@@ -99,6 +118,8 @@ export default function ClientsPage() {
   const filtered = useMemo(() => {
     let list = all.filter((c) => {
       if (view !== "all" && getClientSegment(c) !== view) return false;
+      if (cityFilter !== "all" && c.city !== cityFilter) return false;
+      if (sourceFilter !== "all" && c.acquisitionChannel !== sourceFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
@@ -116,6 +137,8 @@ export default function ClientsPage() {
           return b.totalSpentXof - a.totalSpentXof;
         case "orders_desc":
           return b.totalOrders - a.totalOrders;
+        case "delivered_desc":
+          return b.totalDeliveredOrders - a.totalDeliveredOrders;
         case "name":
           return a.name.localeCompare(b.name);
         case "recent_order":
@@ -124,27 +147,22 @@ export default function ClientsPage() {
       }
     });
     return list;
-  }, [all, view, search, sortBy]);
-
-  const selected = filtered.find((c) => c.id === selectedId) ?? null;
+  }, [all, view, search, sortBy, cityFilter, sourceFilter]);
 
   return (
     <div className="min-h-full bg-paper">
+      {/* Header commun : CTA + cloche (même ordre partout) */}
+      <PageHeader kicker="Mon activité" title="Clients">
+        <button
+          onClick={() => setAddOpen(true)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        >
+          <Plus className="h-4 w-4" />
+          Ajouter un client
+        </button>
+      </PageHeader>
+
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
-        {/* HEADER */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[24px] font-bold tracking-tight text-ink-900">Clients</h1>
-            <p className="mt-1 text-[13px] text-ink-500">Suivez votre base client, leur fidélité et leur valeur.</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <NotificationsBell />
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">
-              <Plus className="h-4 w-4" />
-              Ajouter un client
-            </button>
-          </div>
-        </div>
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -185,6 +203,38 @@ export default function ClientsPage() {
               </Dropdown>
 
               <Dropdown
+                label="Ville"
+                value={cityFilter === "all" ? "Toutes" : cityFilter}
+                open={cityOpen}
+                setOpen={setCityOpen}
+              >
+                <DropdownItem active={cityFilter === "all"} onClick={() => { setCityFilter("all"); setCityOpen(false); }}>
+                  Toutes les villes
+                </DropdownItem>
+                {cityOptions.map((v) => (
+                  <DropdownItem key={v} active={cityFilter === v} onClick={() => { setCityFilter(v); setCityOpen(false); }}>
+                    {v}
+                  </DropdownItem>
+                ))}
+              </Dropdown>
+
+              <Dropdown
+                label="Source"
+                value={sourceFilter === "all" ? "Toutes" : CHANNEL_LABELS[sourceFilter as keyof typeof CHANNEL_LABELS]}
+                open={sourceOpen}
+                setOpen={setSourceOpen}
+              >
+                <DropdownItem active={sourceFilter === "all"} onClick={() => { setSourceFilter("all"); setSourceOpen(false); }}>
+                  Toutes les sources
+                </DropdownItem>
+                {sourceOptions.map((s) => (
+                  <DropdownItem key={s} active={sourceFilter === s} onClick={() => { setSourceFilter(s); setSourceOpen(false); }}>
+                    {CHANNEL_LABELS[s]}
+                  </DropdownItem>
+                ))}
+              </Dropdown>
+
+              <Dropdown
                 label="Trier"
                 value={SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Dernière commande"}
                 open={sortOpen}
@@ -219,15 +269,11 @@ export default function ClientsPage() {
                   <tbody className="divide-y divide-[#F4F5F6]">
                     {filtered.map((c) => {
                       const seg = getClientSegment(c);
-                      const isSel = c.id === selectedId;
                       return (
                         <tr
                           key={c.id}
-                          onClick={() => setSelectedId(c.id)}
-                          className={cn(
-                            "cursor-pointer transition",
-                            isSel ? "bg-kamoo-blue-50/60" : "hover:bg-paper-2/50",
-                          )}
+                          onClick={() => router.push(`/clients/${c.id}`)}
+                          className="cursor-pointer transition hover:bg-paper-2/50"
                         >
                           <td className="px-4 py-2.5">
                             <div className="flex items-center gap-2.5">
@@ -267,116 +313,25 @@ export default function ClientsPage() {
             </div>
           </div>
 
-          {/* Fiche client — affichée uniquement si un client est sélectionné.
-              Sinon le tableau occupe toute la largeur. */}
-          {selected && (
-            <aside className="sticky top-6 hidden w-[360px] shrink-0 self-start lg:block">
-              <ClientDetail client={selected} onClose={() => setSelectedId(null)} />
-            </aside>
-          )}
+          {/* Plus de panneau latéral : cliquer un client ouvre sa page de
+              détail (/clients/[id]) et le tableau garde toute la largeur. */}
         </div>
       </div>
+
+      {addOpen && (
+        <AddClientModal
+          onClose={() => setAddOpen(false)}
+          onCreate={(c) => {
+            addClient(c);
+            setAddOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 /* ─── Fiche détail ──────────────────────────────────────────────── */
-function ClientDetail({ client: c, onClose }: { client: Client; onClose: () => void }) {
-  const seg = getClientSegment(c);
-  const preferred = c.preferredProductIds
-    .map((id) => MOCK_PRODUITS.find((p) => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => !!p)
-    .slice(0, 3);
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
-      {/* En-tête */}
-      <div className="relative border-b border-line p-4">
-        <button
-          onClick={onClose}
-          className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900"
-          aria-label="Fermer"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="flex items-center gap-3">
-          <span
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-[15px] font-bold text-white"
-            style={{ background: c.avatarBg }}
-          >
-            {getInitials(c.name)}
-          </span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="truncate text-[15px] font-bold text-ink-900">{c.name}</span>
-              <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", SEG_PILL[seg])}>
-                {SEGMENT_LABELS[seg]}
-              </span>
-            </div>
-            <div className="mt-0.5 text-[12px] tabular-nums text-ink-500">{c.phone}</div>
-            <div className="text-[11.5px] text-ink-400">{c.zone ? `${c.zone}, ${c.city}` : c.city}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-px border-b border-line bg-[#F1F2F4]">
-        <MiniStat value={String(c.totalOrders)} label="Commandes" />
-        <MiniStat value={`${formatXOF(c.totalSpentXof, false)} F`} label="Dépensé" />
-        <MiniStat value={formatRelative(c.lastOrderDate)} label="Dernière" />
-      </div>
-
-      {/* Détails */}
-      <div className="flex flex-col gap-2.5 border-b border-line p-4 text-[12.5px]">
-        <DetailRow label="Client depuis" value={new Date(c.firstOrderDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} />
-        <DetailRow label="Source" value={CHANNEL_LABELS[c.acquisitionChannel]} />
-        <DetailRow label="Taux de livraison" value={`${deliveryRate(c)}%`} />
-      </div>
-
-      {/* Produits préférés */}
-      {preferred.length > 0 && (
-        <div className="border-b border-line p-4">
-          <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">Produits préférés</div>
-          <div className="flex flex-col gap-1.5">
-            {preferred.map((p) => (
-              <div key={p.id} className="flex items-center gap-2.5">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: p.bg }}>
-                  {p.emoji}
-                </span>
-                <span className="truncate text-[12.5px] font-medium text-ink-900">{p.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex flex-col gap-1.5 p-3">
-        <Link
-          href={`/clients/${c.id}`}
-          className="flex h-10 items-center justify-center gap-2 rounded-lg bg-kamoo-blue-900 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-        >
-          <User className="h-4 w-4" />
-          Voir le profil complet
-        </Link>
-        <Action href={`/clients/${c.id}`} icon={ArrowRight} label={`Voir les commandes (${c.totalOrders})`} />
-        <Action
-          href={getWhatsappLink(c.whatsapp ?? c.phone)}
-          external
-          icon={MessageCircle}
-          label="Envoyer un WhatsApp"
-        />
-        <Action href={`tel:${c.phone.replace(/\s/g, "")}`} external icon={Phone} label="Appeler le client" />
-        <Action icon={StickyNote} label="Ajouter une note" />
-        <button className="flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold text-red-600 transition hover:bg-red-50">
-          <RotateCcw className="h-4 w-4" />
-          Marquer à relancer
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /* ─── Sous-composants ──────────────────────────────────────────── */
 function Kpi({
   icon: Icon,
@@ -524,4 +479,132 @@ function Action({
     );
   }
   return <button className={cls}>{inner}</button>;
+}
+
+/* ─── Modale « Ajouter un client » ──────────────────────────────────
+ * Workflow volontairement léger : seuls le NOM et le NUMÉRO sont
+ * obligatoires — tout le reste est optionnel (esprit Kamoo : rapidité). */
+function AddClientModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (c: Client) => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [city, setCity] = useState("");
+  const [zone, setZone] = useState("");
+  const [channel, setChannel] = useState<Client["acquisitionChannel"]>("whatsapp");
+  const [notes, setNotes] = useState("");
+
+  const valid = name.trim().length > 0 && phone.trim().length > 0;
+
+  const AVATARS = [
+    "linear-gradient(135deg,#0EA5E9,#0284C7)",
+    "linear-gradient(135deg,#22C55E,#16A34A)",
+    "linear-gradient(135deg,#A855F7,#7E22CE)",
+    "linear-gradient(135deg,#F59E0B,#B45309)",
+    "linear-gradient(135deg,#EC4899,#DB2777)",
+  ];
+
+  function submit() {
+    if (!valid) return;
+    const today = new Date().toISOString().slice(0, 10);
+    onCreate({
+      id: `cu_new_${Date.now().toString(36)}`,
+      name: name.trim(),
+      phone: phone.trim(),
+      whatsapp: whatsapp.trim() || undefined,
+      city: city.trim() || "—",
+      zone: zone.trim() || city.trim() || "—",
+      country: "SN",
+      status: "actif",
+      acquisitionChannel: channel,
+      firstOrderDate: today,
+      lastOrderDate: today,
+      totalOrders: 0,
+      totalDeliveredOrders: 0,
+      totalCancelledOrders: 0,
+      totalSpentXof: 0,
+      avgBasketXof: 0,
+      preferredProductIds: [],
+      notes: notes.trim() || undefined,
+      avatarBg: AVATARS[name.length % AVATARS.length],
+    });
+  }
+
+  const inputCls =
+    "h-10 w-full rounded-lg border border-line bg-white px-3 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600";
+  const labelCls = "mb-1 block text-[11.5px] font-semibold text-ink-600";
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h2 className="text-[15px] font-bold text-ink-900">Ajouter un client</h2>
+          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex max-h-[65vh] flex-col gap-3.5 overflow-y-auto px-5 py-4">
+          <div>
+            <label className={labelCls}>
+              Nom du client <span className="text-red-500">*</span>
+            </label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex : Awa Ndiaye" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className={labelCls}>
+                Téléphone <span className="text-red-500">*</span>
+              </label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+221 77 …" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>WhatsApp (optionnel)</label>
+              <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="Si différent" className={inputCls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className={labelCls}>Ville (optionnel)</label>
+              <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex : Dakar" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Quartier / zone (optionnel)</label>
+              <input value={zone} onChange={(e) => setZone(e.target.value)} placeholder="Ex : Médina" className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Source (optionnel)</label>
+            <select value={channel} onChange={(e) => setChannel(e.target.value as Client["acquisitionChannel"])} className={inputCls}>
+              {(Object.keys(CHANNEL_LABELS) as Client["acquisitionChannel"][]).map((k) => (
+                <option key={k} value={k}>{CHANNEL_LABELS[k]}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Note (optionnel)</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Préférences, contexte…" className="w-full resize-none rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600" />
+          </div>
+        </div>
+
+        <div className="flex gap-2 border-t border-line px-5 py-3.5">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2">
+            Annuler
+          </button>
+          <button
+            disabled={!valid}
+            onClick={submit}
+            className="flex-1 rounded-lg bg-kamoo-blue-900 py-2.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800 disabled:opacity-40"
+          >
+            Ajouter le client
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -13,7 +13,9 @@ import {
   ChevronRight,
   LayoutGrid,
   Leaf,
+  Archive,
   PackageX,
+  Trash2,
   Plus,
   Rows3,
   Search,
@@ -48,7 +50,7 @@ import {
 } from "@/lib/types/produit";
 import { dateFilterFromSearchParams } from "@/lib/utils/date-filter-url";
 import { formatXOF } from "@/lib/format";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { cn } from "@/lib/utils";
 
 /**
@@ -59,7 +61,7 @@ import { cn } from "@/lib/utils";
  * stats rentabilité, période, tri, filtres, photos de couverture, campagnes.
  */
 
-type StatusView = "all" | "active" | "inactive" | "low_stock" | "out_of_stock";
+type StatusView = "all" | "active" | "inactive" | "low_stock" | "out_of_stock" | "archived";
 type SortKey = "best_seller" | "recent" | "stock_asc" | "name";
 
 const VIEW_TABS: { id: StatusView; label: string }[] = [
@@ -68,6 +70,7 @@ const VIEW_TABS: { id: StatusView; label: string }[] = [
   { id: "inactive", label: "Inactif" },
   { id: "low_stock", label: "Stock bas" },
   { id: "out_of_stock", label: "Rupture" },
+  { id: "archived", label: "Archivé" },
 ];
 
 const SORT_OPTIONS: { id: SortKey; label: string }[] = [
@@ -78,6 +81,9 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
 ];
 
 function matchesView(p: Produit, view: StatusView): boolean {
+  // Les archivés ne sortent QUE dans la vue Archivé.
+  if (view === "archived") return !!p.archived;
+  if (p.archived) return false;
   if (view === "all") return true;
   if (view === "active") return p.isActive;
   if (view === "inactive") return !p.isActive;
@@ -130,7 +136,8 @@ function filterMovementsByPeriod(
 
 /* ════════════════════════════════════════════════════════════════════ */
 export default function BoutiquePage() {
-  const { products: all } = useProductsState();
+  const { products: all, bulkSetActive, bulkSetArchived, removeProducts } = useProductsState();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [search, setSearch] = useSessionStorageState("boutique.search", "");
   const [view, setView] = useSessionStorageState<StatusView>("boutique.view", "all");
@@ -197,13 +204,19 @@ export default function BoutiquePage() {
 
   const viewCounts: Record<StatusView, number> = useMemo(() => {
     const counts: Record<StatusView, number> = {
-      all: all.length,
+      all: 0,
       active: 0,
       inactive: 0,
       low_stock: 0,
       out_of_stock: 0,
+      archived: 0,
     };
     for (const p of all) {
+      if (p.archived) {
+        counts.archived++;
+        continue; // les archivés ne comptent pas dans les autres vues
+      }
+      counts.all++;
       if (p.isActive) counts.active++;
       else counts.inactive++;
       if (p.isActive) {
@@ -251,25 +264,17 @@ export default function BoutiquePage() {
 
   return (
     <div className="flex h-full flex-col bg-paper">
-      {/* HEADER — bandeau blanc unique (façon /apercu) */}
-      <header className="shrink-0 border-b border-line bg-white">
-        <div className="mx-auto flex h-[68px] max-w-[1320px] items-center gap-4 px-6">
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-400">
-              Mon activité
-            </div>
-            <div className="text-[19px] font-bold tracking-tight text-ink-900">Catalogue</div>
-          </div>
-          <NotificationsBell />
-          <Link
-            href="/boutique/nouveau"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-          >
-            <Plus className="h-4 w-4" />
-            Ajouter un produit
-          </Link>
-        </div>
-      </header>
+      {/* Header commun : période + CTA + cloche (même ordre partout) */}
+      <PageHeader kicker="Mon activité" title="Catalogue">
+        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+        <Link
+          href="/boutique/nouveau"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        >
+          <Plus className="h-4 w-4" />
+          Ajouter un produit
+        </Link>
+      </PageHeader>
 
       <div className="mx-auto flex w-full min-h-0 max-w-[1320px] flex-1 flex-col gap-4 px-6 py-6">
         {/* KPI */}
@@ -388,10 +393,7 @@ export default function BoutiquePage() {
             )}
           </div>
 
-          {/* Période — à droite */}
-          <div className="ml-auto">
-            <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-          </div>
+          {/* Période : dans le header commun (convention globale) */}
         </div>
 
         {/* CONTENU */}
@@ -429,13 +431,90 @@ export default function BoutiquePage() {
             )}
           </div>
         ) : (
-          <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
-            <div className="always-show-scrollbar h-full overflow-auto">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
+            {/* Barre d'actions groupées (sélection multiple) */}
+            {selectedIds.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-kamoo-blue-100 bg-kamoo-blue-50/60 px-4 py-2.5">
+                <span className="text-[12.5px] font-bold text-kamoo-blue-900">
+                  {selectedIds.length} sélectionné{selectedIds.length > 1 ? "s" : ""}
+                </span>
+                <span className="mx-1 h-4 w-px bg-kamoo-blue-200" />
+                <BulkBtn
+                  icon={CheckCircle2}
+                  label="Mettre en vente"
+                  onClick={() => {
+                    bulkSetArchived(selectedIds, false);
+                    bulkSetActive(selectedIds, true);
+                    setSelectedIds([]);
+                  }}
+                />
+                <BulkBtn
+                  icon={PackageX}
+                  label="Désactiver"
+                  onClick={() => {
+                    bulkSetActive(selectedIds, false);
+                    setSelectedIds([]);
+                  }}
+                />
+                {view === "archived" ? (
+                  <BulkBtn
+                    icon={Archive}
+                    label="Désarchiver"
+                    onClick={() => {
+                      bulkSetArchived(selectedIds, false);
+                      setSelectedIds([]);
+                    }}
+                  />
+                ) : (
+                  <BulkBtn
+                    icon={Archive}
+                    label="Archiver"
+                    onClick={() => {
+                      bulkSetArchived(selectedIds, true);
+                      setSelectedIds([]);
+                    }}
+                  />
+                )}
+                <BulkBtn
+                  icon={Trash2}
+                  label="Supprimer"
+                  danger
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Supprimer définitivement ${selectedIds.length} produit${selectedIds.length > 1 ? "s" : ""} ? Cette action est irréversible.`,
+                      )
+                    ) {
+                      removeProducts(selectedIds);
+                      setSelectedIds([]);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="ml-auto text-[12px] font-semibold text-ink-400 hover:text-ink-700"
+                >
+                  Annuler la sélection
+                </button>
+              </div>
+            )}
+            <div className="always-show-scrollbar min-h-0 flex-1 overflow-auto">
               <ProduitsTable
                 produits={filtered}
                 getStats={getStats}
                 getCover={getCover}
                 isPeriodFiltered={isPeriodMode}
+                selectedIds={selectedIds}
+                onToggleSelect={(id) =>
+                  setSelectedIds((prev) =>
+                    prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+                  )
+                }
+                onToggleAll={() =>
+                  setSelectedIds((prev) =>
+                    filtered.every((p) => prev.includes(p.id)) ? [] : filtered.map((p) => p.id),
+                  )
+                }
               />
             </div>
           </div>
@@ -723,16 +802,24 @@ function ProduitsTable({
   getStats,
   getCover,
   isPeriodFiltered,
+  selectedIds,
+  onToggleSelect,
+  onToggleAll,
 }: {
   produits: Produit[];
   getStats: (p: Produit) => ProductStats;
   getCover: (p: Produit) => string | null;
   isPeriodFiltered: boolean;
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
+  onToggleAll: () => void;
 }) {
   const router = useRouter();
+  const allSelected = produits.length > 0 && produits.every((p) => selectedIds.includes(p.id));
   return (
-    <table className="w-full min-w-[1500px] table-fixed text-[13px]">
+    <table className="w-full min-w-[1540px] table-fixed text-[13px]">
       <colgroup>
+        <col style={{ width: "44px" }} />
         <col style={{ width: "60px" }} />
         <col style={{ width: "260px" }} />
         <col style={{ width: "120px" }} />
@@ -746,6 +833,15 @@ function ProduitsTable({
       </colgroup>
       <thead className="sticky top-0 z-10 bg-white">
         <tr className="border-b border-line text-left">
+          <Th>
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={onToggleAll}
+              className="h-4 w-4 cursor-pointer rounded border-line accent-kamoo-blue-700"
+              aria-label="Tout sélectionner"
+            />
+          </Th>
           <Th> </Th>
           <Th>Produit</Th>
           <Th align="center">Stock</Th>
@@ -767,8 +863,21 @@ function ProduitsTable({
             <tr
               key={p.id}
               onClick={() => router.push(`/boutique/${p.id}`)}
-              className="cursor-pointer border-b border-line last:border-0 transition hover:bg-paper-2/50"
+              className={cn(
+                "cursor-pointer border-b border-line last:border-0 transition hover:bg-paper-2/50",
+                selectedIds.includes(p.id) && "bg-kamoo-blue-50/40",
+              )}
             >
+              <Td>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(p.id)}
+                  onChange={() => onToggleSelect(p.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-4 w-4 cursor-pointer rounded border-line accent-kamoo-blue-700"
+                  aria-label={`Sélectionner ${p.name}`}
+                />
+              </Td>
               <Td>
                 {cover ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -859,12 +968,19 @@ function ProduitsTable({
                 )}
               </Td>
               <Td align="center">
-                <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">
-                  <span className={cn("h-1.5 w-1.5 rounded-full", p.isActive ? "bg-emerald-500" : "bg-ink-300")} />
-                  <span className={p.isActive ? "text-ink-900" : "text-ink-400"}>
-                    {p.isActive ? "En vente" : "Inactif"}
+                {p.archived ? (
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
+                    <Archive className="h-3 w-3" />
+                    Archivé
                   </span>
-                </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">
+                    <span className={cn("h-1.5 w-1.5 rounded-full", p.isActive ? "bg-emerald-500" : "bg-ink-300")} />
+                    <span className={p.isActive ? "text-ink-900" : "text-ink-400"}>
+                      {p.isActive ? "En vente" : "Inactif"}
+                    </span>
+                  </span>
+                )}
               </Td>
             </tr>
           );
@@ -899,5 +1015,32 @@ function Td({ children, align = "left" }: { children: React.ReactNode; align?: "
     >
       {children}
     </td>
+  );
+}
+
+function BulkBtn({
+  icon: Icon,
+  label,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition",
+        danger
+          ? "border-red-200 bg-white text-red-600 hover:bg-red-50"
+          : "border-line bg-white text-ink-700 hover:bg-paper-2",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
   );
 }

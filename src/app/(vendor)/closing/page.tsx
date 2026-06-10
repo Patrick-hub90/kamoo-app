@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Check,
   CheckCircle2,
@@ -29,7 +30,7 @@ import {
   formatDuration,
 } from "@/lib/data/mock-closing";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
@@ -85,6 +86,7 @@ export default function ClosingPage() {
   /* Machine d'états closing (extraOrders + overrides, sessionStorage).
    * UNE SEULE instance du hook par page : les actions sont passées en props
    * (les instances de useSessionStorageState ne se synchronisent pas). */
+  const router = useRouter();
   const closing = useClosingState();
   const all = closing.all;
   const stats = useMemo(() => computeClosingStats(all), [all]);
@@ -98,7 +100,6 @@ export default function ClosingPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(all[0]?.id ?? null);
 
   const counts = useMemo<Record<ViewKey, number>>(() => {
     const c: Record<string, number> = { all: all.length };
@@ -137,44 +138,37 @@ export default function ClosingPage() {
   }, [all, view, search, sortBy]);
 
   const shown = filtered.slice(0, pageSize);
-  const selected = filtered.find((a) => a.id === selectedId) ?? null;
 
   return (
     <div className="min-h-full bg-paper">
-      <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
-        {/* HEADER */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[24px] font-bold tracking-tight text-ink-900">Closing</h1>
-            <p className="mt-1 text-[13px] text-ink-500">Suivez les appels de votre closeuse pour valider les commandes.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <NotificationsBell />
-            <div className="hidden items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5 shadow-kamoo-sm sm:flex">
-              <span
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
-                style={{ background: closeuse.avatarBg }}
-              >
-                {closeuse.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-              </span>
-              <div className="leading-tight">
-                <div className="text-[12.5px] font-semibold text-ink-900">{closeuse.name}</div>
-                <div className="flex items-center gap-1 text-[10.5px] text-ink-500">
-                  Closeuse active
-                  <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                  {closeuse.rating}
-                </div>
-              </div>
+      {/* Header commun : chip closeuse + CTA + cloche (même ordre partout) */}
+      <PageHeader kicker="Mon activité" title="Closing">
+        <div className="hidden items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5 sm:flex">
+          <span
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
+            style={{ background: closeuse.avatarBg }}
+          >
+            {closeuse.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+          </span>
+          <div className="leading-tight">
+            <div className="text-[12px] font-semibold text-ink-900">{closeuse.name}</div>
+            <div className="flex items-center gap-1 text-[10px] text-ink-500">
+              Closeuse active
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              {closeuse.rating}
             </div>
-            <button
-              onClick={() => setCreateOpen(true)}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-            >
-              <Plus className="h-4 w-4" />
-              Nouvelle commande
-            </button>
           </div>
         </div>
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        >
+          <Plus className="h-4 w-4" />
+          Nouvelle commande
+        </button>
+      </PageHeader>
+
+      <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -247,12 +241,11 @@ export default function ClosingPage() {
                     {shown.map((a) => {
                       const st = STATUS_STYLE[a.status];
                       const StIcon = st.icon;
-                      const isSel = a.id === selectedId;
                       return (
                         <tr
                           key={a.id}
-                          onClick={() => setSelectedId(a.id)}
-                          className={cn("cursor-pointer transition", isSel ? "bg-kamoo-blue-50/60" : "hover:bg-paper-2/50")}
+                          onClick={() => router.push(`/closing/${a.id}`)}
+                          className="cursor-pointer transition hover:bg-paper-2/50"
                         >
                           {/* N° */}
                           <td className="whitespace-nowrap px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{a.id}</td>
@@ -358,13 +351,7 @@ export default function ClosingPage() {
             </div>
           </div>
 
-          {/* Fiche commande — affichée uniquement si une commande est sélectionnée.
-              Sinon le tableau occupe toute la largeur. */}
-          {selected && (
-            <aside className="sticky top-6 hidden w-[380px] shrink-0 self-start lg:block">
-              <ClosingDetail assignment={selected} closeuseName={closeuse.name} onClose={() => setSelectedId(null)} closing={closing} />
-            </aside>
-          )}
+          {/* Plus de panneau lateral : cliquer une commande ouvre sa page de detail (/closing/[id]) ou vivent toutes les actions. */}
         </div>
       </div>
 
@@ -376,7 +363,7 @@ export default function ClosingPage() {
           onCreate={(order) => {
             closing.addOrder(order);
             setCreateOpen(false);
-            setSelectedId(order.id);
+            router.push(`/closing/${order.id}`);
           }}
         />
       )}
@@ -531,319 +518,6 @@ function CreateOrderModal({
             Créer la commande
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Fiche commande ────────────────────────────────────────────── */
-function ClosingDetail({
-  assignment: a,
-  closeuseName,
-  onClose,
-  closing,
-}: {
-  assignment: ClosingAssignment;
-  closeuseName: string;
-  onClose: () => void;
-  closing: ReturnType<typeof useClosingState>;
-}) {
-  const [assignOpen, setAssignOpen] = useState(false);
-  const st = STATUS_STYLE[a.status];
-  const StIcon = st.icon;
-  const total = orderTotalXof(a);
-  const history = buildClosingHistory(a, closeuseName);
-  const nextAction = nextActionLabel(a.status);
-
-  /* États dérivés pour le rendu conditionnel des actions */
-  const isOpen = TO_PROCESS.includes(a.status); // nouvelle / rappelé / injoignable
-  const isConfirmed = a.status === "livraison_en_cours";
-  const hasLivreur = !!a.delivery;
-  const isAlerte = a.delivery?.progress === "alerte";
-  const isClosed = a.status === "livre" || a.status === "annule";
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
-      {/* En-tête */}
-      <div className="flex items-center justify-between gap-2 border-b border-line p-4">
-        <div className="min-w-0">
-          <div className="text-[15px] font-bold tabular-nums text-ink-900">{a.id}</div>
-          <span className={cn("mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", st.pill)}>
-            <StIcon className="h-3 w-3" />
-            {CLOSING_STATUS_LABELS[a.status]}
-          </span>
-        </div>
-        <button onClick={onClose} className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="max-h-[calc(100vh-160px)] overflow-y-auto">
-        {/* Infos client */}
-        <div className="flex gap-3 border-b border-line p-4">
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">Client</div>
-            <div className="flex flex-col gap-1.5 text-[12.5px]">
-              <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-ink-400" /><span className="font-semibold text-ink-900">{a.client.name}</span></div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-ink-400" />
-                <span className="tabular-nums text-ink-700">{a.client.phone}</span>
-                {a.client.whatsapp && <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-500 text-[8px] font-bold text-white">W</span>}
-              </div>
-              <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-ink-400" /><span className="text-ink-700">{a.client.zone ? `${a.client.zone}, ${a.client.city}` : a.client.city}</span></div>
-            </div>
-          </div>
-          <div className="shrink-0 rounded-lg bg-paper-2/70 px-3 py-2 text-right">
-            <div className="text-[10px] font-medium uppercase text-ink-400">Montant</div>
-            <div className="text-[14px] font-bold tabular-nums text-ink-900">{formatXOF(total, false)} F</div>
-            <div className="mt-1 text-[10px] font-medium uppercase text-ink-400">Articles</div>
-            <div className="text-[12px] font-semibold text-ink-900">{a.items.length} article{a.items.length > 1 ? "s" : ""}</div>
-          </div>
-        </div>
-
-        {/* Produits */}
-        <div className="border-b border-line p-4">
-          <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">Produit{a.items.length > 1 ? "s" : ""}</div>
-          <div className="flex flex-col gap-2">
-            {a.items.map((it, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: it.productBg }}>{it.productEmoji}</span>
-                <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-900">{it.productName}</span>
-                <span className="shrink-0 text-[12px] font-semibold tabular-nums text-ink-700">{it.quantity} × {formatXOF(it.unitPriceXof, false)} F</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Historique des appels */}
-        <div className="border-b border-line p-4">
-          <div className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">Historique des appels</div>
-          <ol className="flex flex-col gap-3">
-            {history.map((e, i) => (
-              <li key={i} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600">
-                    <Check className="h-3 w-3" />
-                  </span>
-                  {i < history.length - 1 && <span className="mt-1 w-px flex-1 bg-line" />}
-                </div>
-                <div className="min-w-0 pb-1">
-                  <div className="text-[12px] font-semibold text-ink-900">{e.label}</div>
-                  <div className="text-[10.5px] tabular-nums text-ink-400">{fmtDateTime(e.at)}</div>
-                  {e.detail && <div className="mt-0.5 text-[11px] text-ink-500">{e.detail}</div>}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {/* Notes */}
-        {a.comment && (
-          <div className="border-b border-line p-4">
-            <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">Notes</div>
-            <p className="rounded-lg bg-paper-2/70 px-3 py-2 text-[12px] text-ink-700">{a.comment}</p>
-          </div>
-        )}
-
-        {/* Prochaine action */}
-        {nextAction && (
-          <div className="border-b border-line p-4">
-            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12.5px] font-semibold text-amber-800">
-              <Clock className="h-4 w-4 shrink-0 text-amber-600" />
-              {nextAction}
-            </div>
-          </div>
-        )}
-
-        {/* Actions — conditionnelles à l'état réel de la commande */}
-        <div className="p-3">
-          {/* Contact client : toujours possible tant que la commande n'est pas close */}
-          {!isClosed && (
-            <div className="grid grid-cols-2 gap-2">
-              <ActionBtn
-                icon={Phone}
-                label="Appeler"
-                href={`tel:${a.client.phone.replace(/\s/g, "")}`}
-                className="bg-kamoo-blue-900 text-white hover:bg-kamoo-blue-800"
-              />
-              <ActionBtn
-                icon={MessageCircle}
-                label="WhatsApp"
-                href={
-                  a.client.whatsapp || a.client.phone
-                    ? `https://wa.me/${(a.client.whatsapp ?? a.client.phone).replace(/\D/g, "")}`
-                    : undefined
-                }
-                external
-                className="bg-emerald-600 text-white hover:bg-emerald-700"
-              />
-            </div>
-          )}
-
-          <div className="mt-2 flex flex-col gap-2">
-            {/* Phase appel : confirmer / reporter / injoignable / annuler */}
-            {isOpen && (
-              <>
-                <ActionBtn
-                  icon={Check}
-                  label="Confirmer la commande"
-                  onClick={() => closing.confirm(a.id)}
-                  className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
-                />
-                <ActionBtn
-                  icon={RotateCcw}
-                  label="Reporter / Rappeler demain"
-                  onClick={() => closing.postpone(a.id)}
-                  className="border border-amber-200 bg-white text-amber-700 hover:bg-amber-50"
-                />
-                {a.status !== "injoignable" && (
-                  <ActionBtn
-                    icon={Phone}
-                    label="Marquer injoignable"
-                    onClick={() => closing.markUnreachable(a.id)}
-                    className="border border-line bg-white text-ink-600 hover:bg-paper-2"
-                  />
-                )}
-              </>
-            )}
-
-            {/* Phase livraison : assigner / marquer livrée / résoudre l'alerte */}
-            {isConfirmed && !hasLivreur && (
-              <ActionBtn
-                icon={Truck}
-                label="Assigner un livreur"
-                onClick={() => setAssignOpen(true)}
-                className="bg-kamoo-orange-500 text-white hover:bg-kamoo-orange-600"
-              />
-            )}
-            {isConfirmed && hasLivreur && !isAlerte && (
-              <ActionBtn
-                icon={CheckCircle2}
-                label="Marquer livrée & encaissée"
-                onClick={() => closing.markDelivered(a.id)}
-                className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
-              />
-            )}
-            {isAlerte && (
-              <>
-                <ActionBtn
-                  icon={RotateCcw}
-                  label="Relancer la livraison"
-                  onClick={() => closing.retryDelivery(a.id)}
-                  className="border border-amber-200 bg-white text-amber-700 hover:bg-amber-50"
-                />
-                <ActionBtn
-                  icon={CheckCircle2}
-                  label="Finalement livrée"
-                  onClick={() => closing.markDelivered(a.id)}
-                  className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
-                />
-              </>
-            )}
-
-            {!isClosed && (
-              <ActionBtn
-                icon={XCircle}
-                label="Annuler la commande"
-                onClick={() => {
-                  if (window.confirm(`Annuler définitivement la commande ${a.id} ?`))
-                    closing.cancel(a.id);
-                }}
-                className="border border-red-200 bg-white text-red-600 hover:bg-red-50"
-              />
-            )}
-
-            {isClosed && (
-              <p className="rounded-lg bg-paper-2/60 px-3 py-2.5 text-center text-[12px] text-ink-500">
-                Commande {a.status === "livre" ? "livrée et encaissée" : "annulée"} — aucune action.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Modale d'assignation livreur */}
-      {assignOpen && (
-        <AssignLivreurModal
-          onClose={() => setAssignOpen(false)}
-          onAssign={(d) => {
-            closing.assignLivreur(a.id, d);
-            setAssignOpen(false);
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-/* ─── Modale « Assigner un livreur » ────────────────────────────── */
-function AssignLivreurModal({
-  onClose,
-  onAssign,
-}: {
-  onClose: () => void;
-  onAssign: (d: AssignedDelivery) => void;
-}) {
-  const { currentMarket } = useCurrentMarket();
-  const livreurs = MOCK_LIVREURS.filter(
-    (l) => l.countryCode === currentMarket.country.code,
-  );
-
-  function pick(slug: string) {
-    const l = livreurs.find((x) => x.slug === slug);
-    if (!l) return;
-    const eta = new Date();
-    eta.setHours(eta.getHours() + 3, 0, 0, 0);
-    onAssign({
-      id: `lv_${l.slug}`,
-      name: l.name,
-      phone: "", // jamais affiché : contact via chat in-app uniquement
-      avatarBg: l.avatarBg,
-      rating: l.rating,
-      progress: "en_attente",
-      scheduledAt: eta.toISOString(),
-      pickedUpAt: new Date().toISOString(),
-      deliveriesCount: l.kpi.deliveriesHandled,
-    });
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-          <h2 className="text-[15px] font-bold text-ink-900">Assigner un livreur</h2>
-          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="max-h-[60vh] overflow-y-auto p-3">
-          {livreurs.map((l) => (
-            <button
-              key={l.slug}
-              onClick={() => pick(l.slug)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-paper-2"
-            >
-              {l.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={l.photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
-              ) : (
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: l.avatarBg }}>
-                  {l.initials}
-                </span>
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold text-ink-900">{l.name}</span>
-                <span className="block text-[11px] text-ink-500">
-                  ★ {l.rating} · {l.kpi.deliverySuccessRate}% réussite · {l.zones.length} zones
-                </span>
-              </span>
-              <span className="shrink-0 text-[11.5px] font-semibold text-kamoo-blue-700">Choisir</span>
-            </button>
-          ))}
-        </div>
-        <p className="border-t border-line px-5 py-3 text-[11px] text-ink-400">
-          Le livreur reçoit la course sur son app Kamoo et vous suivez la livraison en temps réel.
-        </p>
       </div>
     </div>
   );

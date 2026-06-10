@@ -15,6 +15,7 @@ import {
   Star,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
@@ -37,7 +38,7 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
   return (
     <div className="min-h-full bg-paper">
       {/* Retour */}
-      <div className="border-b border-line bg-white px-6 py-3">
+      <div className="flex items-center justify-between border-b border-line bg-white px-6 py-2.5">
         <Link
           href="/marketplace/transitaires"
           className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-500 transition hover:text-ink-900"
@@ -45,6 +46,7 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
           <ArrowLeft className="h-3.5 w-3.5" />
           Retour à la marketplace
         </Link>
+        <NotificationsBell />
       </div>
 
       {/* COVER */}

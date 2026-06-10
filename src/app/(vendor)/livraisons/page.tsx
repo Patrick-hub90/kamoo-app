@@ -17,7 +17,7 @@ import {
   Truck,
   Wallet,
 } from "lucide-react";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { computeDeliveryStats } from "@/lib/data/mock-closing";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import {
@@ -123,22 +123,15 @@ export default function LivraisonsPage() {
 
   return (
     <div className="min-h-full bg-paper">
+      {/* Header commun : actions + cloche (même ordre partout) */}
+      <PageHeader kicker="Mon activité" title="Livraisons">
+        <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"><Download className="h-4 w-4 text-ink-400" /> Exporter</button>
+        {/* Une livraison naît d'une commande confirmée : on assigne le
+            livreur depuis la fiche commande, côté Closing. */}
+        <Link href="/closing" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"><Plus className="h-4 w-4" /> Assigner un livreur</Link>
+      </PageHeader>
+
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
-        {/* HEADER */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[24px] font-bold tracking-tight text-ink-900">Livraisons</h1>
-            <p className="mt-1 text-[13px] text-ink-500">Suivez l&apos;acheminement de vos commandes confirmées jusqu&apos;au client.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <NotificationsBell />
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"><History className="h-4 w-4 text-ink-400" /> Tout l&apos;historique</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"><Download className="h-4 w-4 text-ink-400" /> Exporter</button>
-            {/* Une livraison naît d'une commande confirmée : on assigne le
-                livreur depuis la fiche commande, côté Closing. */}
-            <Link href="/closing" className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"><Plus className="h-4 w-4" /> Assigner un livreur</Link>
-          </div>
-        </div>
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

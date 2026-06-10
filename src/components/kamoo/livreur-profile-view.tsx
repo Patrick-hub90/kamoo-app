@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import { ALL_DAYS } from "@/lib/types/closeuse";
@@ -53,11 +54,12 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
   return (
     <div className="min-h-full bg-paper">
       {/* Retour */}
-      <div className="border-b border-line bg-white px-6 py-3">
+      <div className="flex items-center justify-between border-b border-line bg-white px-6 py-2.5">
         <Link href="/marketplace/livreurs" className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-500 transition hover:text-ink-900">
           <ArrowLeft className="h-3.5 w-3.5" />
           Retour à la marketplace
         </Link>
+        <NotificationsBell />
       </div>
 
       {/* HERO navy + portrait / logo */}

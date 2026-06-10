@@ -21,6 +21,7 @@ import type { Produit } from "@/lib/types/produit";
 
 type ProductOverride = {
   isActive?: boolean;
+  archived?: boolean;
   /** Champs éditables via le formulaire produit (V1 mock) */
   name?: string;
   description?: string;
@@ -37,14 +38,17 @@ type ProductsStore = {
   overrides: ProductOverridesMap;
   /** Produits créés via « Ajouter un produit » (en tête de catalogue) */
   extra: Produit[];
+  /** Produits supprimés (fixtures masquées, créations retirées) */
+  deleted: string[];
 };
 
 const STORAGE_KEY = "kamoo.productOverrides";
 const EXTRA_KEY = "kamoo.extraProducts";
+const DELETED_KEY = "kamoo.deletedProducts";
 
 /* ─── Store module-level (singleton client) ─── */
 
-let store: ProductsStore = { overrides: {}, extra: [] };
+let store: ProductsStore = { overrides: {}, extra: [], deleted: [] };
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -54,9 +58,11 @@ function hydrateOnce() {
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
     const extra = sessionStorage.getItem(EXTRA_KEY);
+    const deleted = sessionStorage.getItem(DELETED_KEY);
     store = {
       overrides: stored ? (JSON.parse(stored) as ProductOverridesMap) : {},
       extra: extra ? (JSON.parse(extra) as Produit[]) : [],
+      deleted: deleted ? (JSON.parse(deleted) as string[]) : [],
     };
   } catch {
     /* ignore — sessionStorage corrompu */
@@ -72,6 +78,7 @@ function persist() {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(store.overrides));
     sessionStorage.setItem(EXTRA_KEY, JSON.stringify(store.extra));
+    sessionStorage.setItem(DELETED_KEY, JSON.stringify(store.deleted));
   } catch {
     /* ignore */
   }
@@ -108,6 +115,7 @@ function getSnapshot(): ProductsStore {
 const EMPTY_STORE: ProductsStore = Object.freeze({
   overrides: {},
   extra: [],
+  deleted: [],
 }) as ProductsStore;
 
 function getServerSnapshot(): ProductsStore {
@@ -120,6 +128,7 @@ function applyOverride(p: Produit, o: ProductOverride | undefined): Produit {
   return {
     ...p,
     ...(o.isActive !== undefined && { isActive: o.isActive }),
+    ...(o.archived !== undefined && { archived: o.archived }),
     ...(o.name !== undefined && { name: o.name }),
     ...(o.description !== undefined && { description: o.description }),
     ...(o.emoji !== undefined && { emoji: o.emoji }),
@@ -133,15 +142,18 @@ function applyOverride(p: Produit, o: ProductOverride | undefined): Produit {
 }
 
 export function useProductsState() {
-  const { overrides, extra } = useSyncExternalStore(
+  const { overrides, extra, deleted } = useSyncExternalStore(
     subscribe,
     getSnapshot,
     getServerSnapshot,
   );
 
   const products: Produit[] = useMemo(
-    () => [...extra, ...MOCK_PRODUITS].map((p) => applyOverride(p, overrides[p.id])),
-    [overrides, extra],
+    () =>
+      [...extra, ...MOCK_PRODUITS]
+        .filter((p) => !deleted.includes(p.id))
+        .map((p) => applyOverride(p, overrides[p.id])),
+    [overrides, extra, deleted],
   );
 
   const getProduct = useCallback(
@@ -193,6 +205,40 @@ export function useProductsState() {
     }
   }, []);
 
+  /* ─── Actions groupées (sélection multiple du catalogue) ─── */
+
+  /** Active / désactive en masse (mettre en vente ↔ désactiver). */
+  const bulkSetActive = useCallback((ids: string[], active: boolean) => {
+    updateState((prev) => {
+      const next = { ...prev };
+      for (const id of ids) next[id] = { ...next[id], isActive: active };
+      return next;
+    });
+  }, []);
+
+  /** Archive / désarchive en masse (un produit archivé sort des vues actives). */
+  const bulkSetArchived = useCallback((ids: string[], archived: boolean) => {
+    updateState((prev) => {
+      const next = { ...prev };
+      for (const id of ids)
+        next[id] = { ...next[id], archived, ...(archived ? { isActive: false } : {}) };
+      return next;
+    });
+  }, []);
+
+  /** Supprime en masse (fixtures masquées, créations retirées). */
+  const removeProducts = useCallback((ids: string[]) => {
+    store = {
+      overrides: Object.fromEntries(
+        Object.entries(store.overrides).filter(([id]) => !ids.includes(id)),
+      ),
+      extra: store.extra.filter((p) => !ids.includes(p.id)),
+      deleted: [...new Set([...store.deleted, ...ids])],
+    };
+    persist();
+    notify();
+  }, []);
+
   return {
     products,
     getProduct,
@@ -200,5 +246,8 @@ export function useProductsState() {
     setActive,
     addProduct,
     updateProduct,
+    bulkSetActive,
+    bulkSetArchived,
+    removeProducts,
   };
 }

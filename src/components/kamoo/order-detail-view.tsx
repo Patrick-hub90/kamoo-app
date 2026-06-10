@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -20,6 +21,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
+import { AssignLivreurModal } from "@/components/kamoo/assign-livreur-modal";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { useChat } from "@/components/kamoo/chat";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
@@ -138,6 +140,7 @@ function OrderHeader({
   closing?: ReturnType<typeof useClosingState>;
 }) {
   const { openChat } = useChat();
+  const [editOpen, setEditOpen] = useState(false);
   return (
     <header className="mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -196,13 +199,94 @@ function OrderHeader({
             <MessageSquare className="h-3.5 w-3.5" />
             Contacter la closeuse
           </button>
-          <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2">
-            <Pencil className="h-3.5 w-3.5" />
-            Modifier
+          {closing && (
+            <button
+              onClick={() => setEditOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Modifier
+            </button>
+          )}
+        </div>
+      </div>
+
+      {editOpen && closing && (
+        <EditOrderModal a={a} closing={closing} onClose={() => setEditOpen(false)} />
+      )}
+    </header>
+  );
+}
+
+/* ─── Modale « Modifier » : créneau de livraison + commentaire ──────── */
+
+function EditOrderModal({
+  a,
+  closing,
+  onClose,
+}: {
+  a: ClosingAssignment;
+  closing: ReturnType<typeof useClosingState>;
+  onClose: () => void;
+}) {
+  const initialSlot = a.delivery?.scheduledAt
+    ? new Date(a.delivery.scheduledAt).toISOString().slice(0, 16)
+    : "";
+  const [slot, setSlot] = useState(initialSlot);
+  const [comment, setComment] = useState(a.comment ?? "");
+
+  function save() {
+    closing.update(a.id, {
+      comment: comment.trim() || undefined,
+      ...(a.delivery && slot
+        ? { delivery: { ...a.delivery, scheduledAt: new Date(slot).toISOString() } }
+        : {}),
+    });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h3 className="text-[15px] font-bold text-ink-900">Modifier la commande</h3>
+          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
+            <XCircle className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-3.5 px-5 py-4">
+          {a.delivery && (
+            <div>
+              <label className="mb-1 block text-[11.5px] font-semibold text-ink-600">Créneau de livraison prévu</label>
+              <input
+                type="datetime-local"
+                value={slot}
+                onChange={(e) => setSlot(e.target.value)}
+                className="h-10 w-full rounded-lg border border-line bg-white px-3 text-[13px] text-ink-900 outline-none focus:border-kamoo-blue-600"
+              />
+            </div>
+          )}
+          <div>
+            <label className="mb-1 block text-[11.5px] font-semibold text-ink-600">Commentaire interne</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+              placeholder="Ex : client préfère être livré après 17 h…"
+              className="w-full resize-none rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
+            />
+          </div>
+        </div>
+        <div className="flex gap-2 border-t border-line px-5 py-3.5">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2">
+            Annuler
+          </button>
+          <button onClick={save} className="flex-1 rounded-lg bg-kamoo-blue-900 py-2.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800">
+            Enregistrer
           </button>
         </div>
       </div>
-    </header>
+    </div>
   );
 }
 
@@ -222,6 +306,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
   const { openChat } = useChat();
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
   const history = buildClosingHistory(a, closeuse.name);
+  const [assignOpen, setAssignOpen] = useState(false);
 
   const total = orderTotalXof(a);
 
@@ -238,9 +323,85 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
 
   const isLivreurAlert = a.delivery?.progress === "alerte";
 
+  /* États du flux closing (mêmes règles que la machine d'états) */
+  const isOpenStatus = ["nouvelle", "rappele", "injoignable"].includes(a.status);
+  const isConfirmed = a.status === "livraison_en_cours";
+  const isClosed = a.status === "livre" || a.status === "annule";
+
   return (
     <div className="px-8 py-6">
       <OrderHeader a={a} backHref={backHref} closing={closing} />
+
+      {/* Barre d'actions closing — la page détail est le poste de pilotage */}
+      {closing && !isClosed && (
+        <div className="mb-5 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-3 shadow-kamoo-sm">
+          <a
+            href={`tel:${a.client.phone.replace(/\s/g, "")}`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+          >
+            <PhoneCall className="h-3.5 w-3.5" /> Appeler
+          </a>
+          <a
+            href={`https://wa.me/${(a.client.whatsapp ?? a.client.phone).replace(/\D/g, "")}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 text-[12.5px] font-semibold text-white transition hover:bg-emerald-700"
+          >
+            <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+          </a>
+          <span className="mx-1 h-5 w-px bg-line" />
+          {isOpenStatus && (
+            <>
+              <button
+                onClick={() => closing.confirm(a.id)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3.5 text-[12.5px] font-semibold text-emerald-700 transition hover:bg-emerald-50"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> Confirmer
+              </button>
+              <button
+                onClick={() => closing.postpone(a.id)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3.5 text-[12.5px] font-semibold text-amber-700 transition hover:bg-amber-50"
+              >
+                <Clock className="h-3.5 w-3.5" /> Reporter demain
+              </button>
+              {a.status !== "injoignable" && (
+                <button
+                  onClick={() => closing.markUnreachable(a.id)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[12.5px] font-semibold text-ink-600 transition hover:bg-paper-2"
+                >
+                  <PhoneOff className="h-3.5 w-3.5" /> Injoignable
+                </button>
+              )}
+            </>
+          )}
+          {isConfirmed && !a.delivery && (
+            <button
+              onClick={() => setAssignOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-3.5 text-[12.5px] font-bold text-white transition hover:bg-kamoo-orange-600"
+            >
+              <Truck className="h-3.5 w-3.5" /> Assigner un livreur
+            </button>
+          )}
+          <button
+            onClick={() => {
+              if (window.confirm(`Annuler définitivement la commande ${a.id} ?`)) closing.cancel(a.id);
+            }}
+            className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3.5 text-[12.5px] font-semibold text-red-600 transition hover:bg-red-50"
+          >
+            <XCircle className="h-3.5 w-3.5" /> Annuler la commande
+          </button>
+        </div>
+      )}
+
+      {assignOpen && closing && (
+        <AssignLivreurModal
+          onClose={() => setAssignOpen(false)}
+          onAssign={(d) => {
+            closing.assignLivreur(a.id, d);
+            setAssignOpen(false);
+          }}
+        />
+      )}
 
       {/* Alerte livreur */}
       {isLivreurAlert && (

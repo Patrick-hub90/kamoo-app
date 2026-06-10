@@ -16,6 +16,7 @@ import { CloseuseCard } from "@/components/kamoo/closeuse-card";
 import { MOCK_CLOSEUSES, isTopPerformer } from "@/lib/data/mock-closeuses";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { type Closeuse } from "@/lib/types/closeuse";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { cn } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
@@ -108,6 +109,7 @@ export default function MarketplaceCloseursPage() {
 
   return (
     <div className="min-h-full bg-paper">
+      <PageHeader kicker="Découvrir" title="Marketplace · Closeurs" />
       {/* HERO */}
       <section className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}

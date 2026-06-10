@@ -37,6 +37,8 @@ export type Produit = {
 
   /** État */
   isActive: boolean;
+  /** Produit archivé : masqué des vues actives, conservé pour l'historique */
+  archived?: boolean;
 
   /** Performance — calculée depuis les commandes en V1, mock pour la démo */
   soldThisMonth: number;
