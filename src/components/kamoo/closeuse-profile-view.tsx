@@ -9,17 +9,11 @@ import {
   CheckCircle2,
   Clock,
   Crown,
-  Headphones,
-  Lock,
   MapPin,
   MessageCircle,
-  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Star,
-  Tag,
-  TrendingUp,
-  Users,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
@@ -110,25 +104,10 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
       <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[1.7fr_1fr]">
         {/* ─── GAUCHE ─── */}
         <div className="flex min-w-0 flex-col gap-5">
-          {/* À propos + spécialités + indicateurs */}
+          {/* À propos — la bio seule ; les indicateurs vivent dans « En bref » */}
           <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
             <h2 className="text-[15px] font-bold text-ink-900">À propos</h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-600">{c.bio}</p>
-            {!!c.skills?.length && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {c.skills.map((s) => (
-                  <span key={s} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-paper-2/40 px-3 py-1.5 text-[12px] font-medium text-ink-700">
-                    <Tag className="h-3.5 w-3.5 text-ink-400" /> {s}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4 sm:grid-cols-4">
-              <Stat icon={TrendingUp} tone="bg-emerald-50 text-emerald-700" value={`${c.kpi.confirmationRate}%`} label="Taux de confirmation" />
-              <Stat icon={Clock} tone="bg-kamoo-orange-50 text-kamoo-orange-600" value={respLabel(c.kpi.avgResponseMin)} label="Réponse moyenne" />
-              <Stat icon={ShoppingBag} tone="bg-kamoo-blue-50 text-kamoo-blue-700" value={fmt(c.kpi.ordersHandled)} label="Cmdes traitées" />
-              <Stat icon={Users} tone="bg-purple-50 text-purple-700" value={String(c.activePartners)} label="Partenaires actifs" />
-            </div>
           </section>
 
           {/* Disponibilité & langues */}
@@ -204,6 +183,18 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
         {/* ─── DROITE ─── */}
         <div className="flex flex-col gap-5">
           <section className="sticky top-6 flex flex-col gap-5">
+            {/* En bref — indicateurs calculés par la plateforme */}
+            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+              <h3 className="mb-3 text-[13px] font-bold text-ink-900">En bref</h3>
+              <div className="flex flex-col gap-3 text-[12.5px]">
+                <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Taux de confirmation" value={`${c.kpi.confirmationRate}%`} />
+                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Réponse moyenne" value={respLabel(c.kpi.avgResponseMin)} />
+                <BriefRow icon={ShoppingBag} tone="text-kamoo-blue-700" label="Commandes traitées" value={fmt(c.kpi.ordersHandled)} />
+                <BriefRow icon={Calendar} tone="text-purple-700" label="Ancienneté" value={`${c.kpi.monthsOnPlatform} mois`} />
+                <BriefRow icon={MapPin} tone="text-red-500" label="Zone" value={`${c.city}, ${COUNTRY[c.countryCode] ?? c.countryCode}`} />
+              </div>
+            </div>
+
             {/* CTA partenariat (choix direct — règle Kamoo) */}
             <PartnerCta
               role="closeuse"
@@ -216,26 +207,6 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
               priceHint="Payé uniquement quand la commande est livrée et encaissée."
               chatPartner={chatPartner}
             />
-
-            {/* Garanties */}
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <div className="flex flex-col gap-3">
-                <Trust icon={ShieldCheck} tone="text-emerald-600" title="Profil vérifié par Kamoo" sub="Identité + entretien validés" />
-                <Trust icon={Lock} tone="text-kamoo-blue-700" title="Paiement à la commande livrée" sub="Aucun frais fixe, zéro risque" />
-                <Trust icon={Headphones} tone="text-kamoo-orange-500" title="Support Kamoo en cas de litige" sub="Nous vous accompagnons" />
-              </div>
-            </div>
-
-            {/* En bref */}
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <h3 className="mb-3 text-[13px] font-bold text-ink-900">En bref</h3>
-              <div className="flex flex-col gap-3 text-[12.5px]">
-                <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Taux de confirmation" value={`${c.kpi.confirmationRate}%`} />
-                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Réponse moyenne" value={respLabel(c.kpi.avgResponseMin)} />
-                <BriefRow icon={Calendar} tone="text-kamoo-blue-700" label="Ancienneté" value={`${c.kpi.monthsOnPlatform} mois`} />
-                <BriefRow icon={MapPin} tone="text-purple-700" label="Zone" value={`${c.city}, ${COUNTRY[c.countryCode] ?? c.countryCode}`} />
-              </div>
-            </div>
           </section>
         </div>
       </div>
@@ -261,18 +232,6 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
 }
 
 /* ─── Sous-composants ─────────────────────────────────────────── */
-function Stat({ icon: Icon, tone, value, label }: { icon: React.ComponentType<{ className?: string }>; tone: string; value: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", tone)}><Icon className="h-4 w-4" /></span>
-      <div className="min-w-0">
-        <div className="text-[15px] font-bold tabular-nums leading-tight text-ink-900">{value}</div>
-        <div className="truncate text-[10.5px] text-ink-400">{label}</div>
-      </div>
-    </div>
-  );
-}
-
 function Reviews({ c, onShowAll }: { c: Closeuse; onShowAll?: () => void }) {
   return (
     <div>
@@ -329,18 +288,6 @@ function Faq({ c, firstName }: { c: Closeuse; firstName: string }) {
           <p className="mt-2 text-[12.5px] leading-relaxed text-ink-600">{it.a}</p>
         </details>
       ))}
-    </div>
-  );
-}
-
-function Trust({ icon: Icon, tone, title, sub }: { icon: React.ComponentType<{ className?: string }>; tone: string; title: string; sub: string }) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", tone)} />
-      <div>
-        <div className="text-[12.5px] font-semibold text-ink-900">{title}</div>
-        <div className="text-[11px] text-ink-500">{sub}</div>
-      </div>
     </div>
   );
 }

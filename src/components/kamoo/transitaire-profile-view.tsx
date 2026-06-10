@@ -5,21 +5,14 @@ import Link from "next/link";
 import {
   ArrowLeft,
   BadgeCheck,
-  Camera,
   CheckCircle2,
   Clock,
   Globe,
-  Headphones,
-  Lock,
   MapPin,
   MessageCircle,
   Package,
-  Route,
-  ShieldCheck,
   Sparkles,
   Star,
-  Tag,
-  Users,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
@@ -106,20 +99,10 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
       <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[1.7fr_1fr]">
         {/* ─── GAUCHE ─── */}
         <div className="flex min-w-0 flex-col gap-5">
-          {/* À propos + engagements de service (déclarés par le transitaire) */}
+          {/* À propos */}
           <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
             <h2 className="text-[15px] font-bold text-ink-900">À propos</h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-600">{t.about}</p>
-            <div className="mt-4 border-t border-line pt-4">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-wide text-ink-400">
-                Engagements de service
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Feature icon={ShieldCheck} label={t.paymentPolicy === "upfront" ? "Paiement avant l'expédition" : "Paiement à l'arrivée"} />
-                <Feature icon={Camera} label="Suivi photo systématique" />
-                <Feature icon={Tag} label="Tarification transparente" />
-              </div>
-            </div>
           </section>
 
           {/* Tarifs & modes (fusionnés) + indicateurs */}
@@ -169,25 +152,6 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
         {/* ─── DROITE ─── */}
         <div className="flex flex-col gap-5">
           <section className="sticky top-6 flex flex-col gap-5">
-            {/* CTA partenariat (choix direct — règle Kamoo) */}
-            <PartnerCta
-              role="transitaire"
-              slug={t.slug}
-              name={t.name}
-              title={`Prêt à travailler avec ${firstName} ?`}
-              description="Choisissez ce transitaire pour vos prochaines expéditions depuis la Chine. Il reçoit la demande et vous échangez via le chat Kamoo."
-              chatPartner={chatPartner}
-            />
-
-            {/* Garanties */}
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <div className="flex flex-col gap-3">
-                <Trust icon={ShieldCheck} tone="text-emerald-600" title="Profil vérifié par Kamoo" sub="Transitaire certifié et contrôlé" />
-                <Trust icon={Lock} tone="text-kamoo-blue-700" title="Paiement sécurisé via plateforme" sub="Vos paiements sont protégés" />
-                <Trust icon={Headphones} tone="text-kamoo-orange-500" title="Support Kamoo en cas de litige" sub="Nous vous accompagnons" />
-              </div>
-            </div>
-
             {/* En bref — caractéristiques calculées par la plateforme,
                 en lignes complètes (pas de troncature, pas de pavés colorés) */}
             <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
@@ -198,9 +162,18 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
                 <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Dans le délai annoncé" value={`${t.onTimePct ?? "—"} % des colis`} />
                 <BriefRow icon={Globe} tone="text-purple-700" label="Destinations desservies" value={`${t.countriesServed ?? "—"} pays`} />
                 <BriefRow icon={MapPin} tone="text-red-500" label="Entrepôt de retrait" value={t.localWarehouse ?? t.city} />
-                <BriefRow icon={Route} tone="text-ink-500" label="Itinéraire principal" value={`${t.city} → Afrique de l'Ouest`} />
               </div>
             </div>
+
+            {/* CTA partenariat (choix direct — règle Kamoo) */}
+            <PartnerCta
+              role="transitaire"
+              slug={t.slug}
+              name={t.name}
+              title={`Prêt à travailler avec ${firstName} ?`}
+              description="Choisissez ce transitaire pour vos prochaines expéditions depuis la Chine. Il reçoit la demande et vous échangez via le chat Kamoo."
+              chatPartner={chatPartner}
+            />
           </section>
         </div>
       </div>
@@ -226,49 +199,7 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
 }
 
 /* ─── Sous-composants ─────────────────────────────────────────── */
-function Feature({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-lg border border-line bg-paper-2/40 px-3 py-2 text-[12.5px] font-medium text-ink-700">
-      <Icon className="h-4 w-4 text-ink-400" />
-      {label}
-    </span>
-  );
-}
 
-function StatsRow({ t }: { t: Transitaire }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <StatCard icon={Clock} tone="bg-kamoo-orange-50 text-kamoo-orange-600" value={t.responseTime ?? "—"} label="Répond en moyenne" />
-      <StatCard icon={CheckCircle2} tone="bg-emerald-50 text-emerald-700" value={`${t.onTimePct ?? "—"}%`} label="Livraisons à temps" />
-      <StatCard icon={Users} tone="bg-kamoo-blue-50 text-kamoo-blue-700" value={String(t.activeVendors)} label="E-commerçants actifs" />
-      <StatCard icon={Globe} tone="bg-purple-50 text-purple-700" value={`${t.countriesServed ?? "—"} pays`} label="Destinations desservies" />
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  tone,
-  value,
-  label,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  tone: string;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-line bg-paper-2/30 p-3">
-      <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", tone)}>
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <div className="text-[16px] font-bold tabular-nums leading-tight text-ink-900">{value}</div>
-        <div className="truncate text-[10.5px] text-ink-400">{label}</div>
-      </div>
-    </div>
-  );
-}
 
 function Reviews({ t, preview, onShowAll }: { t: Transitaire; preview?: boolean; onShowAll?: () => void }) {
   const list = preview ? t.reviews.slice(0, 4) : t.reviews;
@@ -347,27 +278,6 @@ function Faq({ t }: { t: Transitaire }) {
   );
 }
 
-function Trust({
-  icon: Icon,
-  tone,
-  title,
-  sub,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  tone: string;
-  title: string;
-  sub: string;
-}) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", tone)} />
-      <div>
-        <div className="text-[12.5px] font-semibold text-ink-900">{title}</div>
-        <div className="text-[11px] text-ink-500">{sub}</div>
-      </div>
-    </div>
-  );
-}
 
 function BriefRow({
   icon: Icon,

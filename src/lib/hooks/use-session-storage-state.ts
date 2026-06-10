@@ -35,8 +35,15 @@ export function useSessionStorageState<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sauvegarde quand value change (mais pas au tout 1er rendu)
+  // Sauvegarde quand value change — mais JAMAIS lors de l'exécution initiale
+  // des effets : sinon une instance fraîchement montée écrase le storage avec
+  // sa defaultValue avant que les autres instances (même clé) n'aient lu.
+  const isFirstPersist = useRef(true);
   useEffect(() => {
+    if (isFirstPersist.current) {
+      isFirstPersist.current = false;
+      return;
+    }
     if (!isHydrated.current) return;
     try {
       sessionStorage.setItem(key, JSON.stringify(value));

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   BadgeCheck,
@@ -7,6 +9,7 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
+import { usePartners } from "@/lib/hooks/use-partners";
 import type { Closeuse } from "@/lib/types/closeuse";
 import { isTopPerformer } from "@/lib/data/mock-closeuses";
 import { cn } from "@/lib/utils";
@@ -30,6 +33,8 @@ type Props = {
 
 export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props) {
   const top = isTopPerformer(c);
+  const { getPartnership } = usePartners();
+  const partnership = getPartnership("closeuse", c.slug);
   return (
     <div
       className={cn(
@@ -39,32 +44,28 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
           : "border-line hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]",
       )}
     >
-      {/* Sélection (si comparateur) + top performer */}
-      {(onToggle || top) && (
-        <div className="mb-2 flex items-start justify-between">
-          {onToggle ? (
-            <label className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-ink-400">
-              <input
-                type="checkbox"
-                checked={selected}
-                onChange={onToggle}
-                className="h-4 w-4 rounded border-line accent-kamoo-blue-700"
-              />
-              Comparer
-            </label>
-          ) : (
-            <span />
-          )}
-          {top && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
-              <Crown className="h-3 w-3" /> Top performer
-            </span>
-          )}
-        </div>
-      )}
+      {/* Badges en absolu : la hauteur des cartes reste identique
+          avec ou sans Top performer / partenariat. */}
+      <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
+        {partnership?.status === "active" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <BadgeCheck className="h-3 w-3" /> Votre closeuse
+          </span>
+        )}
+        {partnership?.status === "pending" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            Demande envoyée
+          </span>
+        )}
+        {top && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
+            <Crown className="h-3 w-3" /> Top performer
+          </span>
+        )}
+      </div>
 
-      {/* Identité */}
-      <div className="flex gap-3">
+      {/* Identité (padding droit si badges pour éviter le chevauchement) */}
+      <div className={cn("flex gap-3", (top || partnership) && "pr-16")}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={c.photoUrl}
@@ -113,14 +114,14 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
       </div>
 
       {/* Prix */}
-      <div className="mt-2 text-[13px] font-bold text-ink-900">
+      <div className="mb-3 mt-2 text-[13px] font-bold text-ink-900">
         {fmt(c.commissionXof)} <span className="text-[11px] font-medium text-ink-500">FCFA /commande</span>
       </div>
 
       {/* Action — le contact passe par le profil */}
       <Link
         href={`/marketplace/closeurs/${c.slug}`}
-        className="mt-3 flex w-full items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        className="mt-auto flex w-full items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
       >
         Voir le profil
       </Link>

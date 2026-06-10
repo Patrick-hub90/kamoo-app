@@ -76,6 +76,8 @@ export type Livreur = {
   joinedAt: string;
   /** Services proposés (livraison incluse par défaut) */
   services?: LivreurService[];
+  /** Grille tarifaire détaillée des services (façon ComeUp) */
+  serviceOfferings?: ServiceOffering[];
 };
 
 export const LIVREUR_TYPE_LABELS: Record<LivreurType, string> = {
@@ -100,6 +102,21 @@ export const LIVREUR_SERVICE_SHORT: Record<LivreurService, string> = {
   livraison: "Livraison",
   closing: "Closing",
   entreposage: "Entreposage",
+};
+
+/**
+ * Offre de service détaillée (façon ComeUp) : chaque service additionnel a
+ * son tarif, son unité et sa description. La livraison reste tarifée par
+ * zone (cf. `zones`), les autres services par leur grille propre.
+ */
+export type ServiceOffering = {
+  service: LivreurService;
+  /** Tarif F CFA (absent pour la livraison : tarifée par zone) */
+  priceXof?: number;
+  /** Unité de facturation, ex. « / commande confirmée », « / colis / jour » */
+  unit?: string;
+  /** Description détaillée rédigée par le livreur */
+  description: string;
 };
 
 export const LIVREUR_STATUS_LABELS: Record<LivreurStatus, string> = {

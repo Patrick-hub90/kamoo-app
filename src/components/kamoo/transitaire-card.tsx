@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { usePartners } from "@/lib/hooks/use-partners";
 import type { Transitaire } from "@/lib/types/transitaire";
 import type { TransportMode } from "@/lib/types/expedition";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
@@ -38,6 +39,8 @@ type Props = {
 };
 
 export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }: Props) {
+  const { getPartnership } = usePartners();
+  const partnership = getPartnership("transitaire", t.slug);
 
   return (
     <div
@@ -57,8 +60,19 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
           <div className="h-full w-full" style={{ background: t.coverBg }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-        <div className="absolute left-3 top-3">
-          {saved && (
+        <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+          {/* On travaille déjà ensemble : badge prioritaire sur « Enregistré » */}
+          {partnership?.status === "active" && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <BadgeCheck className="h-2.5 w-2.5" /> Votre transitaire
+            </span>
+          )}
+          {partnership?.status === "pending" && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <Clock className="h-2.5 w-2.5" /> Demande envoyée
+            </span>
+          )}
+          {saved && !partnership && (
             <span className="inline-flex items-center gap-1 rounded-full bg-kamoo-blue-900/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
               <Bookmark className="h-2.5 w-2.5 fill-current" /> Enregistré
             </span>
@@ -107,11 +121,11 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
         {/* Description */}
         <p className="mt-2.5 line-clamp-2 text-[12.5px] leading-relaxed text-ink-600">{t.about}</p>
 
-        {/* Fiabilité — sobre et explicite (calculé par la plateforme) */}
-        <div className="mt-3 rounded-xl border border-line bg-paper-2/40 px-3 py-2 text-[11.5px] leading-relaxed text-ink-600">
-          <b className="text-ink-900">{(t.ordersHandled ?? 0).toLocaleString("fr-FR")}</b> expéditions traitées
-          · répond en ~<b className="text-ink-900">{t.responseTime ?? "—"}</b>
-          · <b className="text-ink-900">{t.onTimePct ?? "—"} %</b> livrées dans le délai annoncé
+        {/* Fiabilité — 3 indicateurs distincts, calculés par la plateforme */}
+        <div className="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper-2/40 py-2.5 text-center text-[11px]">
+          <Stat icon={Ship} value={fmt(t.ordersHandled ?? 0)} label="Expéditions" />
+          <Stat icon={Clock} value={`~${t.responseTime ?? "—"}`} label="Répond en" />
+          <Stat icon={CheckCircle2} value={`${t.onTimePct ?? "—"} %`} label="Dans les délais" />
         </div>
 
         {/* Tarifs — pleine largeur, montants explicites */}

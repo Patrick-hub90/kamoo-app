@@ -15,7 +15,6 @@ import {
   MapPin,
   MessageCircle,
   Package,
-  ShieldCheck,
   Sparkles,
   Star,
   Truck,
@@ -125,35 +124,55 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
             </div>
           </section>
 
-          {/* Services proposés — la flexibilité Kamoo : chaque livreur compose son offre */}
-          {l.services && l.services.length > 0 && (
+          {/* Services proposés — grille tarifaire façon ComeUp : chaque service
+              a son tarif, son unité et la description rédigée par le livreur.
+              La sélection se fait au moment du choix du livreur (ou via
+              « Gérer » une fois partenaire). */}
+          {l.serviceOfferings && l.serviceOfferings.length > 0 && (
             <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
               <h2 className="text-[15px] font-bold text-ink-900">Services proposés</h2>
-              <div className="mt-3 grid gap-2">
-                {l.services.map((s) => (
-                  <div key={s} className="flex items-start gap-3 rounded-xl border border-line bg-paper-2/30 px-3.5 py-3">
-                    <span
-                      className={cn(
-                        "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
-                        s === "closing"
-                          ? "bg-kamoo-blue-50 text-kamoo-blue-700"
-                          : s === "entreposage"
-                            ? "bg-purple-50 text-purple-700"
-                            : "bg-emerald-50 text-emerald-700",
-                      )}
-                    >
-                      {s === "closing" ? <Headphones className="h-4 w-4" /> : s === "entreposage" ? <Package className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-semibold text-ink-900">{LIVREUR_SERVICE_LABELS[s]}</div>
-                      <div className="text-[11.5px] leading-relaxed text-ink-500">
-                        {s === "livraison" && "Livraison de vos commandes confirmées avec encaissement à la livraison (COD)."}
-                        {s === "closing" && "Confirme aussi vos commandes par téléphone — pratique si vous n'avez pas de closeuse."}
-                        {s === "entreposage" && "Stocke vos colis chez lui pour livrer plus vite — tarif au colis et par jour, à convenir via le chat."}
+              <p className="mb-3 mt-1 text-[12.5px] text-ink-500">
+                Composez votre offre : vous choisissez les services au moment de sélectionner ce livreur.
+              </p>
+              <div className="grid gap-2.5">
+                {l.serviceOfferings.map((o) => {
+                  const s = o.service;
+                  return (
+                    <div key={s} className="rounded-xl border border-line bg-paper-2/30 px-4 py-3.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-2.5">
+                          <span
+                            className={cn(
+                              "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
+                              s === "closing"
+                                ? "bg-kamoo-blue-50 text-kamoo-blue-700"
+                                : s === "entreposage"
+                                  ? "bg-purple-50 text-purple-700"
+                                  : "bg-emerald-50 text-emerald-700",
+                            )}
+                          >
+                            {s === "closing" ? <Headphones className="h-4 w-4" /> : s === "entreposage" ? <Package className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
+                          </span>
+                          <span className="text-[13.5px] font-bold text-ink-900">
+                            {LIVREUR_SERVICE_LABELS[s]}
+                            {s === "livraison" && (
+                              <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase text-emerald-700">Service principal</span>
+                            )}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="text-[15px] font-extrabold tabular-nums text-ink-900">
+                            {o.priceXof != null ? `${fmt(o.priceXof)} F` : `dès ${fmt(minPrice)} F`}
+                          </span>
+                          <span className="block text-[10.5px] font-medium text-ink-400">
+                            {o.unit ?? "/ livraison, selon la zone"}
+                          </span>
+                        </span>
                       </div>
+                      <p className="mt-2 text-[12px] leading-relaxed text-ink-600">{o.description}</p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}
@@ -221,7 +240,19 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
         {/* ─── DROITE ─── */}
         <div className="flex flex-col gap-5">
           <section className="sticky top-6 flex flex-col gap-5">
-            {/* CTA partenariat (choix direct — règle Kamoo) */}
+            {/* En bref — indicateurs calculés par la plateforme */}
+            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+              <h3 className="mb-3 text-[13px] font-bold text-ink-900">En bref</h3>
+              <div className="flex flex-col gap-3 text-[12.5px]">
+                <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Taux de réussite" value={`${l.kpi.deliverySuccessRate}%`} />
+                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Délai de réponse" value={`${l.kpi.avgDeliveryMin} min`} />
+                <BriefRow icon={Calendar} tone="text-kamoo-blue-700" label="Ancienneté" value={`${l.kpi.monthsOnPlatform} mois`} />
+                <BriefRow icon={MapPin} tone="text-purple-700" label="Zone principale" value={`${l.city}, ${COUNTRY[l.countryCode] ?? l.countryCode}`} />
+              </div>
+            </div>
+
+            {/* CTA partenariat — workflow services façon ComeUp si le livreur
+                propose plus que la livraison */}
             <PartnerCta
               role="livreur"
               slug={l.slug}
@@ -232,27 +263,8 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
               priceValue={`dès ${fmt(minPrice)} F CFA / livraison`}
               priceHint="Tarif fixe selon la zone, payé sur chaque livraison."
               chatPartner={chatPartner}
+              serviceOfferings={l.serviceOfferings}
             />
-
-            {/* Garanties */}
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <div className="flex flex-col gap-3">
-                <Trust icon={ShieldCheck} tone="text-emerald-600" title="Profil vérifié par Kamoo" sub="Identité et fiabilité contrôlées" />
-                <Trust icon={Truck} tone="text-kamoo-blue-700" title="Suivi de livraison intégré" sub="Statut en temps réel sur Kamoo" />
-                <Trust icon={Headphones} tone="text-kamoo-orange-500" title="Support Kamoo en cas de litige" sub="Nous vous accompagnons" />
-              </div>
-            </div>
-
-            {/* En bref */}
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <h3 className="mb-3 text-[13px] font-bold text-ink-900">En bref</h3>
-              <div className="flex flex-col gap-3 text-[12.5px]">
-                <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Taux de réussite" value={`${l.kpi.deliverySuccessRate}%`} />
-                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Délai de réponse" value={`${l.kpi.avgDeliveryMin} min`} />
-                <BriefRow icon={Calendar} tone="text-kamoo-blue-700" label="Ancienneté" value={`${l.kpi.monthsOnPlatform} mois`} />
-                <BriefRow icon={MapPin} tone="text-purple-700" label="Zone principale" value={`${l.city}, ${COUNTRY[l.countryCode] ?? l.countryCode}`} />
-              </div>
-            </div>
           </section>
         </div>
       </div>
@@ -344,18 +356,6 @@ function Faq({ l, cta, minPrice }: { l: Livreur; cta: string; minPrice: number }
           <p className="mt-2 text-[12.5px] leading-relaxed text-ink-600">{it.a}</p>
         </details>
       ))}
-    </div>
-  );
-}
-
-function Trust({ icon: Icon, tone, title, sub }: { icon: React.ComponentType<{ className?: string }>; tone: string; title: string; sub: string }) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", tone)} />
-      <div>
-        <div className="text-[12.5px] font-semibold text-ink-900">{title}</div>
-        <div className="text-[11px] text-ink-500">{sub}</div>
-      </div>
     </div>
   );
 }

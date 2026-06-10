@@ -1,4 +1,4 @@
-import type { Livreur } from "@/lib/types/livreur";
+import type { Livreur, ServiceOffering } from "@/lib/types/livreur";
 
 /**
  * Mocks Marketplace Livreurs — 8 profils variés pour la démo.
@@ -420,6 +420,60 @@ const SERVICES: Record<string, Livreur["services"]> = {
   "express-cameroun": ["livraison", "entreposage"],
 };
 
+/* Description standard de la livraison (tarifée par zone, cf. `zones`). */
+const LIVRAISON_OFFERING: ServiceOffering = {
+  service: "livraison",
+  description:
+    "Livraison de vos commandes confirmées avec encaissement à la livraison (COD). Tarif fixe selon la zone — voir la grille des zones desservies.",
+};
+
+/**
+ * Grille tarifaire détaillée par livreur (façon ComeUp) : chaque service
+ * additionnel a son tarif, son unité et sa description rédigée par le livreur.
+ */
+const SERVICE_OFFERINGS: Record<string, ServiceOffering[]> = {
+  "ibrahima-sarr": [
+    LIVRAISON_OFFERING,
+    {
+      service: "closing",
+      priceXof: 1000,
+      unit: "/ commande confirmée",
+      description:
+        "J'appelle vos clients pour confirmer la commande avant de livrer. Pratique si vous n'avez pas de closeuse : je confirme et je livre dans la foulée, payé uniquement sur les commandes confirmées.",
+    },
+  ],
+  "aminata-diakite": [
+    LIVRAISON_OFFERING,
+    {
+      service: "closing",
+      priceXof: 1200,
+      unit: "/ commande confirmée",
+      description:
+        "6 ans de télévente avant la livraison : je confirme vos commandes en français et en dioula, puis je les livre moi-même. Un seul interlocuteur du premier appel à l'encaissement.",
+    },
+  ],
+  "wave-express-sn": [
+    LIVRAISON_OFFERING,
+    {
+      service: "entreposage",
+      priceXof: 100,
+      unit: "/ colis / jour",
+      description:
+        "Entrepôt sécurisé de 200 m² aux Parcelles Assainies : vos colis y sont stockés et partent en livraison directement, sans passer par chez vous. Inventaire mis à jour dans Kamoo.",
+    },
+  ],
+  "express-cameroun": [
+    LIVRAISON_OFFERING,
+    {
+      service: "entreposage",
+      priceXof: 150,
+      unit: "/ colis / jour",
+      description:
+        "Dépôt central à Akwa avec gardiennage 24 h/24. Idéal pour pré-positionner votre stock à Douala et livrer en moins de 2 h.",
+    },
+  ],
+};
+
 /**
  * Photo de profil téléchargée (Unsplash, licence libre) pour les livreurs
  * INDÉPENDANTS uniquement, servie depuis /public/livreurs/{slug}.jpg.
@@ -429,6 +483,7 @@ export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => ({
   ...l,
   photoUrl: l.type === "particulier" ? `/livreurs/${l.slug}.jpg` : undefined,
   services: SERVICES[l.slug] ?? ["livraison"],
+  serviceOfferings: SERVICE_OFFERINGS[l.slug] ?? [LIVRAISON_OFFERING],
 }));
 
 export function getLivreur(slug: string): Livreur | undefined {

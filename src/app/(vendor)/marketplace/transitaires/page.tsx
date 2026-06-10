@@ -11,7 +11,6 @@ import {
   Ship,
   Star,
   Users,
-  Wallet,
   X,
 } from "lucide-react";
 import { TransitaireCard } from "@/components/kamoo/transitaire-card";
@@ -61,7 +60,6 @@ export default function MarketplaceTransitairesPage() {
   const [certifiedOnly, setCertifiedOnly] = useState(false);
   const [mode, setMode] = useState<"all" | TransportMode>("all");
   const [maxDelay, setMaxDelay] = useState(0);
-  const [arrivalPay, setArrivalPay] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("rating");
   const [open, setOpen] = useState<string | null>(null);
   const [saved, setSaved] = useSessionStorageState<string[]>(
@@ -78,7 +76,6 @@ export default function MarketplaceTransitairesPage() {
       if (t.rating < minRating) return false;
       if (mode !== "all" && !t.modes.some((m) => m.mode === mode)) return false;
       if (maxDelay > 0 && minDelayDays(t) > maxDelay) return false;
-      if (arrivalPay && t.paymentPolicy !== "on_arrival") return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
@@ -107,10 +104,10 @@ export default function MarketplaceTransitairesPage() {
     });
     // Les transitaires enregistrés remontent en tête de liste.
     return [...sorted.filter((t) => saved.includes(t.slug)), ...sorted.filter((t) => !saved.includes(t.slug))];
-  }, [all, search, certifiedOnly, minRating, mode, maxDelay, arrivalPay, sortBy, saved]);
+  }, [all, search, certifiedOnly, minRating, mode, maxDelay, sortBy, saved]);
 
   const filtersActive =
-    search.trim() !== "" || certifiedOnly || minRating > 0 || mode !== "all" || maxDelay > 0 || arrivalPay;
+    search.trim() !== "" || certifiedOnly || minRating > 0 || mode !== "all" || maxDelay > 0;
 
   function reset() {
     setSearch("");
@@ -118,14 +115,12 @@ export default function MarketplaceTransitairesPage() {
     setCertifiedOnly(false);
     setMode("all");
     setMaxDelay(0);
-    setArrivalPay(false);
   }
 
   /* Chips des filtres actifs (affichés sous la barre) */
   const chips: { label: string; clear: () => void }[] = [];
   if (mode !== "all") chips.push({ label: TRANSPORT_MODE_LABELS[mode], clear: () => setMode("all") });
   if (maxDelay > 0) chips.push({ label: `Délai ≤ ${maxDelay} j`, clear: () => setMaxDelay(0) });
-  if (arrivalPay) chips.push({ label: "Paiement à l'arrivée", clear: () => setArrivalPay(false) });
   if (minRating > 0) chips.push({ label: `Au moins ${minRating}★`, clear: () => setMinRating(0) });
   if (certifiedOnly) chips.push({ label: "Certifié Kamoo", clear: () => setCertifiedOnly(false) });
 
@@ -211,20 +206,6 @@ export default function MarketplaceTransitairesPage() {
               </Opt>
             ))}
           </Select>
-
-          <button
-            onClick={() => setArrivalPay((v) => !v)}
-            className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-medium transition",
-              arrivalPay
-                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                : "border-line bg-white text-ink-700 hover:bg-paper-2",
-            )}
-          >
-            <Wallet className="h-3.5 w-3.5" />
-            Paiement à l&apos;arrivée
-            {arrivalPay && <Check className="h-3 w-3" />}
-          </button>
 
           <button
             onClick={() => setCertifiedOnly((v) => !v)}
