@@ -21,15 +21,30 @@ import type { Produit } from "@/lib/types/produit";
 
 type ProductOverride = {
   isActive?: boolean;
+  /** Champs éditables via le formulaire produit (V1 mock) */
+  name?: string;
+  description?: string;
+  emoji?: string;
+  priceXof?: number;
+  costPriceXof?: number;
+  stock?: number;
+  lowStockThreshold?: number;
 };
 
 type ProductOverridesMap = Record<string, ProductOverride>;
 
+type ProductsStore = {
+  overrides: ProductOverridesMap;
+  /** Produits créés via « Ajouter un produit » (en tête de catalogue) */
+  extra: Produit[];
+};
+
 const STORAGE_KEY = "kamoo.productOverrides";
+const EXTRA_KEY = "kamoo.extraProducts";
 
 /* ─── Store module-level (singleton client) ─── */
 
-let overridesState: ProductOverridesMap = {};
+let store: ProductsStore = { overrides: {}, extra: [] };
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -38,9 +53,11 @@ function hydrateOnce() {
   hydrated = true;
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored !== null) {
-      overridesState = JSON.parse(stored) as ProductOverridesMap;
-    }
+    const extra = sessionStorage.getItem(EXTRA_KEY);
+    store = {
+      overrides: stored ? (JSON.parse(stored) as ProductOverridesMap) : {},
+      extra: extra ? (JSON.parse(extra) as Produit[]) : [],
+    };
   } catch {
     /* ignore — sessionStorage corrompu */
   }
@@ -53,14 +70,21 @@ function notify() {
 function persist() {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(overridesState));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(store.overrides));
+    sessionStorage.setItem(EXTRA_KEY, JSON.stringify(store.extra));
   } catch {
     /* ignore */
   }
 }
 
 function updateState(updater: (prev: ProductOverridesMap) => ProductOverridesMap) {
-  overridesState = updater(overridesState);
+  store = { ...store, overrides: updater(store.overrides) };
+  persist();
+  notify();
+}
+
+function updateExtra(updater: (prev: Produit[]) => Produit[]) {
+  store = { ...store, extra: updater(store.extra) };
   persist();
   notify();
 }
@@ -75,39 +99,50 @@ function subscribe(callback: () => void): () => void {
   };
 }
 
-function getSnapshot(): ProductOverridesMap {
-  return overridesState;
+function getSnapshot(): ProductsStore {
+  return store;
 }
 
 // Référence stable pour le SSR snapshot — sinon useSyncExternalStore détecte
 // un changement à chaque render et entre en boucle infinie.
-const EMPTY_OVERRIDES: ProductOverridesMap = Object.freeze(
-  {},
-) as ProductOverridesMap;
+const EMPTY_STORE: ProductsStore = Object.freeze({
+  overrides: {},
+  extra: [],
+}) as ProductsStore;
 
-function getServerSnapshot(): ProductOverridesMap {
+function getServerSnapshot(): ProductsStore {
   // Côté serveur (SSR initial), pas d'overrides. Le client se ré-hydrate.
-  return EMPTY_OVERRIDES;
+  return EMPTY_STORE;
+}
+
+function applyOverride(p: Produit, o: ProductOverride | undefined): Produit {
+  if (!o) return p;
+  return {
+    ...p,
+    ...(o.isActive !== undefined && { isActive: o.isActive }),
+    ...(o.name !== undefined && { name: o.name }),
+    ...(o.description !== undefined && { description: o.description }),
+    ...(o.emoji !== undefined && { emoji: o.emoji }),
+    ...(o.priceXof !== undefined && { priceXof: o.priceXof }),
+    ...(o.costPriceXof !== undefined && { costPriceXof: o.costPriceXof }),
+    ...(o.stock !== undefined && { stock: o.stock }),
+    ...(o.lowStockThreshold !== undefined && {
+      lowStockThreshold: o.lowStockThreshold,
+    }),
+  };
 }
 
 export function useProductsState() {
-  const overrides = useSyncExternalStore(
+  const { overrides, extra } = useSyncExternalStore(
     subscribe,
     getSnapshot,
     getServerSnapshot,
   );
 
-  const products: Produit[] = useMemo(() => {
-    if (Object.keys(overrides).length === 0) return MOCK_PRODUITS;
-    return MOCK_PRODUITS.map((p) => {
-      const o = overrides[p.id];
-      if (!o) return p;
-      return {
-        ...p,
-        ...(o.isActive !== undefined && { isActive: o.isActive }),
-      };
-    });
-  }, [overrides]);
+  const products: Produit[] = useMemo(
+    () => [...extra, ...MOCK_PRODUITS].map((p) => applyOverride(p, overrides[p.id])),
+    [overrides, extra],
+  );
 
   const getProduct = useCallback(
     (id: string): Produit | undefined => products.find((p) => p.id === id),
@@ -141,10 +176,29 @@ export function useProductsState() {
     });
   }, []);
 
+  /** Création (modale / page Nouveau produit) — persiste en tête de catalogue. */
+  const addProduct = useCallback((p: Produit) => {
+    updateExtra((prev) => [p, ...prev]);
+  }, []);
+
+  /** Édition des champs du formulaire — stockée en override par-dessus la fixture. */
+  const updateProduct = useCallback((id: string, patch: ProductOverride) => {
+    const isExtra = store.extra.some((p) => p.id === id);
+    if (isExtra) {
+      updateExtra((prev) =>
+        prev.map((p) => (p.id === id ? ({ ...p, ...patch } as Produit) : p)),
+      );
+    } else {
+      updateState((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+    }
+  }, []);
+
   return {
     products,
     getProduct,
     toggleActive,
     setActive,
+    addProduct,
+    updateProduct,
   };
 }

@@ -13,6 +13,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useProductsState } from "@/lib/hooks/use-products-state";
 import { cn } from "@/lib/utils";
 
 export type ProductFormInitial = {
@@ -54,6 +55,7 @@ export function ProductForm({
   successHref,
 }: Props) {
   const router = useRouter();
+  const { addProduct, updateProduct } = useProductsState();
 
   const [name, setName] = useState(initial.name);
   const [description, setDescription] = useState(initial.description);
@@ -127,7 +129,40 @@ export function ProductForm({
 
   const handleSave = () => {
     if (!isValid) return;
-    // TODO V2 : server action createProduct() / updateProduct()
+    // V1 mock : persistance réelle via le store produits (sessionStorage).
+    // V2 : server action createProduct() / updateProduct() (Supabase).
+    if (mode === "create") {
+      const id = `p_new_${Date.now().toString(36)}`;
+      addProduct({
+        id,
+        sku: initial.sku,
+        name: name.trim(),
+        emoji,
+        bg: initial.bg,
+        description: description.trim(),
+        priceXof: priceNum,
+        costPriceXof: costNum ?? undefined,
+        stock: stockNum,
+        lowStockThreshold: thresholdNum,
+        isActive,
+        soldThisMonth: 0,
+        soldTotal: 0,
+        revenueThisMonthXof: 0,
+        revenueTotalXof: 0,
+        createdAt: new Date().toISOString(),
+      });
+    } else if (initial.id) {
+      updateProduct(initial.id, {
+        name: name.trim(),
+        description: description.trim(),
+        emoji,
+        priceXof: priceNum,
+        costPriceXof: costNum ?? undefined,
+        stock: stockNum,
+        lowStockThreshold: thresholdNum,
+        isActive,
+      });
+    }
     setSaved(true);
     setTimeout(() => {
       router.push(successHref);
