@@ -19,7 +19,7 @@ import {
 import { LivreurCard } from "@/components/kamoo/livreur-card";
 import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
-import { type Livreur, type LivreurType } from "@/lib/types/livreur";
+import { LIVREUR_SERVICE_SHORT, type Livreur, type LivreurService, type LivreurType } from "@/lib/types/livreur";
 import { cn } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
@@ -60,6 +60,7 @@ export default function MarketplaceLivreursPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState<TypeKey>("all");
   const [status, setStatus] = useState<StatusKey>("all");
+  const [service, setService] = useState<"all" | LivreurService>("all");
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState<SortKey>("rating");
   const [open, setOpen] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export default function MarketplaceLivreursPage() {
     const list = all.filter((l) => {
       if (type !== "all" && l.type !== type) return false;
       if (status !== "all" && l.status !== status) return false;
+      if (service !== "all" && !(l.services ?? []).includes(service)) return false;
       if (minRating > 0 && l.rating < minRating) return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
@@ -93,15 +95,16 @@ export default function MarketplaceLivreursPage() {
           return b.rating - a.rating || b.reviewsCount - a.reviewsCount;
       }
     });
-  }, [all, type, status, minRating, search, sortBy]);
+  }, [all, type, status, service, minRating, search, sortBy]);
 
-  const filtersActive = !!search || type !== "all" || status !== "all" || minRating > 0;
-  function reset() { setSearch(""); setType("all"); setStatus("all"); setMinRating(0); }
+  const filtersActive = !!search || type !== "all" || status !== "all" || service !== "all" || minRating > 0;
+  function reset() { setSearch(""); setType("all"); setStatus("all"); setService("all"); setMinRating(0); }
 
   /* Chips des filtres actifs (affichés sous la barre) */
   const chips: { label: string; clear: () => void }[] = [];
   if (type !== "all") chips.push({ label: TYPE_LABELS[type], clear: () => setType("all") });
   if (status !== "all") chips.push({ label: STATUS_LABELS[status], clear: () => setStatus("all") });
+  if (service !== "all") chips.push({ label: LIVREUR_SERVICE_SHORT[service], clear: () => setService("all") });
   if (minRating > 0) chips.push({ label: `Au moins ${minRating}★`, clear: () => setMinRating(0) });
 
 
@@ -152,6 +155,14 @@ export default function MarketplaceLivreursPage() {
 
           <Select id="status" icon={BadgeCheck} label="Statut" value={status === "all" ? null : STATUS_LABELS[status]} open={open} setOpen={setOpen}>
             {(Object.keys(STATUS_LABELS) as StatusKey[]).map((s) => <Opt key={s} active={status === s} onClick={() => { setStatus(s); setOpen(null); }}>{STATUS_LABELS[s]}</Opt>)}
+          </Select>
+
+          <Select id="service" icon={Headphones} label="Service" value={service === "all" ? null : LIVREUR_SERVICE_SHORT[service]} open={open} setOpen={setOpen}>
+            <Opt active={service === "all"} onClick={() => { setService("all"); setOpen(null); }}>Tous les services</Opt>
+            <div className="my-1 h-px bg-line" />
+            {(Object.keys(LIVREUR_SERVICE_SHORT) as LivreurService[]).map((s) => (
+              <Opt key={s} active={service === s} onClick={() => { setService(s); setOpen(null); }}>{LIVREUR_SERVICE_SHORT[s]}</Opt>
+            ))}
           </Select>
 
           <Select id="note" icon={Star} label="Note" value={minRating === 0 ? null : `Au moins ${minRating}`} open={open} setOpen={setOpen}>

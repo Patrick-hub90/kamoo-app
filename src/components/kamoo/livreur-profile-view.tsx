@@ -22,9 +22,10 @@ import {
   Users,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
+import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import { ALL_DAYS } from "@/lib/types/closeuse";
-import { LIVREUR_TYPE_LABELS, type Livreur } from "@/lib/types/livreur";
+import { LIVREUR_SERVICE_LABELS, LIVREUR_TYPE_LABELS, type Livreur } from "@/lib/types/livreur";
 import { cn } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
@@ -124,6 +125,39 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
             </div>
           </section>
 
+          {/* Services proposés — la flexibilité Kamoo : chaque livreur compose son offre */}
+          {l.services && l.services.length > 0 && (
+            <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+              <h2 className="text-[15px] font-bold text-ink-900">Services proposés</h2>
+              <div className="mt-3 grid gap-2">
+                {l.services.map((s) => (
+                  <div key={s} className="flex items-start gap-3 rounded-xl border border-line bg-paper-2/30 px-3.5 py-3">
+                    <span
+                      className={cn(
+                        "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
+                        s === "closing"
+                          ? "bg-kamoo-blue-50 text-kamoo-blue-700"
+                          : s === "entreposage"
+                            ? "bg-purple-50 text-purple-700"
+                            : "bg-emerald-50 text-emerald-700",
+                      )}
+                    >
+                      {s === "closing" ? <Headphones className="h-4 w-4" /> : s === "entreposage" ? <Package className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-semibold text-ink-900">{LIVREUR_SERVICE_LABELS[s]}</div>
+                      <div className="text-[11.5px] leading-relaxed text-ink-500">
+                        {s === "livraison" && "Livraison de vos commandes confirmées avec encaissement à la livraison (COD)."}
+                        {s === "closing" && "Confirme aussi vos commandes par téléphone — pratique si vous n'avez pas de closeuse."}
+                        {s === "entreposage" && "Stocke vos colis chez lui pour livrer plus vite — tarif au colis et par jour, à convenir via le chat."}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Zones & disponibilité */}
           <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
             <h2 className="text-[15px] font-bold text-ink-900">Zones desservies &amp; tarifs</h2>
@@ -187,25 +221,22 @@ export function LivreurProfileView({ livreur: l }: { livreur: Livreur }) {
         {/* ─── DROITE ─── */}
         <div className="flex flex-col gap-5">
           <section className="sticky top-6 flex flex-col gap-5">
-            {/* CTA */}
+            {/* CTA partenariat (choix direct — règle Kamoo) */}
+            <PartnerCta
+              role="livreur"
+              slug={l.slug}
+              name={l.name}
+              title={`Travailler avec ${cta} ?`}
+              description="Choisissez ce livreur pour vos livraisons. Il reçoit la demande sur son application et vous suivez chaque course en temps réel."
+              priceLabel="Tarif"
+              priceValue={`dès ${fmt(minPrice)} F CFA / livraison`}
+              priceHint="Tarif fixe selon la zone, payé sur chaque livraison."
+              chatPartner={chatPartner}
+            />
+
+            {/* Garanties */}
             <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <h2 className="text-[17px] font-bold leading-tight text-ink-900">Travailler avec {cta} ?</h2>
-              <div className="mt-3 rounded-xl bg-paper-2/50 px-3 py-2.5">
-                <div className="text-[10.5px] font-medium uppercase tracking-wide text-ink-400">Tarif</div>
-                <div className="text-[20px] font-extrabold tabular-nums text-ink-900">dès {fmt(minPrice)} <span className="text-[12px] font-semibold text-ink-500">F CFA / livraison</span></div>
-                <div className="mt-0.5 text-[11px] text-ink-400">Tarif fixe selon la zone, payé sur chaque livraison.</div>
-              </div>
-              <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600">
-                Choisir ce livreur
-              </button>
-              <button
-                onClick={() => openChat(chatPartner)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Discuter avant de décider
-              </button>
-              <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
+              <div className="flex flex-col gap-3">
                 <Trust icon={ShieldCheck} tone="text-emerald-600" title="Profil vérifié par Kamoo" sub="Identité et fiabilité contrôlées" />
                 <Trust icon={Truck} tone="text-kamoo-blue-700" title="Suivi de livraison intégré" sub="Statut en temps réel sur Kamoo" />
                 <Trust icon={Headphones} tone="text-kamoo-orange-500" title="Support Kamoo en cas de litige" sub="Nous vous accompagnons" />

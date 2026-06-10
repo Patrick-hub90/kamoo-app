@@ -9,7 +9,7 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
-import type { Livreur } from "@/lib/types/livreur";
+import { LIVREUR_SERVICE_SHORT, type Livreur } from "@/lib/types/livreur";
 import { cn } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
@@ -54,6 +54,27 @@ export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
           </div>
         </div>
       </div>
+
+      {/* Services — un livreur peut aussi faire du closing ou de l'entreposage */}
+      {l.services && l.services.length > 1 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {l.services.map((s) => (
+            <span
+              key={s}
+              className={cn(
+                "rounded-md px-2 py-0.5 text-[10.5px] font-semibold",
+                s === "closing"
+                  ? "bg-kamoo-blue-50 text-kamoo-blue-700"
+                  : s === "entreposage"
+                    ? "bg-purple-50 text-purple-700"
+                    : "bg-paper-2 text-ink-600",
+              )}
+            >
+              {LIVREUR_SERVICE_SHORT[s]}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Bio */}
       <p className="mt-2.5 line-clamp-2 text-[12px] leading-relaxed text-ink-600">{l.bio}</p>

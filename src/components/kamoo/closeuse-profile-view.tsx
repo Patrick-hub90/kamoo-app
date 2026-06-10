@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
+import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import { isTopPerformer } from "@/lib/data/mock-closeuses";
 import {
@@ -203,25 +204,22 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
         {/* ─── DROITE ─── */}
         <div className="flex flex-col gap-5">
           <section className="sticky top-6 flex flex-col gap-5">
-            {/* CTA */}
+            {/* CTA partenariat (choix direct — règle Kamoo) */}
+            <PartnerCta
+              role="closeuse"
+              slug={c.slug}
+              name={c.name}
+              title={`Travailler avec ${firstName} ?`}
+              description="Choisissez cette closeuse pour confirmer vos commandes. Elle reçoit la demande sur son application et vous échangez via le chat Kamoo."
+              priceLabel="Commission"
+              priceValue={`${fmt(c.commissionXof)} F CFA / commande livrée`}
+              priceHint="Payé uniquement quand la commande est livrée et encaissée."
+              chatPartner={chatPartner}
+            />
+
+            {/* Garanties */}
             <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <h2 className="text-[17px] font-bold leading-tight text-ink-900">Travailler avec {firstName} ?</h2>
-              <div className="mt-3 rounded-xl bg-paper-2/50 px-3 py-2.5">
-                <div className="text-[10.5px] font-medium uppercase tracking-wide text-ink-400">Commission</div>
-                <div className="text-[20px] font-extrabold tabular-nums text-ink-900">{fmt(c.commissionXof)} <span className="text-[12px] font-semibold text-ink-500">F CFA / commande livrée</span></div>
-                <div className="mt-0.5 text-[11px] text-ink-400">Payé uniquement quand la commande est livrée et encaissée.</div>
-              </div>
-              <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600">
-                Choisir cette closeuse
-              </button>
-              <button
-                onClick={() => openChat(chatPartner)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Discuter avant de décider
-              </button>
-              <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
+              <div className="flex flex-col gap-3">
                 <Trust icon={ShieldCheck} tone="text-emerald-600" title="Profil vérifié par Kamoo" sub="Identité + entretien validés" />
                 <Trust icon={Lock} tone="text-kamoo-blue-700" title="Paiement à la commande livrée" sub="Aucun frais fixe, zéro risque" />
                 <Trust icon={Headphones} tone="text-kamoo-orange-500" title="Support Kamoo en cas de litige" sub="Nous vous accompagnons" />

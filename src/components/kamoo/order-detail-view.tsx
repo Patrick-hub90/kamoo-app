@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { useChat } from "@/components/kamoo/chat";
+import { useClosingState } from "@/lib/hooks/use-closing-state";
 import {
   buildClosingHistory,
   MOCK_ACTIVE_CLOSEUSE,
@@ -130,9 +131,11 @@ function StatusPill({ label, bg, text, dot }: Pill) {
 function OrderHeader({
   a,
   backHref,
+  closing,
 }: {
   a: ClosingAssignment;
   backHref: string;
+  closing?: ReturnType<typeof useClosingState>;
 }) {
   const { openChat } = useChat();
   return (
@@ -162,10 +165,21 @@ function OrderHeader({
 
         {/* Droite : actions + navigation */}
         <div className="flex shrink-0 items-center gap-2">
-          {a.status === "livraison_en_cours" && (
-            <button className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800">
+          {a.status === "livraison_en_cours" && closing && (
+            <button
+              onClick={() => closing.markDelivered(a.id)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800"
+            >
               <CheckCircle2 className="h-4 w-4" />
               Marquer livrée
+            </button>
+          )}
+          {a.delivery?.progress === "alerte" && closing && (
+            <button
+              onClick={() => closing.retryDelivery(a.id)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 text-[13px] font-bold text-amber-800 transition hover:bg-amber-100"
+            >
+              Relancer la livraison
             </button>
           )}
           <button
@@ -200,9 +214,11 @@ type Props = {
   breadcrumbLabel: string;
   /** Mise en page pleine largeur, une seule colonne (pas de panneau latéral) */
   fullWidth?: boolean;
+  /** Machine d'états closing (actions réelles). Fourni par les pages [id]. */
+  closing?: ReturnType<typeof useClosingState>;
 };
 
-export function OrderDetailView({ a, backHref, fullWidth = false }: Props) {
+export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Props) {
   const { openChat } = useChat();
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
   const history = buildClosingHistory(a, closeuse.name);
@@ -224,7 +240,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false }: Props) {
 
   return (
     <div className="px-8 py-6">
-      <OrderHeader a={a} backHref={backHref} />
+      <OrderHeader a={a} backHref={backHref} closing={closing} />
 
       {/* Alerte livreur */}
       {isLivreurAlert && (

@@ -30,11 +30,15 @@ import {
 } from "@/lib/data/mock-closing";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { useClosingState } from "@/lib/hooks/use-closing-state";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CANCELLATION_REASON_LABELS,
   CLOSING_STATUS_LABELS,
   orderTotalXof,
+  type AssignedDelivery,
   type ClosingAssignment,
   type ClosingStatus,
 } from "@/lib/types/closing";
@@ -78,16 +82,11 @@ function fmtDateTime(iso: string): string {
 }
 
 export default function ClosingPage() {
-  /* Commandes créées à la main (démo) — persistées en sessionStorage et
-   * affichées en tête de liste avec les fixtures. */
-  const [extraOrders, setExtraOrders] = useSessionStorageState<ClosingAssignment[]>(
-    "closing.extraOrders",
-    [],
-  );
-  const all = useMemo(
-    () => [...extraOrders, ...MOCK_CLOSING_ASSIGNMENTS],
-    [extraOrders],
-  );
+  /* Machine d'états closing (extraOrders + overrides, sessionStorage).
+   * UNE SEULE instance du hook par page : les actions sont passées en props
+   * (les instances de useSessionStorageState ne se synchronisent pas). */
+  const closing = useClosingState();
+  const all = closing.all;
   const stats = useMemo(() => computeClosingStats(all), [all]);
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
 
@@ -363,7 +362,7 @@ export default function ClosingPage() {
               Sinon le tableau occupe toute la largeur. */}
           {selected && (
             <aside className="sticky top-6 hidden w-[380px] shrink-0 self-start lg:block">
-              <ClosingDetail assignment={selected} closeuseName={closeuse.name} onClose={() => setSelectedId(null)} />
+              <ClosingDetail assignment={selected} closeuseName={closeuse.name} onClose={() => setSelectedId(null)} closing={closing} />
             </aside>
           )}
         </div>
@@ -375,7 +374,7 @@ export default function ClosingPage() {
           existingIds={all.map((a) => a.id)}
           onClose={() => setCreateOpen(false)}
           onCreate={(order) => {
-            setExtraOrders([order, ...extraOrders]);
+            closing.addOrder(order);
             setCreateOpen(false);
             setSelectedId(order.id);
           }}
@@ -542,16 +541,26 @@ function ClosingDetail({
   assignment: a,
   closeuseName,
   onClose,
+  closing,
 }: {
   assignment: ClosingAssignment;
   closeuseName: string;
   onClose: () => void;
+  closing: ReturnType<typeof useClosingState>;
 }) {
+  const [assignOpen, setAssignOpen] = useState(false);
   const st = STATUS_STYLE[a.status];
   const StIcon = st.icon;
   const total = orderTotalXof(a);
   const history = buildClosingHistory(a, closeuseName);
   const nextAction = nextActionLabel(a.status);
+
+  /* États dérivés pour le rendu conditionnel des actions */
+  const isOpen = TO_PROCESS.includes(a.status); // nouvelle / rappelé / injoignable
+  const isConfirmed = a.status === "livraison_en_cours";
+  const hasLivreur = !!a.delivery;
+  const isAlerte = a.delivery?.progress === "alerte";
+  const isClosed = a.status === "livre" || a.status === "annule";
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
@@ -646,19 +655,195 @@ function ClosingDetail({
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions — conditionnelles à l'état réel de la commande */}
         <div className="p-3">
-          <div className="grid grid-cols-2 gap-2">
-            <ActionBtn icon={Phone} label="Appeler" className="bg-kamoo-blue-900 text-white hover:bg-kamoo-blue-800" />
-            <ActionBtn icon={MessageCircle} label="WhatsApp" className="bg-emerald-600 text-white hover:bg-emerald-700" />
-          </div>
+          {/* Contact client : toujours possible tant que la commande n'est pas close */}
+          {!isClosed && (
+            <div className="grid grid-cols-2 gap-2">
+              <ActionBtn
+                icon={Phone}
+                label="Appeler"
+                href={`tel:${a.client.phone.replace(/\s/g, "")}`}
+                className="bg-kamoo-blue-900 text-white hover:bg-kamoo-blue-800"
+              />
+              <ActionBtn
+                icon={MessageCircle}
+                label="WhatsApp"
+                href={
+                  a.client.whatsapp || a.client.phone
+                    ? `https://wa.me/${(a.client.whatsapp ?? a.client.phone).replace(/\D/g, "")}`
+                    : undefined
+                }
+                external
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
+              />
+            </div>
+          )}
+
           <div className="mt-2 flex flex-col gap-2">
-            <ActionBtn icon={Check} label="Confirmer" className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50" />
-            <ActionBtn icon={RotateCcw} label="Reporter / Rappeler" className="border border-amber-200 bg-white text-amber-700 hover:bg-amber-50" />
-            <ActionBtn icon={Phone} label="Marquer injoignable" className="border border-line bg-white text-ink-600 hover:bg-paper-2" />
-            <ActionBtn icon={XCircle} label="Annuler la commande" className="border border-red-200 bg-white text-red-600 hover:bg-red-50" />
+            {/* Phase appel : confirmer / reporter / injoignable / annuler */}
+            {isOpen && (
+              <>
+                <ActionBtn
+                  icon={Check}
+                  label="Confirmer la commande"
+                  onClick={() => closing.confirm(a.id)}
+                  className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
+                />
+                <ActionBtn
+                  icon={RotateCcw}
+                  label="Reporter / Rappeler demain"
+                  onClick={() => closing.postpone(a.id)}
+                  className="border border-amber-200 bg-white text-amber-700 hover:bg-amber-50"
+                />
+                {a.status !== "injoignable" && (
+                  <ActionBtn
+                    icon={Phone}
+                    label="Marquer injoignable"
+                    onClick={() => closing.markUnreachable(a.id)}
+                    className="border border-line bg-white text-ink-600 hover:bg-paper-2"
+                  />
+                )}
+              </>
+            )}
+
+            {/* Phase livraison : assigner / marquer livrée / résoudre l'alerte */}
+            {isConfirmed && !hasLivreur && (
+              <ActionBtn
+                icon={Truck}
+                label="Assigner un livreur"
+                onClick={() => setAssignOpen(true)}
+                className="bg-kamoo-orange-500 text-white hover:bg-kamoo-orange-600"
+              />
+            )}
+            {isConfirmed && hasLivreur && !isAlerte && (
+              <ActionBtn
+                icon={CheckCircle2}
+                label="Marquer livrée & encaissée"
+                onClick={() => closing.markDelivered(a.id)}
+                className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
+              />
+            )}
+            {isAlerte && (
+              <>
+                <ActionBtn
+                  icon={RotateCcw}
+                  label="Relancer la livraison"
+                  onClick={() => closing.retryDelivery(a.id)}
+                  className="border border-amber-200 bg-white text-amber-700 hover:bg-amber-50"
+                />
+                <ActionBtn
+                  icon={CheckCircle2}
+                  label="Finalement livrée"
+                  onClick={() => closing.markDelivered(a.id)}
+                  className="border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
+                />
+              </>
+            )}
+
+            {!isClosed && (
+              <ActionBtn
+                icon={XCircle}
+                label="Annuler la commande"
+                onClick={() => {
+                  if (window.confirm(`Annuler définitivement la commande ${a.id} ?`))
+                    closing.cancel(a.id);
+                }}
+                className="border border-red-200 bg-white text-red-600 hover:bg-red-50"
+              />
+            )}
+
+            {isClosed && (
+              <p className="rounded-lg bg-paper-2/60 px-3 py-2.5 text-center text-[12px] text-ink-500">
+                Commande {a.status === "livre" ? "livrée et encaissée" : "annulée"} — aucune action.
+              </p>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Modale d'assignation livreur */}
+      {assignOpen && (
+        <AssignLivreurModal
+          onClose={() => setAssignOpen(false)}
+          onAssign={(d) => {
+            closing.assignLivreur(a.id, d);
+            setAssignOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Modale « Assigner un livreur » ────────────────────────────── */
+function AssignLivreurModal({
+  onClose,
+  onAssign,
+}: {
+  onClose: () => void;
+  onAssign: (d: AssignedDelivery) => void;
+}) {
+  const { currentMarket } = useCurrentMarket();
+  const livreurs = MOCK_LIVREURS.filter(
+    (l) => l.countryCode === currentMarket.country.code,
+  );
+
+  function pick(slug: string) {
+    const l = livreurs.find((x) => x.slug === slug);
+    if (!l) return;
+    const eta = new Date();
+    eta.setHours(eta.getHours() + 3, 0, 0, 0);
+    onAssign({
+      id: `lv_${l.slug}`,
+      name: l.name,
+      phone: "", // jamais affiché : contact via chat in-app uniquement
+      avatarBg: l.avatarBg,
+      rating: l.rating,
+      progress: "en_attente",
+      scheduledAt: eta.toISOString(),
+      pickedUpAt: new Date().toISOString(),
+      deliveriesCount: l.kpi.deliveriesHandled,
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h2 className="text-[15px] font-bold text-ink-900">Assigner un livreur</h2>
+          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto p-3">
+          {livreurs.map((l) => (
+            <button
+              key={l.slug}
+              onClick={() => pick(l.slug)}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-paper-2"
+            >
+              {l.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={l.photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: l.avatarBg }}>
+                  {l.initials}
+                </span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-semibold text-ink-900">{l.name}</span>
+                <span className="block text-[11px] text-ink-500">
+                  ★ {l.rating} · {l.kpi.deliverySuccessRate}% réussite · {l.zones.length} zones
+                </span>
+              </span>
+              <span className="shrink-0 text-[11.5px] font-semibold text-kamoo-blue-700">Choisir</span>
+            </button>
+          ))}
+        </div>
+        <p className="border-t border-line px-5 py-3 text-[11px] text-ink-400">
+          Le livreur reçoit la course sur son app Kamoo et vous suivez la livraison en temps réel.
+        </p>
       </div>
     </div>
   );
@@ -770,13 +955,31 @@ function ActionBtn({
   icon: Icon,
   label,
   className,
+  onClick,
+  href,
+  external,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   className?: string;
+  onClick?: () => void;
+  href?: string;
+  external?: boolean;
 }) {
+  const cls = cn(
+    "flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold transition",
+    className,
+  );
+  if (href) {
+    return (
+      <a href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} className={cls}>
+        <Icon className="h-4 w-4" />
+        {label}
+      </a>
+    );
+  }
   return (
-    <button className={cn("flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold transition", className)}>
+    <button onClick={onClick} className={cls}>
       <Icon className="h-4 w-4" />
       {label}
     </button>

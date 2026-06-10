@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -17,7 +18,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { NotificationsBell } from "@/components/kamoo/notifications-bell";
-import { computeDeliveryStats, getDeliveryItems } from "@/lib/data/mock-closing";
+import { computeDeliveryStats } from "@/lib/data/mock-closing";
+import { useClosingState } from "@/lib/hooks/use-closing-state";
 import {
   orderTotalXof,
   type ClosingAssignment,
@@ -54,7 +56,18 @@ const fmtDateTime = (iso: string) => {
 const relevantDate = (a: ClosingAssignment) => a.delivery?.scheduledAt ?? a.createdAt;
 
 export default function LivraisonsPage() {
-  const all = useMemo(() => getDeliveryItems(), []);
+  /* Branchée sur la machine d'états closing : les livreurs assignés et les
+   * livraisons marquées depuis Closing apparaissent ici immédiatement. */
+  const closing = useClosingState();
+  const all = useMemo(
+    () =>
+      closing.all.filter(
+        (a) =>
+          a.delivery !== undefined &&
+          (a.status === "livraison_en_cours" || a.status === "livre"),
+      ),
+    [closing.all],
+  );
   const stats = useMemo(() => computeDeliveryStats(all), [all]);
 
   const router = useRouter();
@@ -121,7 +134,9 @@ export default function LivraisonsPage() {
             <NotificationsBell />
             <button className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"><History className="h-4 w-4 text-ink-400" /> Tout l&apos;historique</button>
             <button className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"><Download className="h-4 w-4 text-ink-400" /> Exporter</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"><Plus className="h-4 w-4" /> Nouvelle livraison</button>
+            {/* Une livraison naît d'une commande confirmée : on assigne le
+                livreur depuis la fiche commande, côté Closing. */}
+            <Link href="/closing" className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"><Plus className="h-4 w-4" /> Assigner un livreur</Link>
           </div>
         </div>
 

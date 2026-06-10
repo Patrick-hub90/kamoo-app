@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
+import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
@@ -168,27 +169,19 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
         {/* ─── DROITE ─── */}
         <div className="flex flex-col gap-5">
           <section className="sticky top-6 flex flex-col gap-5">
-            {/* CTA */}
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
-              <h2 className="text-[17px] font-bold leading-tight text-ink-900">
-                Prêt à travailler avec {firstName} ?
-              </h2>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-500">
-                Choisissez ce transitaire pour vos prochaines expéditions depuis la Chine.
-                Vous pourrez discuter avec lui directement après sélection.
-              </p>
-              <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600">
-                Choisir ce transitaire
-              </button>
-              <button
-                onClick={() => openChat(chatPartner)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Discuter avant de décider
-              </button>
+            {/* CTA partenariat (choix direct — règle Kamoo) */}
+            <PartnerCta
+              role="transitaire"
+              slug={t.slug}
+              name={t.name}
+              title={`Prêt à travailler avec ${firstName} ?`}
+              description="Choisissez ce transitaire pour vos prochaines expéditions depuis la Chine. Il reçoit la demande et vous échangez via le chat Kamoo."
+              chatPartner={chatPartner}
+            />
 
-              <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
+            {/* Garanties */}
+            <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
+              <div className="flex flex-col gap-3">
                 <Trust icon={ShieldCheck} tone="text-emerald-600" title="Profil vérifié par Kamoo" sub="Transitaire certifié et contrôlé" />
                 <Trust icon={Lock} tone="text-kamoo-blue-700" title="Paiement sécurisé via plateforme" sub="Vos paiements sont protégés" />
                 <Trust icon={Headphones} tone="text-kamoo-orange-500" title="Support Kamoo en cas de litige" sub="Nous vous accompagnons" />

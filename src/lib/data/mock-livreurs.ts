@@ -406,6 +406,21 @@ const RAW_LIVREURS: Livreur[] = [
 ];
 
 /**
+ * Services proposés par livreur — la flexibilité Kamoo : certains font aussi
+ * le closing ou l'entreposage. Déclaré par le livreur à l'inscription.
+ */
+const SERVICES: Record<string, Livreur["services"]> = {
+  "moussa-sow": ["livraison"],
+  "ibrahima-sarr": ["livraison", "closing"],
+  "pape-faye": ["livraison"],
+  "aminata-diakite": ["livraison", "closing"],
+  "yves-mballa": ["livraison"],
+  "wave-express-sn": ["livraison", "entreposage"],
+  "yango-delivery-ci": ["livraison"],
+  "express-cameroun": ["livraison", "entreposage"],
+};
+
+/**
  * Photo de profil téléchargée (Unsplash, licence libre) pour les livreurs
  * INDÉPENDANTS uniquement, servie depuis /public/livreurs/{slug}.jpg.
  * Les AGENCES gardent leur avatar à initiales (placeholder logo).
@@ -413,6 +428,7 @@ const RAW_LIVREURS: Livreur[] = [
 export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => ({
   ...l,
   photoUrl: l.type === "particulier" ? `/livreurs/${l.slug}.jpg` : undefined,
+  services: SERVICES[l.slug] ?? ["livraison"],
 }));
 
 export function getLivreur(slug: string): Livreur | undefined {

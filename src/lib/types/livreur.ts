@@ -74,11 +74,32 @@ export type Livreur = {
   schedule: WorkingSchedule;
   /** Date d'inscription Kamoo (ISO) — pour "Partenaire depuis…" */
   joinedAt: string;
+  /** Services proposés (livraison incluse par défaut) */
+  services?: LivreurService[];
 };
 
 export const LIVREUR_TYPE_LABELS: Record<LivreurType, string> = {
   particulier: "Livreur indépendant",
   agence: "Agence de livraison",
+};
+
+/**
+ * Services proposés par un livreur — la flexibilité Kamoo : certains livreurs
+ * font aussi le closing (le vendeur se passe alors de closeuse) ou stockent
+ * les colis chez eux (entreposage). Chacun compose son offre.
+ */
+export type LivreurService = "livraison" | "closing" | "entreposage";
+
+export const LIVREUR_SERVICE_LABELS: Record<LivreurService, string> = {
+  livraison: "Livraison COD",
+  closing: "Closing (confirmation d'appels)",
+  entreposage: "Entreposage de colis",
+};
+
+export const LIVREUR_SERVICE_SHORT: Record<LivreurService, string> = {
+  livraison: "Livraison",
+  closing: "Closing",
+  entreposage: "Entreposage",
 };
 
 export const LIVREUR_STATUS_LABELS: Record<LivreurStatus, string> = {
