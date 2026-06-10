@@ -1,5 +1,6 @@
 import type { Expedition } from "@/lib/types/expedition";
 import { shiftToNow } from "@/lib/clock";
+import { MOCK_PRODUITS } from "./mock-produits";
 
 /**
  * Données mockées pour les expéditions — usage UI uniquement.
@@ -45,7 +46,8 @@ const RAW_EXPEDITIONS: Expedition[] = [
     destinationCountry: "SN",
     status: "received_china",
     paymentStatus: "unpaid",
-    productName: "Crème hydratante L'Oréal",
+    productId: "p_creme",
+    productName: "Crème éclaircissante naturelle",
     otherProductsCount: 1,
     thumb: { emoji: "🧴", bg: "linear-gradient(135deg,#FCE7F3,#F472B6)" },
     transitaire: TRANSITAIRES.liang,
@@ -66,7 +68,8 @@ const RAW_EXPEDITIONS: Expedition[] = [
     destinationCountry: "SN",
     status: "received_china",
     paymentStatus: "unpaid",
-    productName: "Power banks 10 000mAh",
+    productId: "p_powerbank",
+    productName: "Power Bank 10 000mAh",
     otherProductsCount: 0,
     thumb: { emoji: "🔋", bg: "linear-gradient(135deg,#DCFCE7,#22C55E)" },
     transitaire: TRANSITAIRES.shanghai,
@@ -87,6 +90,7 @@ const RAW_EXPEDITIONS: Expedition[] = [
     destinationCountry: "SN",
     status: "awaiting_quote",
     paymentStatus: "unpaid",
+    productId: "p_lunettes",
     productName: "Lunettes solaires aviateur",
     otherProductsCount: 2,
     thumb: { emoji: "🕶️", bg: "linear-gradient(135deg,#FEF3C7,#F59E0B)" },
@@ -104,7 +108,8 @@ const RAW_EXPEDITIONS: Expedition[] = [
     destinationCountry: "SN",
     status: "arrived_destination",
     paymentStatus: "paid",
-    productName: "Sacs à main cuir véritable",
+    productId: "p_sac",
+    productName: "Sac à main cuir",
     otherProductsCount: 0,
     thumb: { emoji: "👜", bg: "linear-gradient(135deg,#DBEAFE,#3B82F6)" },
     transitaire: TRANSITAIRES.liang,
@@ -125,7 +130,8 @@ const RAW_EXPEDITIONS: Expedition[] = [
     destinationCountry: "SN",
     status: "received_china",
     paymentStatus: "paid",
-    productName: "Casquettes brodées",
+    productId: "p_casquette",
+    productName: "Casquette brodée",
     otherProductsCount: 0,
     thumb: { emoji: "🧢", bg: "linear-gradient(135deg,#FED7AA,#F97316)" },
     transitaire: TRANSITAIRES.pearl,
@@ -142,7 +148,8 @@ const RAW_EXPEDITIONS: Expedition[] = [
     destinationCountry: "SN",
     status: "arrived_destination",
     paymentStatus: "paid",
-    productName: "Coques téléphone silicone",
+    productId: "p_coque",
+    productName: "Coque téléphone silicone",
     otherProductsCount: 4,
     thumb: { emoji: "📱", bg: "linear-gradient(135deg,#E9D5FF,#A78BFA)" },
     transitaire: TRANSITAIRES.shanghai,
@@ -159,10 +166,16 @@ const RAW_EXPEDITIONS: Expedition[] = [
  * sur aujourd'hui (même écart relatif) pour que les filtres de période
  * fonctionnent en permanence. Les `eta` restent des libellés d'affichage.
  */
-export const MOCK_EXPEDITIONS: Expedition[] = RAW_EXPEDITIONS.map((e) => ({
-  ...e,
-  createdAt: shiftToNow(e.createdAt),
-}));
+export const MOCK_EXPEDITIONS: Expedition[] = RAW_EXPEDITIONS.map((e) => {
+  // Source unique de verite : le produit du catalogue fournit nom + visuel.
+  const p = e.productId ? MOCK_PRODUITS.find((x) => x.id === e.productId) : undefined;
+  return {
+    ...e,
+    createdAt: shiftToNow(e.createdAt),
+    productName: p?.name ?? e.productName,
+    thumb: p ? { emoji: p.emoji, bg: p.bg } : e.thumb,
+  };
+});
 
 export function computeListStats(expeditions: Expedition[]) {
   const total = expeditions.length;

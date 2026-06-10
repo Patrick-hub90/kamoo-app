@@ -24,11 +24,13 @@ import {
   DateRangeFilter,
   type DateFilterValue,
 } from "@/components/kamoo/date-range-filter";
-import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
+
+import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
 import { formatXOF } from "@/lib/format";
 import { filterByDateWith, normalizeDateFilter } from "@/lib/utils/date-filter";
 import { MOCK_TODAY } from "@/lib/clock";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
+import { useExpeditionsState } from "@/lib/hooks/use-expeditions-state";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +48,8 @@ const TABS: { id: TabFilter; label: string }[] = [
  * barre de filtres + tableau + pagination. Couleur d'attention en ROUGE.
  */
 export default function ExpeditionsListPage() {
-  const expeditions = MOCK_EXPEDITIONS;
+  /* Fixtures + expéditions créées via le wizard (sessionStorage) */
+  const { all: expeditions } = useExpeditionsState();
 
   const [tab, setTab] = useSessionStorageState<TabFilter>("expeditions.tab", "all");
   const [search, setSearch] = useSessionStorageState<string>("expeditions.search", "");
@@ -54,9 +57,22 @@ export default function ExpeditionsListPage() {
     "expeditions.dateFilter",
     { preset: "all" },
   );
+  const [mode, setMode] = useState<"all" | TransportMode>("all");
+  const [productFilter, setProductFilter] = useState<string>("all");
+  const [sortDir, setSortDir] = useState<"recent" | "oldest" | "priority">("priority");
   const [viewOpen, setViewOpen] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
+
+  /* Produits présents dans les expéditions (pour le filtre Produit) */
+  const productOptions = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const e of expeditions) names.set(e.productId ?? e.productName, e.productName);
+    return [...names.entries()].map(([id, name]) => ({ id, name }));
+  }, [expeditions]);
 
   const [justCreatedFlag, setJustCreatedFlag] = useState<{ colis: number } | null>(null);
   useEffect(() => {
@@ -85,6 +101,8 @@ export default function ExpeditionsListPage() {
         if (isActionRequired) return false;
       }
       if (tab === "arrivees" && e.status !== "arrived_destination") return false;
+      if (mode !== "all" && e.transportMode !== mode) return false;
+      if (productFilter !== "all" && (e.productId ?? e.productName) !== productFilter) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!e.publicCode.toLowerCase().includes(q) && !e.productName.toLowerCase().includes(q))
@@ -92,14 +110,24 @@ export default function ExpeditionsListPage() {
       }
       return true;
     });
-  }, [expeditions, tab, dateFilter, search]);
+  }, [expeditions, tab, dateFilter, search, mode, productFilter]);
 
-  const sorted = useMemo(() => sortByPriority(filtered), [filtered]);
-  const filtersActive = search.length > 0 || dateFilter.preset !== "all" || tab !== "all";
+  const sorted = useMemo(() => {
+    if (sortDir === "recent")
+      return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (sortDir === "oldest")
+      return [...filtered].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    return sortByPriority(filtered);
+  }, [filtered, sortDir]);
+
+  const filtersActive =
+    search.length > 0 || dateFilter.preset !== "all" || tab !== "all" || mode !== "all" || productFilter !== "all";
   const clearFilters = () => {
     setSearch("");
     setDateFilter({ preset: "all" });
     setTab("all");
+    setMode("all");
+    setProductFilter("all");
   };
 
   const tabCounts = useMemo(
@@ -126,26 +154,19 @@ export default function ExpeditionsListPage() {
 
   return (
     <div className="min-h-full bg-paper">
+      {/* Header commun : période + CTA + cloche (même ordre partout) */}
+      <PageHeader kicker="Mon activité" title="Expéditions">
+        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+        <Link
+          href="/expeditions/nouvelle"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+        >
+          <Plus className="h-4 w-4" />
+          Nouvelle expédition
+        </Link>
+      </PageHeader>
+
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
-        {/* HEADER */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[24px] font-bold tracking-tight text-ink-900">Expéditions</h1>
-            <p className="mt-1 text-[13px] text-ink-500">
-              Suivez et gérez toutes vos expéditions en temps réel.
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <NotificationsBell />
-            <Link
-              href="/expeditions/nouvelle"
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-            >
-              <Plus className="h-4 w-4" />
-              Nouvelle expédition
-            </Link>
-          </div>
-        </div>
 
         {/* Bannière succès */}
         {justCreatedFlag && (
@@ -235,8 +256,45 @@ export default function ExpeditionsListPage() {
             )}
           </div>
 
+          {/* Mode */}
+          <FilterSelect
+            label="Mode"
+            value={mode === "all" ? null : TRANSPORT_MODE_LABELS[mode]}
+            open={modeOpen}
+            setOpen={setModeOpen}
+          >
+            <FilterOpt active={mode === "all"} onClick={() => { setMode("all"); setModeOpen(false); }}>Tous les modes</FilterOpt>
+            {(Object.keys(TRANSPORT_MODE_LABELS) as TransportMode[]).map((m) => (
+              <FilterOpt key={m} active={mode === m} onClick={() => { setMode(m); setModeOpen(false); }}>{TRANSPORT_MODE_LABELS[m]}</FilterOpt>
+            ))}
+          </FilterSelect>
+
+          {/* Produit */}
+          <FilterSelect
+            label="Produit"
+            value={productFilter === "all" ? null : productOptions.find((p) => p.id === productFilter)?.name ?? null}
+            open={productOpen}
+            setOpen={setProductOpen}
+          >
+            <FilterOpt active={productFilter === "all"} onClick={() => { setProductFilter("all"); setProductOpen(false); }}>Tous les produits</FilterOpt>
+            {productOptions.map((p) => (
+              <FilterOpt key={p.id} active={productFilter === p.id} onClick={() => { setProductFilter(p.id); setProductOpen(false); }}>{p.name}</FilterOpt>
+            ))}
+          </FilterSelect>
+
+          {/* Tri */}
+          <FilterSelect
+            label="Trier"
+            value={sortDir === "priority" ? "Priorité" : sortDir === "recent" ? "Plus récent" : "Plus ancien"}
+            open={sortOpen}
+            setOpen={setSortOpen}
+          >
+            <FilterOpt active={sortDir === "priority"} onClick={() => { setSortDir("priority"); setSortOpen(false); }}>Priorité (actions d&apos;abord)</FilterOpt>
+            <FilterOpt active={sortDir === "recent"} onClick={() => { setSortDir("recent"); setSortOpen(false); }}>Date · plus récent</FilterOpt>
+            <FilterOpt active={sortDir === "oldest"} onClick={() => { setSortDir("oldest"); setSortOpen(false); }}>Date · plus ancien</FilterOpt>
+          </FilterSelect>
+
           <div className="ml-auto flex items-center gap-2">
-            <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
             {filtersActive && (
               <button
                 onClick={clearFilters}
@@ -395,4 +453,70 @@ function sortByPriority(
     return 3;
   };
   return [...expeditions].sort((a, b) => priorityOf(a) - priorityOf(b));
+}
+
+/* ─── Sous-composants filtres (menu déroulant générique) ─────────── */
+function FilterSelect({
+  label,
+  value,
+  open,
+  setOpen,
+  children,
+}: {
+  label: string;
+  value: string | null;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[12.5px] font-medium text-ink-700 transition hover:bg-paper-2"
+      >
+        <span className="text-ink-500">{label}</span>
+        {value && (
+          <>
+            <span className="text-ink-300">·</span>
+            <span className="max-w-[140px] truncate font-semibold">{value}</span>
+          </>
+        )}
+        <ChevronDown className="h-3.5 w-3.5 text-ink-400" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-56 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-kamoo-lg)]">
+            {children}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function FilterOpt({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left text-[12.5px] transition hover:bg-paper-2",
+        active ? "font-semibold text-ink-900" : "font-medium text-ink-700",
+      )}
+    >
+      <span className="truncate">{children}</span>
+      {active && <Check className="h-3.5 w-3.5 shrink-0 text-kamoo-blue-700" />}
+    </button>
+  );
 }

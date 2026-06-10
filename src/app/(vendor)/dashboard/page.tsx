@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import {
   KpiRow,
   CaChart,
@@ -227,24 +227,10 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-full bg-paper">
-      {/* Header unique façon /apercu — bandeau blanc, titre + contrôles.
-          Contenu aligné sur la même largeur max que le corps. */}
-      <header className="sticky top-0 z-20 border-b border-line bg-white">
-        <div className="mx-auto flex h-[68px] max-w-[1320px] items-center gap-4 px-6">
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-400">
-            {todaySubtitle}
-          </div>
-          <div className="text-[19px] font-bold tracking-tight text-ink-900">
-            {greeting} {MOCK_VENDOR.firstName}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-          <NotificationsBell />
-        </div>
-        </div>
-      </header>
+      {/* Header commun (PageHeader) : période + cloche, même ordre partout. */}
+      <PageHeader kicker={todaySubtitle} title={`${greeting} ${MOCK_VENDOR.firstName}`}>
+        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+      </PageHeader>
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-6 py-6">
         {/* KPI */}

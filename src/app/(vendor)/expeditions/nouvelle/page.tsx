@@ -23,10 +23,14 @@ import {
   Zap,
 } from "lucide-react";
 import { ProductSelector } from "@/components/kamoo/product-selector";
+import { MOCK_TRANSITAIRES } from "@/lib/data/mock-transitaires";
+import { useExpeditionsState } from "@/lib/hooks/use-expeditions-state";
+import { usePartners } from "@/lib/hooks/use-partners";
 import { COUNTRIES } from "@/lib/data/countries";
 import { TRANSPORT_MODES_DATA } from "@/lib/data/transport-modes";
 import { PRODUCT_CATEGORIES, getCategoryById } from "@/lib/data/categories";
-import type { TransportMode } from "@/lib/types/expedition";
+import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
+import type { Transitaire } from "@/lib/types/transitaire";
 import { cn } from "@/lib/utils";
 
 /* ─── État local du wizard ─────────────────────────────────────────── */
@@ -85,28 +89,36 @@ export default function NewExpeditionPage() {
       photos: [null, null, null, null, null],
     },
   ]);
-  const [aiCategoryId, setAiCategoryId] = useState("cosmetique");
   const [mode, setMode] = useState<TransportMode>("air_standard");
   const [responsibilityAccepted, setResponsibilityAccepted] = useState(false);
+
+  /* Une expédition Kamoo passe par VOTRE transitaire : sans partenariat
+   * actif, le wizard est bloqué (workflow de connexion ci-dessous). Les
+   * modes, tarifs, délais et catégories sont SYNCHRONISÉS avec lui. */
+  const { partners } = usePartners();
+  const tPartnership = partners.transitaire;
+  const transitaire =
+    tPartnership?.status === "active"
+      ? MOCK_TRANSITAIRES.find((t) => t.slug === tPartnership.slug) ?? null
+      : null;
+
+  const { addExpedition } = useExpeditionsState();
 
   // Pays actif (à remplacer par un context global plus tard)
   const country = COUNTRIES[0]; // SN
 
-  // Catégorie courante + helpers
-  const currentCat = getCategoryById(aiCategoryId);
+  // Modes proposés par LE transitaire connecté
   const isModeAllowed = (m: TransportMode) =>
-    !currentCat.incompatibleModes.includes(m);
+    transitaire ? transitaire.modes.some((tm) => tm.mode === m) : true;
 
-  // Auto-switch si le mode sélectionné devient incompatible
+  // Aligne le mode par défaut sur l'offre du transitaire
   useEffect(() => {
-    if (!isModeAllowed(mode)) {
-      const fallback = TRANSPORT_MODES_DATA.find((m) =>
-        isModeAllowed(m.id),
-      );
-      if (fallback) setMode(fallback.id);
+    if (transitaire && !isModeAllowed(mode)) {
+      const fallback = transitaire.modes[0]?.mode;
+      if (fallback) setMode(fallback);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCategoryId]);
+  }, [transitaire?.slug]);
 
   const totalWeight = useMemo(
     () =>
@@ -140,17 +152,41 @@ export default function NewExpeditionPage() {
    * en base + génère le shipping mark côté serveur.
    */
   const handleSubmit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !transitaire) return;
     setSubmitting(true);
+    const first = colis[0];
+    const tMode = transitaire.modes.find((m) => m.mode === mode);
+    /* L'expédition est réellement créée (sessionStorage) : elle apparaît
+     * immédiatement dans la liste, en « Attente devis ». */
+    addExpedition({
+      id: `exp_new_${Date.now().toString(36)}`,
+      publicCode: shippingMark,
+      vendorId: "v_aicha",
+      destinationCountry: country.code,
+      status: "awaiting_quote",
+      paymentStatus: "unpaid",
+      productId: first?.productId,
+      productName: first?.name || "Colis sans nom",
+      otherProductsCount: Math.max(0, colis.length - 1),
+      thumb: { emoji: "📦", bg: "linear-gradient(135deg,#E2E8F0,#94A3B8)" },
+      transitaire: {
+        name: transitaire.name,
+        avatar: transitaire.avatar,
+        avatarBg: transitaire.avatarBg,
+        rating: transitaire.rating,
+        paymentPolicy: transitaire.paymentPolicy,
+        refusedCategories: tMode?.forbidden ?? [],
+      },
+      transportMode: mode,
+      eta: tMode ? `~${tMode.delay}` : "—",
+      createdAt: new Date().toISOString(),
+      amountXof: null,
+      action: null,
+    });
     try {
       sessionStorage.setItem(
         "expedition.justCreated",
-        JSON.stringify({
-          colis: colis.length,
-          mode,
-          categoryId: aiCategoryId,
-          at: new Date().toISOString(),
-        }),
+        JSON.stringify({ colis: colis.length, mode, at: new Date().toISOString() }),
       );
     } catch {
       // sessionStorage indispo (mode privé) — pas bloquant, on navigue quand même
@@ -159,7 +195,7 @@ export default function NewExpeditionPage() {
   };
 
   // Mock shipping mark — sera généré côté serveur en vrai
-  const shippingMark = `KMO-${country.code}-78421`;
+  const shippingMark = `KMO-${country.code}-${String(78421 + colis.length)}`;
 
   /* ─── Handlers ──────────────────────────────────────────────── */
 
@@ -187,6 +223,41 @@ export default function NewExpeditionPage() {
   };
 
   /* ─── Render ─────────────────────────────────────────────────── */
+
+  /* GATE : pas de transitaire connecté → on guide vers la marketplace.
+   * Une expédition Kamoo est TOUJOURS portée par votre transitaire. */
+  if (!transitaire) {
+    const pending = tPartnership?.status === "pending";
+    return (
+      <div className="grid min-h-full place-items-center bg-paper px-6 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8 text-center shadow-kamoo-sm">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-kamoo-blue-50 text-kamoo-blue-700">
+            <Ship className="h-6 w-6" />
+          </div>
+          <h1 className="mt-4 text-[19px] font-extrabold text-ink-900">
+            {pending ? "Votre transitaire n'a pas encore accepté" : "Connectez d'abord un transitaire"}
+          </h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-ink-500">
+            {pending
+              ? "Votre demande de partenariat est en attente de validation. Dès qu'elle est acceptée, vous pourrez créer vos expéditions avec ses tarifs et ses délais."
+              : "Vos expéditions passent par VOTRE transitaire partenaire : ses modes, tarifs, délais et catégories acceptées s'appliquent automatiquement. Choisissez-en un dans la marketplace pour commencer."}
+          </p>
+          <Link
+            href="/marketplace/transitaires"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600"
+          >
+            {pending ? "Voir ma demande" : "Choisir un transitaire"}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <div className="mt-3">
+            <Link href="/expeditions" className="text-[12px] font-semibold text-ink-400 hover:text-ink-700">
+              Retour aux expéditions
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -242,8 +313,7 @@ export default function NewExpeditionPage() {
         )}
         {step === 2 && (
           <Step2Transport
-            categoryId={aiCategoryId}
-            onCategoryChange={setAiCategoryId}
+            transitaire={transitaire}
             mode={mode}
             onModeChange={setMode}
             isModeAllowed={isModeAllowed}
@@ -254,7 +324,7 @@ export default function NewExpeditionPage() {
           <Step3Confirm
             colis={colis}
             mode={mode}
-            categoryId={aiCategoryId}
+            transitaire={transitaire}
             country={country}
             shippingMark={shippingMark}
             totalWeight={totalWeight}
@@ -704,27 +774,23 @@ function PhotoSlot({
 /* ─── STEP 2 — TRANSPORT ──────────────────────────────────────────── */
 
 function Step2Transport({
-  categoryId,
-  onCategoryChange,
+  transitaire,
   mode,
   onModeChange,
   isModeAllowed,
   countryName,
 }: {
-  categoryId: string;
-  onCategoryChange: (id: string) => void;
+  transitaire: Transitaire;
   mode: TransportMode;
   onModeChange: (m: TransportMode) => void;
   isModeAllowed: (m: TransportMode) => boolean;
   countryName: string;
 }) {
-  const [catOpen, setCatOpen] = useState(false);
-  const currentCat = getCategoryById(categoryId);
-
   const recommendedRaw: TransportMode = "air_standard";
   const recommended = isModeAllowed(recommendedRaw)
     ? recommendedRaw
-    : TRANSPORT_MODES_DATA.find((m) => isModeAllowed(m.id))?.id;
+    : transitaire.modes[0]?.mode;
+  const selectedTMode = transitaire.modes.find((m) => m.mode === mode);
 
   return (
     <div>
@@ -732,7 +798,8 @@ function Step2Transport({
         Mode de transport
       </h2>
       <p className="mt-1 text-[13px] text-ink-500">
-        Choisissez comment votre colis voyagera depuis la Chine vers {countryName}.
+        Modes, tarifs et délais de <b className="text-ink-700">{transitaire.name}</b>, votre
+        transitaire — synchronisés avec son profil.
       </p>
 
       <div className="mt-6 grid grid-cols-[1fr_1.1fr] gap-6">
@@ -746,16 +813,16 @@ function Step2Transport({
               <div className="flex-1">
                 <div className="text-[11px] text-ink-500">Origine</div>
                 <div className="text-lg font-extrabold text-ink-900">
-                  🇨🇳 Guangzhou
+                  🇨🇳 {transitaire.city}
                 </div>
                 <div className="text-[12px] text-ink-500">
-                  Entrepôt Kamoo · GZ-04
+                  Entrepôt {transitaire.name}
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1.5 text-kamoo-orange-500">
                 <ArrowRight className="h-6 w-6" />
                 <div className="text-[10px] font-bold uppercase tracking-wider">
-                  {TRANSPORT_MODES_DATA.find((m) => m.id === mode)?.delay}
+                  {selectedTMode?.delay}
                 </div>
               </div>
               <div className="flex-1 text-right">
@@ -780,138 +847,57 @@ function Step2Transport({
           </div>
         </div>
 
-        {/* DROITE — IA + modes */}
+        {/* DROITE — modes proposés par le transitaire connecté */}
         <div className="flex flex-col gap-3">
-          {/* IA category chip */}
-          <div className="relative">
-            <div className="flex items-center gap-3 rounded-2xl border border-orange-200 bg-gradient-to-br from-kamoo-orange-100 to-kamoo-orange-50 p-3.5">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-kamoo-orange-500 to-kamoo-orange-600 text-white">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-kamoo-orange-700">
-                  Catégorie détectée par IA
-                </div>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                  <span className="text-base">{currentCat.emoji}</span>
-                  <span className="text-[15px] font-extrabold text-ink-900">
-                    {currentCat.label}
-                  </span>
-                  <span className="ml-1 text-[10px] font-semibold text-ink-500">
-                    · d&apos;après vos photos
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setCatOpen(!catOpen)}
-                className="inline-flex items-center gap-1 rounded-lg border border-kamoo-orange-400 bg-white px-2.5 py-1.5 text-[11px] font-bold text-kamoo-orange-700 hover:bg-kamoo-orange-50"
-              >
-                Modifier
-                <ChevronDown className="h-3 w-3" />
-              </button>
-            </div>
-
-            {catOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setCatOpen(false)}
-                />
-                <div className="absolute right-0 top-[calc(100%+6px)] z-20 max-h-80 w-72 overflow-y-auto rounded-xl border border-line bg-white p-1.5 shadow-[var(--shadow-kamoo-lg)]">
-                  <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-500">
-                    Choisir la catégorie
-                  </div>
-                  {PRODUCT_CATEGORIES.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        onCategoryChange(c.id);
-                        setCatOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-paper-2",
-                        c.id === categoryId && "bg-kamoo-orange-50",
-                      )}
-                    >
-                      <span className="text-base">{c.emoji}</span>
-                      <span
-                        className={cn(
-                          "flex-1",
-                          c.id === categoryId
-                            ? "font-bold text-ink-900"
-                            : "font-medium text-ink-900",
-                        )}
-                      >
-                        {c.label}
-                      </span>
-                      {c.id === categoryId && (
-                        <Check className="h-3.5 w-3.5 text-kamoo-orange-500" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-700">
+            Les modes proposés par {transitaire.name}
           </div>
 
-          <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-ink-700">
-            Choisissez votre mode
-          </div>
-
-          {TRANSPORT_MODES_DATA.map((m) => (
-            <TransportModeCard
-              key={m.id}
-              mode={m}
-              selected={mode === m.id}
-              allowed={isModeAllowed(m.id)}
-              recommended={m.id === recommended}
-              incompatibleReason={currentCat.reason}
-              onClick={() => isModeAllowed(m.id) && onModeChange(m.id)}
+          {transitaire.modes.map((tm) => (
+            <TransitaireModeCard
+              key={tm.mode}
+              tMode={tm}
+              selected={mode === tm.mode}
+              recommended={tm.mode === recommended}
+              onClick={() => onModeChange(tm.mode)}
             />
           ))}
+
+          <p className="mt-1 text-[11.5px] leading-relaxed text-ink-400">
+            Les catégories acceptées / refusées par mode seront affichées à la
+            confirmation — vous pourrez les relire avant de valider.
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-function TransportModeCard({
-  mode,
+/** Carte de mode SYNCHRONISÉE avec l'offre du transitaire connecté. */
+function TransitaireModeCard({
+  tMode,
   selected,
-  allowed,
   recommended,
-  incompatibleReason,
   onClick,
 }: {
-  mode: (typeof TRANSPORT_MODES_DATA)[number];
+  tMode: Transitaire["modes"][number];
   selected: boolean;
-  allowed: boolean;
   recommended: boolean;
-  incompatibleReason: string;
   onClick: () => void;
 }) {
-  const Icon = TRANSPORT_ICON[mode.id];
+  const Icon = TRANSPORT_ICON[tMode.mode];
 
   return (
     <button
       onClick={onClick}
-      disabled={!allowed}
       className={cn(
         "relative flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition",
-        !allowed
-          ? "cursor-not-allowed border-line bg-paper-2/50 opacity-60"
-          : selected
-            ? "border-kamoo-blue-700 bg-kamoo-blue-50"
-            : "border-line bg-white hover:border-ink-300",
+        selected
+          ? "border-kamoo-blue-700 bg-kamoo-blue-50"
+          : "border-line bg-white hover:border-ink-300",
       )}
     >
-      {/* Badge recommandé / indisponible */}
-      {!allowed && (
-        <div className="absolute -top-2.5 right-3 inline-flex items-center gap-1 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-          ⚠ Indisponible
-        </div>
-      )}
-      {recommended && allowed && !selected && (
+      {recommended && !selected && (
         <div className="absolute -top-2.5 right-3 rounded-md bg-kamoo-orange-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
           ★ Recommandé
         </div>
@@ -926,56 +912,38 @@ function TransportModeCard({
       <div
         className={cn(
           "grid h-14 w-14 shrink-0 place-items-center rounded-xl",
-          allowed ? TRANSPORT_BG[mode.id] : "bg-ink-100",
-          allowed ? TRANSPORT_FG[mode.id] : "text-ink-400",
+          TRANSPORT_BG[tMode.mode],
+          TRANSPORT_FG[tMode.mode],
         )}
       >
         <Icon className="h-6 w-6" />
       </div>
 
       <div className="flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="text-base font-extrabold text-ink-900">
-            {mode.label}
+        <span className="text-base font-extrabold text-ink-900">
+          {TRANSPORT_MODE_LABELS[tMode.mode]}
+        </span>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-ink-500">
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {tMode.delay}
           </span>
-          <span
-            className={cn(
-              "text-xs font-semibold",
-              allowed ? TRANSPORT_FG[mode.id] : "text-ink-400",
-            )}
-          >
-            {mode.sub}
-          </span>
+          {tMode.description && <span>{tMode.description}</span>}
         </div>
-        {allowed ? (
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-ink-500">
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {mode.delay}
-            </span>
-            <span>{mode.bestFor}</span>
-          </div>
-        ) : (
-          <div className="mt-1 text-[12px] font-semibold leading-snug text-red-600">
-            {incompatibleReason}
-          </div>
-        )}
       </div>
 
-      {/* Tarif indicatif à droite */}
-      {allowed && (
-        <div className="text-right">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-            À partir de
-          </div>
-          <div className="font-display text-[15px] font-extrabold leading-tight text-ink-900">
-            {mode.unitCostFromXof.toLocaleString("fr-FR")}
-          </div>
-          <div className="text-[10px] font-semibold text-ink-500">
-            F CFA / {mode.unit === "kg" ? "kg" : "CBM"}
-          </div>
+      {/* Tarif du transitaire */}
+      <div className="text-right">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+          Tarif
         </div>
-      )}
+        <div className="font-display text-[15px] font-extrabold leading-tight text-ink-900">
+          {tMode.fromXof.toLocaleString("fr-FR")} – {tMode.toXof.toLocaleString("fr-FR")}
+        </div>
+        <div className="text-[10px] font-semibold text-ink-500">
+          F CFA / {tMode.unit === "kg" ? "kg" : "CBM"}
+        </div>
+      </div>
     </button>
   );
 }
@@ -985,7 +953,7 @@ function TransportModeCard({
 function Step3Confirm({
   colis,
   mode,
-  categoryId,
+  transitaire,
   country,
   shippingMark,
   totalWeight,
@@ -995,7 +963,7 @@ function Step3Confirm({
 }: {
   colis: Colis[];
   mode: TransportMode;
-  categoryId: string;
+  transitaire: Transitaire;
   country: (typeof COUNTRIES)[number];
   shippingMark: string;
   totalWeight: number;
@@ -1003,9 +971,8 @@ function Step3Confirm({
   responsibilityAccepted: boolean;
   onResponsibilityChange: (v: boolean) => void;
 }) {
-  const modeData = TRANSPORT_MODES_DATA.find((m) => m.id === mode)!;
+  const tMode = transitaire.modes.find((m) => m.mode === mode)!;
   const ModeIcon = TRANSPORT_ICON[mode];
-  const cat = getCategoryById(categoryId);
 
   return (
     <div className="grid grid-cols-[1.4fr_1fr] gap-6">
@@ -1028,7 +995,7 @@ function Step3Confirm({
             </div>
             <div className={cn("flex flex-col items-center gap-1", TRANSPORT_FG[mode])}>
               <ModeIcon className="h-5 w-5" />
-              <div className="text-[10px] font-bold">{modeData.delay}</div>
+              <div className="text-[10px] font-bold">{tMode.delay}</div>
             </div>
             <div className="flex-1 text-right">
               <div className="text-[11px] text-ink-500">Destination</div>
@@ -1049,8 +1016,8 @@ function Step3Confirm({
               {colis.length} colis · {totalWeight.toFixed(1)} kg estimés
             </div>
             <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-kamoo-blue-700">
-              <Sparkles className="h-3 w-3" />
-              IA : {cat.label}
+              <ModeIcon className="h-3 w-3" />
+              {TRANSPORT_MODE_LABELS[mode]} · {tMode.delay}
             </div>
           </div>
           <div className="flex flex-col gap-2.5">
@@ -1157,7 +1124,44 @@ function Step3Confirm({
           </div>
         </div>
 
-        {/* GARDE-FOU : que se passe-t-il si refusé + checkbox responsabilité */}
+        {/* RELECTURE — catégories du transitaire pour le mode choisi.
+            Synchronisé avec son profil : c'est SA politique qui s'applique. */}
+        <div className="rounded-2xl border border-line bg-white p-5">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+            À relire avant de valider — {TRANSPORT_MODE_LABELS[mode]} chez {transitaire.name}
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
+              <div className="text-[10.5px] font-bold uppercase tracking-wide text-emerald-700">
+                ✓ Colis autorisés
+              </div>
+              <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
+                {(tMode.accepted ?? ["Marchandises générales"]).map((a) => (
+                  <li key={a}>· {a}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50/50 p-3">
+              <div className="text-[10.5px] font-bold uppercase tracking-wide text-red-600">
+                ✕ Colis refusés
+              </div>
+              <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
+                {(tMode.forbidden ?? []).length > 0 ? (
+                  (tMode.forbidden ?? []).map((fz) => <li key={fz}>· {fz}</li>)
+                ) : (
+                  <li className="italic text-ink-400">Aucune restriction déclarée</li>
+                )}
+              </ul>
+            </div>
+          </div>
+          <p className="mt-3 text-[11.5px] leading-relaxed text-ink-400">
+            Un doute sur votre produit ? Discutez-en avec {transitaire.name} via le chat
+            avant de valider — vous pouvez lui envoyer les photos de vos colis.
+          </p>
+        </div>
+
+        {/* GARDE-FOU + protection : l'adresse fournisseur et le shipping mark
+            ne sont transmis au transitaire QU'APRÈS validation. */}
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <div className="flex items-start gap-3">
             <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700">
@@ -1168,10 +1172,11 @@ function Step3Confirm({
                 Que se passe-t-il si le contenu ne correspond pas ?
               </div>
               <p className="mt-1 text-amber-800">
-                Si le transitaire reçoit un produit incompatible avec le mode
-                choisi (ex : cosmétiques liquides en avion), il refusera
-                l&apos;expédition. Vous devrez alors fournir une adresse
-                alternative en Chine et payer les frais de réacheminement.
+                Si {transitaire.name} reçoit un colis d&apos;une catégorie refusée pour le
+                mode choisi, il refusera l&apos;expédition : vous devrez fournir une adresse
+                alternative en Chine et payer les frais de réacheminement. C&apos;est
+                pourquoi l&apos;adresse de son entrepôt et votre shipping mark ne sont
+                débloqués <b>qu&apos;après validation</b> de cette étape.
               </p>
             </div>
           </div>
@@ -1185,9 +1190,9 @@ function Step3Confirm({
             className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-kamoo-orange-500"
           />
           <span className="text-[13px] leading-relaxed text-ink-900">
-            <b>Je confirme</b> que le contenu de mes colis correspond à la
-            catégorie déclarée. En cas de divergence, j&apos;accepte de payer
-            les frais de réacheminement.
+            <b>J&apos;ai relu les colis autorisés / refusés</b> de {transitaire.name} et je
+            confirme que mes colis les respectent. En cas de divergence constatée à la
+            réception, j&apos;accepte de payer les frais de réacheminement.
           </span>
         </label>
       </div>
@@ -1201,7 +1206,7 @@ function Step3Confirm({
           colisCount={colis.length}
         />
 
-        <NextStepsTimeline countryName={country.name} mode={modeData.id} />
+        <NextStepsTimeline countryName={country.name} mode={mode} />
       </div>
     </div>
   );

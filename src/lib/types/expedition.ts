@@ -25,6 +25,8 @@ export type Expedition = {
   paymentStatus: PaymentStatus;
 
   // Produit principal
+  /** Produit du catalogue (source du nom + visuel) */
+  productId?: string;
   productName: string;
   otherProductsCount: number;
   thumb: { emoji: string; bg: string };

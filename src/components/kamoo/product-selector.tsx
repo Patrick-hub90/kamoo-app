@@ -309,8 +309,28 @@ export function ProductSelector({
                 </button>
               </div>
             ) : (
-              /* Liste catalogue */
+              /* Liste catalogue — « Créer un nouveau produit » TOUJOURS en premier */
               <div className="min-h-0 flex-1 overflow-y-auto p-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    draft.trim() ? handleCreate() : inputRef.current?.focus()
+                  }
+                  className="flex w-full items-center gap-3 rounded-lg bg-kamoo-blue-50/60 px-2.5 py-2.5 text-left text-[13px] font-bold text-kamoo-blue-700 transition hover:bg-kamoo-blue-100"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-dashed border-kamoo-blue-300 bg-white">
+                    <Plus className="h-4 w-4" />
+                  </span>
+                  {draft.trim()
+                    ? `Créer le produit « ${draft.trim()} »`
+                    : "Créer un nouveau produit"}
+                  {!draft.trim() && (
+                    <span className="ml-auto text-[10.5px] font-semibold text-kamoo-blue-400">
+                      tapez son nom
+                    </span>
+                  )}
+                </button>
+                <div className="my-1 h-px bg-line" />
                 {filtered.map((p) => {
                   const isSelected = productId === p.id;
                   return (

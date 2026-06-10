@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle, ChevronRight, Plane, Ship, Zap } from "lucide-react";
+import { useSavedCovers } from "@/components/kamoo/product-image-manager";
 import { formatXOF } from "@/lib/format";
 import { TRANSPORT_MODE_LABELS, type Expedition } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,9 @@ export function ExpeditionRow({ expedition: e, isFirst = false }: Props) {
   const ModeIcon = modeIcon(e.transportMode);
   const productLabel =
     e.otherProductsCount > 0 ? `${e.productName} · +${e.otherProductsCount}` : e.productName;
+  /* Visuel relié au catalogue : photo de couverture du produit si dispo */
+  const covers = useSavedCovers();
+  const cover = e.productId ? covers[e.productId] : undefined;
 
   return (
     <Link
@@ -91,14 +95,19 @@ export function ExpeditionRow({ expedition: e, isFirst = false }: Props) {
         <div className="mt-0.5 text-[11px] tabular-nums text-ink-400">{formatDate(e.createdAt)}</div>
       </div>
 
-      {/* 2 · Produit */}
+      {/* 2 · Produit — même visuel que le catalogue (photo si dispo, sinon emoji) */}
       <div className="flex min-w-0 items-center gap-3">
-        <div
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-[18px]"
-          style={{ background: e.thumb.bg }}
-        >
-          {e.thumb.emoji}
-        </div>
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cover} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <div
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-[18px]"
+            style={{ background: e.thumb.bg }}
+          >
+            {e.thumb.emoji}
+          </div>
+        )}
         <div className="min-w-0">
           <div className="truncate text-[13px] font-semibold text-ink-900">{productLabel}</div>
           {isActionRequired && (

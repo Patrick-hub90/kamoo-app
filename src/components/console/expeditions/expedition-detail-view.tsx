@@ -243,7 +243,7 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
                   </div>
                 </div>
 
-                <HistoriqueRecent history={exp.history} />
+                {/* Historique récent retiré : redondant avec la timeline */}
               </div>
             </>
           )}
@@ -385,7 +385,7 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
                       className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-kamoo-orange-500 text-[14px] font-semibold text-white transition hover:bg-kamoo-orange-600"
                     >
                       <Wallet className="h-4 w-4" />
-                      Payer maintenant
+                      Marquer comme payé
                     </button>
                     <button
                       onClick={() => setModal("proof")}
@@ -628,32 +628,3 @@ function ContactRow({
   );
 }
 
-function HistoriqueRecent({ history }: { history: ExpeditionDetail["history"] }) {
-  const events = [...history].reverse().slice(0, 3);
-  return (
-    <div className={CARD + " p-5"}>
-      <div className="mb-3 text-[13.5px] font-semibold text-ink-900">Historique récent</div>
-      <ol className="flex flex-col gap-3">
-        {events.map((e, i) => {
-          const [date, time] = e.date.split(" · ");
-          return (
-            <li key={i} className="flex gap-3">
-              <div className="flex flex-col items-center">
-                <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-kamoo-blue-700" />
-                {i < events.length - 1 && <span className="mt-1 w-px flex-1 bg-line" />}
-              </div>
-              <div className="min-w-0 pb-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[11px] tabular-nums text-ink-400">{date}</span>
-                  {time && <span className="text-[11px] tabular-nums text-ink-300">{time}</span>}
-                </div>
-                <div className="text-[12.5px] font-semibold text-ink-900">{e.label}</div>
-                {e.detail && <div className="truncate text-[11.5px] text-ink-500">{e.detail}</div>}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
