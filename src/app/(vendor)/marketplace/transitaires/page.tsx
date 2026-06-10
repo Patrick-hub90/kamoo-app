@@ -5,14 +5,19 @@ import {
   BadgeCheck,
   Check,
   ChevronDown,
+  Clock,
   Search,
   ShieldCheck,
+  Ship,
   Star,
   Users,
+  Wallet,
+  X,
 } from "lucide-react";
 import { TransitaireCard } from "@/components/kamoo/transitaire-card";
 import { MOCK_TRANSITAIRES } from "@/lib/data/mock-transitaires";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
+import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +30,27 @@ const SORT_LABELS: Record<SortKey, string> = {
   orders: "Commandes traitées",
 };
 
+const MODES: TransportMode[] = ["air_express", "air_standard", "sea"];
+
+const DELAY_OPTIONS = [
+  { v: 0, label: "Tous les délais" },
+  { v: 5, label: "≤ 5 jours" },
+  { v: 10, label: "≤ 10 jours" },
+  { v: 30, label: "≤ 30 jours" },
+];
+
 function minPrice(t: Transitaire): number {
   return Math.min(...t.modes.map((m) => m.fromXof));
+}
+
+/** Délai minimum (en jours) parmi les modes du transitaire. */
+function minDelayDays(t: Transitaire): number {
+  return Math.min(
+    ...t.modes.map((m) => {
+      const n = m.delay.match(/\d+/);
+      return n ? parseInt(n[0], 10) : 999;
+    }),
+  );
 }
 
 export default function MarketplaceTransitairesPage() {
@@ -35,6 +59,9 @@ export default function MarketplaceTransitairesPage() {
   const [search, setSearch] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [certifiedOnly, setCertifiedOnly] = useState(false);
+  const [mode, setMode] = useState<"all" | TransportMode>("all");
+  const [maxDelay, setMaxDelay] = useState(0);
+  const [arrivalPay, setArrivalPay] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("rating");
   const [open, setOpen] = useState<string | null>(null);
   const [saved, setSaved] = useSessionStorageState<string[]>(
@@ -49,11 +76,15 @@ export default function MarketplaceTransitairesPage() {
     const list = all.filter((t) => {
       if (certifiedOnly && t.status !== "certified") return false;
       if (t.rating < minRating) return false;
+      if (mode !== "all" && !t.modes.some((m) => m.mode === mode)) return false;
+      if (maxDelay > 0 && minDelayDays(t) > maxDelay) return false;
+      if (arrivalPay && t.paymentPolicy !== "on_arrival") return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
           !t.name.toLowerCase().includes(q) &&
           !t.city.toLowerCase().includes(q) &&
+          !(t.localWarehouse ?? "").toLowerCase().includes(q) &&
           !t.about.toLowerCase().includes(q) &&
           !t.specialties.some((s) => s.toLowerCase().includes(q))
         )
@@ -76,15 +107,27 @@ export default function MarketplaceTransitairesPage() {
     });
     // Les transitaires enregistrés remontent en tête de liste.
     return [...sorted.filter((t) => saved.includes(t.slug)), ...sorted.filter((t) => !saved.includes(t.slug))];
-  }, [all, search, certifiedOnly, minRating, sortBy, saved]);
+  }, [all, search, certifiedOnly, minRating, mode, maxDelay, arrivalPay, sortBy, saved]);
 
-  const filtersActive = search.trim() !== "" || certifiedOnly || minRating > 0;
+  const filtersActive =
+    search.trim() !== "" || certifiedOnly || minRating > 0 || mode !== "all" || maxDelay > 0 || arrivalPay;
 
   function reset() {
     setSearch("");
     setMinRating(0);
     setCertifiedOnly(false);
+    setMode("all");
+    setMaxDelay(0);
+    setArrivalPay(false);
   }
+
+  /* Chips des filtres actifs (affichés sous la barre) */
+  const chips: { label: string; clear: () => void }[] = [];
+  if (mode !== "all") chips.push({ label: TRANSPORT_MODE_LABELS[mode], clear: () => setMode("all") });
+  if (maxDelay > 0) chips.push({ label: `Délai ≤ ${maxDelay} j`, clear: () => setMaxDelay(0) });
+  if (arrivalPay) chips.push({ label: "Paiement à l'arrivée", clear: () => setArrivalPay(false) });
+  if (minRating > 0) chips.push({ label: `Au moins ${minRating}★`, clear: () => setMinRating(0) });
+  if (certifiedOnly) chips.push({ label: "Certifié Kamoo", clear: () => setCertifiedOnly(false) });
 
   return (
     <div className="min-h-full bg-paper">
@@ -113,7 +156,7 @@ export default function MarketplaceTransitairesPage() {
               <ShieldCheck className="h-4 w-4 text-kamoo-orange-400" /> Profils vérifiés par Kamoo
             </span>
             <span className="inline-flex items-center gap-2">
-              <Users className="h-4 w-4 text-kamoo-orange-400" /> +1 250 transitaires référencés
+              <Users className="h-4 w-4 text-kamoo-orange-400" /> {all.length} transitaire{all.length > 1 ? "s" : ""} référencé{all.length > 1 ? "s" : ""}
             </span>
             <span className="inline-flex items-center gap-2">
               <Star className="h-4 w-4 text-kamoo-orange-400" /> Avis authentiques
@@ -136,6 +179,20 @@ export default function MarketplaceTransitairesPage() {
             />
           </div>
 
+          <Select id="mode" icon={Ship} label="Mode" value={mode === "all" ? null : TRANSPORT_MODE_LABELS[mode]} open={open} setOpen={setOpen}>
+            <Opt active={mode === "all"} onClick={() => { setMode("all"); setOpen(null); }}>Tous les modes</Opt>
+            <div className="my-1 h-px bg-line" />
+            {MODES.map((m) => (
+              <Opt key={m} active={mode === m} onClick={() => { setMode(m); setOpen(null); }}>{TRANSPORT_MODE_LABELS[m]}</Opt>
+            ))}
+          </Select>
+
+          <Select id="delai" icon={Clock} label="Délai" value={maxDelay === 0 ? null : `≤ ${maxDelay} j`} open={open} setOpen={setOpen}>
+            {DELAY_OPTIONS.map((o) => (
+              <Opt key={o.v} active={maxDelay === o.v} onClick={() => { setMaxDelay(o.v); setOpen(null); }}>{o.label}</Opt>
+            ))}
+          </Select>
+
           <Select
             id="note"
             icon={Star}
@@ -156,6 +213,20 @@ export default function MarketplaceTransitairesPage() {
           </Select>
 
           <button
+            onClick={() => setArrivalPay((v) => !v)}
+            className={cn(
+              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-medium transition",
+              arrivalPay
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                : "border-line bg-white text-ink-700 hover:bg-paper-2",
+            )}
+          >
+            <Wallet className="h-3.5 w-3.5" />
+            Paiement à l&apos;arrivée
+            {arrivalPay && <Check className="h-3 w-3" />}
+          </button>
+
+          <button
             onClick={() => setCertifiedOnly((v) => !v)}
             className={cn(
               "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-medium transition",
@@ -168,16 +239,27 @@ export default function MarketplaceTransitairesPage() {
             Certifié
             {certifiedOnly && <Check className="h-3 w-3" />}
           </button>
-
-          {filtersActive && (
-            <button
-              onClick={reset}
-              className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[12.5px] font-semibold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50"
-            >
-              Effacer
-            </button>
-          )}
         </div>
+
+        {/* FILTRES ACTIFS — chips visibles sous la barre */}
+        {chips.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[12px] font-semibold text-ink-500">Filtres actifs :</span>
+            {chips.map((ch, i) => (
+              <button
+                key={i}
+                onClick={ch.clear}
+                className="inline-flex items-center gap-1.5 rounded-full border border-kamoo-blue-200 bg-kamoo-blue-50 px-2.5 py-1 text-[11.5px] font-semibold text-kamoo-blue-800 transition hover:bg-kamoo-blue-100"
+              >
+                {ch.label}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
+            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-orange-600 hover:underline">
+              Tout effacer
+            </button>
+          </div>
+        )}
 
         {/* COMPTEUR + TRI */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { computeClientsStats, MOCK_CLIENTS } from "@/lib/data/mock-clients";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CHANNEL_LABELS,
@@ -132,10 +133,13 @@ export default function ClientsPage() {
             <h1 className="text-[24px] font-bold tracking-tight text-ink-900">Clients</h1>
             <p className="mt-1 text-[13px] text-ink-500">Suivez votre base client, leur fidélité et leur valeur.</p>
           </div>
-          <button className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">
-            <Plus className="h-4 w-4" />
-            Ajouter un client
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <NotificationsBell />
+            <button className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">
+              <Plus className="h-4 w-4" />
+              Ajouter un client
+            </button>
+          </div>
         </div>
 
         {/* KPI */}

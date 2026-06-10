@@ -1,8 +1,8 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
-import { MarketSelector } from "./market-selector";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { useTopbarSlot } from "./topbar-slot";
 
 type TopbarProps = {
@@ -10,6 +10,12 @@ type TopbarProps = {
   onMobileMenuToggle?: () => void;
 };
 
+/**
+ * Topbar global — affiché uniquement sur les pages PAS encore refondues
+ * (cf. HIDE_GLOBAL_TOPBAR). Le sélecteur de marché n'y figure PLUS : le
+ * widget marché vit dans la sidebar (un seul endroit, pas de doublon).
+ * La cloche est la vraie cloche de notifications (synchrone partout).
+ */
 export function Topbar({ onMobileMenuToggle }: TopbarProps = {}) {
   const slot = useTopbarSlot();
 
@@ -38,38 +44,17 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps = {}) {
           {/* Contexte page (ex: commande) */}
           <div className="hidden min-w-0 shrink-0 lg:block">{slot.lead}</div>
 
-          <div className="hidden shrink-0 lg:block">
-            <MarketSelector />
-          </div>
-
           <div className="flex-1" />
 
           {/* Actions page */}
           <div className="flex shrink-0 items-center gap-2.5">{slot.actions}</div>
 
-          <button
-            type="button"
-            className="relative shrink-0 rounded-lg p-2.5 text-ink-700 hover:bg-paper-2"
-            aria-label="Notifications"
-          >
-            <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-kamoo-orange-500 ring-2 ring-white" />
-          </button>
+          <NotificationsBell />
         </>
       ) : (
         <>
           <div className="flex-1" />
-
-          <button
-            type="button"
-            className="relative rounded-lg p-2.5 text-ink-700 hover:bg-paper-2"
-            aria-label="Notifications"
-          >
-            <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-kamoo-orange-500 ring-2 ring-white" />
-          </button>
-
-          <MarketSelector />
+          <NotificationsBell />
         </>
       )}
     </header>

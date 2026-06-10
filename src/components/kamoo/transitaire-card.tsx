@@ -16,7 +16,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useChat } from "@/components/kamoo/chat";
+
 import type { Transitaire } from "@/lib/types/transitaire";
 import type { TransportMode } from "@/lib/types/expedition";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
@@ -38,7 +38,7 @@ type Props = {
 };
 
 export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }: Props) {
-  const { openChat } = useChat();
+
   return (
     <div
       className={cn(
@@ -101,32 +101,23 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
           )}
         </div>
         <div className="mt-1 inline-flex items-center gap-1 text-[12px] text-ink-500">
-          <MapPin className="h-3 w-3 shrink-0" /> {t.countryCode} {t.city} · Partenaire depuis {t.partnerSince}
+          <MapPin className="h-3 w-3 shrink-0" /> Retrait : {t.localWarehouse ?? t.city} · Partenaire depuis {t.partnerSince}
         </div>
 
         {/* Description */}
         <p className="mt-2.5 line-clamp-2 text-[12.5px] leading-relaxed text-ink-600">{t.about}</p>
 
-        {/* Spécialités */}
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {t.specialties.slice(0, 3).map((s) => (
-            <span key={s} className="rounded-md bg-paper-2 px-2 py-0.5 text-[11px] font-medium text-ink-700">
-              {s}
-            </span>
-          ))}
-        </div>
-
-        {/* Stats */}
-        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-line bg-paper-2/40 px-2 py-2.5 text-[11px]">
-          <Stat icon={Users} value={String(t.activeVendors)} label="vendeurs actifs" />
-          <Stat icon={Clock} value={t.responseTime ?? "—"} label="rép. moyenne" />
-          <Stat icon={CheckCircle2} value={`${t.onTimePct ?? "—"}%`} label="à temps" />
+        {/* Fiabilité — sobre et explicite (calculé par la plateforme) */}
+        <div className="mt-3 rounded-xl border border-line bg-paper-2/40 px-3 py-2 text-[11.5px] leading-relaxed text-ink-600">
+          <b className="text-ink-900">{(t.ordersHandled ?? 0).toLocaleString("fr-FR")}</b> expéditions traitées
+          · répond en ~<b className="text-ink-900">{t.responseTime ?? "—"}</b>
+          · <b className="text-ink-900">{t.onTimePct ?? "—"} %</b> livrées dans le délai annoncé
         </div>
 
         {/* Tarifs — pleine largeur, montants explicites */}
         <div className="mt-3">
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-400">
-            Tarifs indicatifs
+            Tarifs
           </div>
           <div className="flex flex-col divide-y divide-[#F4F5F6] rounded-xl border border-line">
             {t.modes.slice(0, 3).map((m) => {
@@ -163,20 +154,6 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
             Voir le profil
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-          <button
-            title="Discuter sur Kamoo"
-            onClick={() =>
-              openChat({
-                id: `transitaire:${t.slug}`,
-                name: t.name,
-                role: "transitaire",
-                avatarBg: t.avatarBg,
-              })
-            }
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </button>
           <button
             title={saved ? "Retirer des enregistrés" : "Enregistrer"}
             onClick={onToggleSave}

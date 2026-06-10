@@ -365,6 +365,20 @@ const COUNTRIES_SERVED: Record<string, number> = {
   "shenzhen-tech-logistics": 7,
 };
 
+/**
+ * Adresse de l'entrepôt LOCAL (retrait des colis à destination). C'est elle
+ * que le vendeur voit en premier : c'est là qu'il ira chercher ses colis.
+ */
+const LOCAL_WAREHOUSE: Record<string, string> = {
+  "trust-transit-services": "Colobane, Dakar",
+  "liang-wei-trading": "Marché Sandaga, Dakar",
+  "pearl-river-logistics": "Cité Keur Gorgui, Dakar",
+  "shanghai-express-cargo": "Parcelles Assainies, Dakar",
+  "yiwu-global-freight": "Grand Yoff, Dakar",
+  "hong-kong-cargo-pro": "Plateau, Dakar",
+  "shenzhen-tech-logistics": "Ouakam, Dakar",
+};
+
 /** Expéditions traitées via Kamoo (tri « Commandes traitées »). */
 const ORDERS_HANDLED: Record<string, number> = {
   "trust-transit-services": 1840,
@@ -382,6 +396,7 @@ export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => ({
   logoImageUrl: undefined,
   countriesServed: COUNTRIES_SERVED[t.slug] ?? 10,
   ordersHandled: ORDERS_HANDLED[t.slug] ?? 1000,
+  localWarehouse: LOCAL_WAREHOUSE[t.slug],
   ...EXTRA[t.slug],
 }));
 

@@ -212,7 +212,9 @@ export function ConsoleRail({
         </div>
 
         {/* Navigation */}
-        <nav className="mt-3 flex-1 overflow-y-auto overflow-x-hidden px-2.5">
+        {/* Scroll possible mais barre masquée (une scrollbar grise sur le
+            navy casse l'identité) — le contenu reste accessible à la molette. */}
+        <nav className="mt-3 flex-1 overflow-y-auto overflow-x-hidden px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {SECTIONS.map((section, sIdx) => (
             <div key={section.label} className={cn(sIdx > 0 && "mt-4")}>
               <div className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white/35">

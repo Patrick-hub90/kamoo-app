@@ -95,9 +95,14 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
       {/* Bio */}
       <p className="mt-2.5 line-clamp-2 text-[12px] leading-relaxed text-ink-600">{c.bio}</p>
 
-      {/* Stats */}
+      {/* Stats — le taux de conversion n'est affiché qu'à partir de 30
+          commandes traitées : avant, il n'est pas significatif (une seule
+          commande confirmée donnerait 100 %). */}
       <div className="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper-2/40 py-2.5 text-center">
-        <Stat value={`${c.kpi.confirmationRate}%`} label="Conversion" />
+        <Stat
+          value={c.kpi.ordersHandled >= 30 ? `${c.kpi.confirmationRate}%` : "—"}
+          label={c.kpi.ordersHandled >= 30 ? "Conversion" : "Trop récent"}
+        />
         <Stat value={respLabel(c.kpi.avgResponseMin)} label="Réponse" />
         <Stat value={fmt(c.kpi.ordersHandled)} label="Cmdes traitées" />
       </div>

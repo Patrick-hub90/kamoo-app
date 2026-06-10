@@ -11,7 +11,9 @@ import {
   Globe,
   Headphones,
   Lock,
+  MapPin,
   MessageCircle,
+  Package,
   Route,
   ShieldCheck,
   Sparkles,
@@ -21,6 +23,7 @@ import {
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
+import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
@@ -28,6 +31,7 @@ import { cn } from "@/lib/utils";
 export function TransitaireProfileView({ transitaire: t }: { transitaire: Transitaire }) {
   const { openChat } = useChat();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
+  const [allReviews, setAllReviews] = useState(false);
   const firstName = t.name.split(" ")[0];
   const chatPartner = {
     id: `transitaire:${t.slug}`,
@@ -72,8 +76,8 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
               </div>
               <div className="pb-1">
                 <h1 className="text-[26px] font-extrabold tracking-tight text-ink-900">{t.name}</h1>
-                <div className="mt-0.5 text-[13px] text-ink-500">
-                  {t.countryCode} {t.city} · Partenaire Kamoo depuis {t.partnerSince}
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[13px] text-ink-500">
+                  <MapPin className="h-3.5 w-3.5" /> Retrait : {t.localWarehouse ?? t.city} · Partenaire Kamoo depuis {t.partnerSince}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
                   <span className="inline-flex items-center gap-1">
@@ -81,8 +85,6 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
                     <b className="text-ink-900">{t.rating}</b>
                     <span className="text-ink-500">{t.reviewsCount} avis</span>
                   </span>
-                  <span className="text-ink-300">·</span>
-                  <span className="text-ink-500">{t.activeVendors} e-commerçants actifs</span>
                   {t.status === "certified" ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-kamoo-orange-200 bg-kamoo-orange-50 px-2.5 py-0.5 text-[11.5px] font-semibold text-kamoo-orange-700">
                       <BadgeCheck className="h-3.5 w-3.5" /> Certifié Kamoo
@@ -103,17 +105,19 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
       <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[1.7fr_1fr]">
         {/* ─── GAUCHE ─── */}
         <div className="flex min-w-0 flex-col gap-5">
-          {/* À propos */}
+          {/* À propos + engagements de service (déclarés par le transitaire) */}
           <section className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
             <h2 className="text-[15px] font-bold text-ink-900">À propos</h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-600">{t.about}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Feature icon={ShieldCheck} label={t.paymentPolicy === "upfront" ? "Paiement avant l'expédition" : "Paiement à l'arrivée"} />
-              <Feature icon={Camera} label="Suivi photo systématique" />
-              <Feature icon={Tag} label="Tarification transparente" />
-            </div>
             <div className="mt-4 border-t border-line pt-4">
-              <StatsRow t={t} />
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-wide text-ink-400">
+                Engagements de service
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Feature icon={ShieldCheck} label={t.paymentPolicy === "upfront" ? "Paiement avant l'expédition" : "Paiement à l'arrivée"} />
+                <Feature icon={Camera} label="Suivi photo systématique" />
+                <Feature icon={Tag} label="Tarification transparente" />
+              </div>
             </div>
           </section>
 
@@ -125,7 +129,8 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
             </p>
             <ModeAccordion modes={t.modes} />
             <p className="mt-3 text-[12px] text-ink-400">
-              Hors taxes / douane. Le devis exact est calculé après votre demande, selon le volume et la catégorie.
+              Hors taxes / douane. Le devis exact est calculé après réception du colis,
+              selon le poids / volume et la catégorie.
             </p>
           </section>
 
@@ -155,7 +160,7 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
               })}
             </div>
             <div className="p-5">
-              {tab === "avis" ? <Reviews t={t} preview /> : <Faq t={t} />}
+              {tab === "avis" ? <Reviews t={t} preview onShowAll={() => setAllReviews(true)} /> : <Faq t={t} />}
             </div>
           </section>
         </div>
@@ -190,18 +195,39 @@ export function TransitaireProfileView({ transitaire: t }: { transitaire: Transi
               </div>
             </div>
 
-            {/* En bref */}
+            {/* En bref — caractéristiques calculées par la plateforme,
+                en lignes complètes (pas de troncature, pas de pavés colorés) */}
             <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
               <h3 className="mb-3 text-[13px] font-bold text-ink-900">En bref</h3>
               <div className="flex flex-col gap-3 text-[12.5px]">
-                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Répond en moyenne" value={t.responseTime ?? "—"} />
-                <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Livraisons à temps" value={`${t.onTimePct ?? "—"}%`} />
-                <BriefRow icon={Route} tone="text-kamoo-blue-700" label="Itinéraire principal" value={`${t.city} → Afrique de l'Ouest`} />
+                <BriefRow icon={Package} tone="text-kamoo-blue-700" label="Expéditions traitées" value={(t.ordersHandled ?? 0).toLocaleString("fr-FR")} />
+                <BriefRow icon={Clock} tone="text-kamoo-orange-500" label="Temps de réponse moyen" value={`~${t.responseTime ?? "—"}`} />
+                <BriefRow icon={CheckCircle2} tone="text-emerald-600" label="Dans le délai annoncé" value={`${t.onTimePct ?? "—"} % des colis`} />
+                <BriefRow icon={Globe} tone="text-purple-700" label="Destinations desservies" value={`${t.countriesServed ?? "—"} pays`} />
+                <BriefRow icon={MapPin} tone="text-red-500" label="Entrepôt de retrait" value={t.localWarehouse ?? t.city} />
+                <BriefRow icon={Route} tone="text-ink-500" label="Itinéraire principal" value={`${t.city} → Afrique de l'Ouest`} />
               </div>
             </div>
           </section>
         </div>
       </div>
+
+      {allReviews && (
+        <ReviewsModal
+          partnerName={t.name}
+          rating={t.rating}
+          reviewsCount={t.reviewsCount}
+          reviews={t.reviews.map((r) => ({
+            authorName: r.vendorName,
+            authorCity: r.vendorCity,
+            rating: r.rating,
+            comment: r.comment,
+            date: r.date,
+            avatarBg: r.avatarBg,
+          }))}
+          onClose={() => setAllReviews(false)}
+        />
+      )}
     </div>
   );
 }
@@ -251,13 +277,13 @@ function StatCard({
   );
 }
 
-function Reviews({ t, preview }: { t: Transitaire; preview?: boolean }) {
+function Reviews({ t, preview, onShowAll }: { t: Transitaire; preview?: boolean; onShowAll?: () => void }) {
   const list = preview ? t.reviews.slice(0, 4) : t.reviews;
   return (
     <div>
       {preview && (
         <div className="mb-3 flex justify-end">
-          <button className="text-[12px] font-semibold text-kamoo-blue-700 hover:underline">
+          <button onClick={onShowAll} className="text-[12px] font-semibold text-kamoo-blue-700 hover:underline">
             Voir tous les avis ({t.reviewsCount})
           </button>
         </div>

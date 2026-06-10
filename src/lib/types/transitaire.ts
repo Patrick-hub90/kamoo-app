@@ -70,6 +70,8 @@ export type Transitaire = {
   countriesServed?: number;
   /** Nombre total d'expéditions/commandes traitées via Kamoo */
   ordersHandled?: number;
+  /** Adresse de l'entrepôt LOCAL de destination (retrait des colis) */
+  localWarehouse?: string;
   /** Avis vendeurs (max 5 affichés sur le profil, lien vers tous) */
   reviews: Review[];
 };

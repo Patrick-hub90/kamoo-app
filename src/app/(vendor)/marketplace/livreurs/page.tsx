@@ -14,9 +14,11 @@ import {
   ShieldCheck,
   Star,
   Users,
+  X,
 } from "lucide-react";
 import { LivreurCard } from "@/components/kamoo/livreur-card";
 import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { type Livreur, type LivreurType } from "@/lib/types/livreur";
 import { cn } from "@/lib/utils";
 
@@ -48,11 +50,14 @@ const STATUS_LABELS: Record<StatusKey, string> = {
 const minPrice = (l: Livreur) => Math.min(...l.zones.map((z) => z.priceXof));
 
 export default function MarketplaceLivreursPage() {
-  const all = MOCK_LIVREURS;
-  const countries = useMemo(() => Array.from(new Set(all.map((l) => l.countryCode))), [all]);
+  /* Un marché = un pays : seuls les livreurs du marché courant sont listés. */
+  const { currentMarket } = useCurrentMarket();
+  const all = useMemo(
+    () => MOCK_LIVREURS.filter((l) => l.countryCode === currentMarket.country.code),
+    [currentMarket.country.code],
+  );
 
   const [search, setSearch] = useState("");
-  const [country, setCountry] = useState("all");
   const [type, setType] = useState<TypeKey>("all");
   const [status, setStatus] = useState<StatusKey>("all");
   const [minRating, setMinRating] = useState(0);
@@ -61,7 +66,6 @@ export default function MarketplaceLivreursPage() {
 
   const filtered = useMemo(() => {
     const list = all.filter((l) => {
-      if (country !== "all" && l.countryCode !== country) return false;
       if (type !== "all" && l.type !== type) return false;
       if (status !== "all" && l.status !== status) return false;
       if (minRating > 0 && l.rating < minRating) return false;
@@ -89,10 +93,16 @@ export default function MarketplaceLivreursPage() {
           return b.rating - a.rating || b.reviewsCount - a.reviewsCount;
       }
     });
-  }, [all, country, type, status, minRating, search, sortBy]);
+  }, [all, type, status, minRating, search, sortBy]);
 
-  const filtersActive = !!search || country !== "all" || type !== "all" || status !== "all" || minRating > 0;
-  function reset() { setSearch(""); setCountry("all"); setType("all"); setStatus("all"); setMinRating(0); }
+  const filtersActive = !!search || type !== "all" || status !== "all" || minRating > 0;
+  function reset() { setSearch(""); setType("all"); setStatus("all"); setMinRating(0); }
+
+  /* Chips des filtres actifs (affichés sous la barre) */
+  const chips: { label: string; clear: () => void }[] = [];
+  if (type !== "all") chips.push({ label: TYPE_LABELS[type], clear: () => setType("all") });
+  if (status !== "all") chips.push({ label: STATUS_LABELS[status], clear: () => setStatus("all") });
+  if (minRating > 0) chips.push({ label: `Au moins ${minRating}★`, clear: () => setMinRating(0) });
 
 
   return (
@@ -132,12 +142,6 @@ export default function MarketplaceLivreursPage() {
             />
           </div>
 
-          <Select id="pays" icon={MapPin} label="Pays" value={country === "all" ? null : COUNTRY[country] ?? country} open={open} setOpen={setOpen}>
-            <Opt active={country === "all"} onClick={() => { setCountry("all"); setOpen(null); }}>Tous les pays</Opt>
-            <div className="my-1 h-px bg-line" />
-            {countries.map((c) => <Opt key={c} active={country === c} onClick={() => { setCountry(c); setOpen(null); }}>{COUNTRY[c] ?? c}</Opt>)}
-          </Select>
-
           <Select id="type" icon={Bike} label="Type" value={type === "all" ? null : TYPE_LABELS[type]} open={open} setOpen={setOpen}>
             {(Object.keys(TYPE_LABELS) as TypeKey[]).map((t) => (
               <Opt key={t} active={type === t} onClick={() => { setType(t); setOpen(null); }}>
@@ -160,12 +164,27 @@ export default function MarketplaceLivreursPage() {
             ))}
           </Select>
 
-          {filtersActive && (
-            <button onClick={reset} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[12.5px] font-semibold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50">
-              Effacer
-            </button>
-          )}
         </div>
+
+        {/* FILTRES ACTIFS — chips visibles sous la barre */}
+        {chips.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[12px] font-semibold text-ink-500">Filtres actifs :</span>
+            {chips.map((ch, i) => (
+              <button
+                key={i}
+                onClick={ch.clear}
+                className="inline-flex items-center gap-1.5 rounded-full border border-kamoo-blue-200 bg-kamoo-blue-50 px-2.5 py-1 text-[11.5px] font-semibold text-kamoo-blue-800 transition hover:bg-kamoo-blue-100"
+              >
+                {ch.label}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
+            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-orange-600 hover:underline">
+              Tout effacer
+            </button>
+          </div>
+        )}
 
         {/* COMPTEUR + TRI */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">

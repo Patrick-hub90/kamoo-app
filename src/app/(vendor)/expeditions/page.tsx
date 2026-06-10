@@ -28,6 +28,7 @@ import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 import { formatXOF } from "@/lib/format";
 import { filterByDateWith, normalizeDateFilter } from "@/lib/utils/date-filter";
 import { MOCK_TODAY } from "@/lib/clock";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { cn } from "@/lib/utils";
 
@@ -134,13 +135,16 @@ export default function ExpeditionsListPage() {
               Suivez et gérez toutes vos expéditions en temps réel.
             </p>
           </div>
-          <Link
-            href="/expeditions/nouvelle"
-            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-          >
-            <Plus className="h-4 w-4" />
-            Nouvelle expédition
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <NotificationsBell />
+            <Link
+              href="/expeditions/nouvelle"
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+            >
+              <Plus className="h-4 w-4" />
+              Nouvelle expédition
+            </Link>
+          </div>
         </div>
 
         {/* Bannière succès */}

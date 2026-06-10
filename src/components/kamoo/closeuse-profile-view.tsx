@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
+import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import { isTopPerformer } from "@/lib/data/mock-closeuses";
 import {
   ALL_DAYS,
@@ -43,6 +44,7 @@ function formatHour(hhmm: string) {
 export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
   const { openChat } = useChat();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
+  const [allReviews, setAllReviews] = useState(false);
   const firstName = c.name.split(" ")[0];
   const top = isTopPerformer(c);
   const chatPartner = {
@@ -84,8 +86,6 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
                 <b>{c.rating}</b>
                 <span className="text-white/60">{c.reviewsCount} avis</span>
               </span>
-              <span className="text-white/25">·</span>
-              <span className="text-white/70">{c.activePartners} partenaires actifs</span>
               {top && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[11.5px] font-semibold text-amber-200 ring-1 ring-inset ring-amber-300/30">
                   <Crown className="h-3.5 w-3.5" /> Top performer
@@ -196,7 +196,7 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
                 );
               })}
             </div>
-            <div className="p-5">{tab === "avis" ? <Reviews c={c} /> : <Faq c={c} firstName={firstName} />}</div>
+            <div className="p-5">{tab === "avis" ? <Reviews c={c} onShowAll={() => setAllReviews(true)} /> : <Faq c={c} firstName={firstName} />}</div>
           </section>
         </div>
 
@@ -241,6 +241,23 @@ export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
           </section>
         </div>
       </div>
+
+      {allReviews && (
+        <ReviewsModal
+          partnerName={c.name}
+          rating={c.rating}
+          reviewsCount={c.reviewsCount}
+          reviews={c.reviews.map((r) => ({
+            authorName: r.vendorName,
+            authorCity: r.vendorCity,
+            rating: r.rating,
+            comment: r.comment,
+            date: new Date(r.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
+            avatarBg: r.vendorAvatarBg,
+          }))}
+          onClose={() => setAllReviews(false)}
+        />
+      )}
     </div>
   );
 }
@@ -258,11 +275,13 @@ function Stat({ icon: Icon, tone, value, label }: { icon: React.ComponentType<{ 
   );
 }
 
-function Reviews({ c }: { c: Closeuse }) {
+function Reviews({ c, onShowAll }: { c: Closeuse; onShowAll?: () => void }) {
   return (
     <div>
       <div className="mb-3 flex justify-end">
-        <span className="text-[12px] font-semibold text-kamoo-blue-700">Voir tous les avis ({c.reviewsCount})</span>
+        <button onClick={onShowAll} className="text-[12px] font-semibold text-kamoo-blue-700 hover:underline">
+          Voir tous les avis ({c.reviewsCount})
+        </button>
       </div>
       {c.reviews.length === 0 ? (
         <p className="py-6 text-center text-[12.5px] italic text-ink-400">Aucun avis pour le moment.</p>

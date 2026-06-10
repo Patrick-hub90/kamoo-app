@@ -6,19 +6,16 @@ import {
   Check,
   ChevronDown,
   Clock,
-  Crown,
   Globe,
-  Headphones,
-  MapPin,
   Search,
   ShieldCheck,
-  Sparkles,
   Star,
-  Tag,
+  X,
 } from "lucide-react";
 import { CloseuseCard } from "@/components/kamoo/closeuse-card";
 import { MOCK_CLOSEUSES, isTopPerformer } from "@/lib/data/mock-closeuses";
-import { CLOSEUSE_SKILLS, type Closeuse } from "@/lib/types/closeuse";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { type Closeuse } from "@/lib/types/closeuse";
 import { cn } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
@@ -41,17 +38,21 @@ const STATUS_LABELS: Record<StatusKey, string> = {
 };
 
 export default function MarketplaceCloseursPage() {
-  const all = MOCK_CLOSEUSES;
+  /* Un marché = un pays : la marketplace ne montre QUE les closeuses du
+   * marché courant (pas de filtre Pays — ce serait illogique). */
+  const { currentMarket } = useCurrentMarket();
+  const all = useMemo(
+    () => MOCK_CLOSEUSES.filter((c) => c.countryCode === currentMarket.country.code),
+    [currentMarket.country.code],
+  );
 
   const languages = useMemo(() => {
     const m = new Map<string, string>();
     all.forEach((c) => c.languages.forEach((l) => m.set(l.code, l.name)));
     return Array.from(m, ([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name));
   }, [all]);
-  const countries = useMemo(() => Array.from(new Set(all.map((c) => c.countryCode))), [all]);
 
   const [search, setSearch] = useState("");
-  const [country, setCountry] = useState("all");
   const [lang, setLang] = useState("all");
   const [status, setStatus] = useState<StatusKey>("all");
   const [minRating, setMinRating] = useState(0);
@@ -60,7 +61,6 @@ export default function MarketplaceCloseursPage() {
 
   const filtered = useMemo(() => {
     const list = all.filter((c) => {
-      if (country !== "all" && c.countryCode !== country) return false;
       if (lang !== "all" && !c.languages.some((l) => l.code === lang)) return false;
       if (minRating > 0 && c.rating < minRating) return false;
       if (status !== "all") {
@@ -93,12 +93,18 @@ export default function MarketplaceCloseursPage() {
           return b.rating - a.rating || b.reviewsCount - a.reviewsCount;
       }
     });
-  }, [all, country, lang, status, minRating, search, sortBy]);
+  }, [all, lang, status, minRating, search, sortBy]);
 
-  const filtersActive = !!search || country !== "all" || lang !== "all" || status !== "all" || minRating > 0;
+  const filtersActive = !!search || lang !== "all" || status !== "all" || minRating > 0;
   function reset() {
-    setSearch(""); setCountry("all"); setLang("all"); setStatus("all"); setMinRating(0);
+    setSearch(""); setLang("all"); setStatus("all"); setMinRating(0);
   }
+
+  /* Chips des filtres actifs (affichés sous la barre) */
+  const chips: { label: string; clear: () => void }[] = [];
+  if (lang !== "all") chips.push({ label: languages.find((l) => l.code === lang)?.name ?? lang, clear: () => setLang("all") });
+  if (status !== "all") chips.push({ label: STATUS_LABELS[status], clear: () => setStatus("all") });
+  if (minRating > 0) chips.push({ label: `Au moins ${minRating}★`, clear: () => setMinRating(0) });
 
   return (
     <div className="min-h-full bg-paper">
@@ -137,12 +143,6 @@ export default function MarketplaceCloseursPage() {
             />
           </div>
 
-          <Select id="pays" icon={MapPin} label="Pays" value={country === "all" ? null : COUNTRY[country] ?? country} open={open} setOpen={setOpen}>
-            <Opt active={country === "all"} onClick={() => { setCountry("all"); setOpen(null); }}>Tous les pays</Opt>
-            <div className="my-1 h-px bg-line" />
-            {countries.map((c) => <Opt key={c} active={country === c} onClick={() => { setCountry(c); setOpen(null); }}>{COUNTRY[c] ?? c}</Opt>)}
-          </Select>
-
           <Select id="lang" icon={Globe} label="Langue" value={lang === "all" ? null : languages.find((l) => l.code === lang)?.name ?? null} open={open} setOpen={setOpen}>
             <Opt active={lang === "all"} onClick={() => { setLang("all"); setOpen(null); }}>Toutes les langues</Opt>
             <div className="my-1 h-px bg-line" />
@@ -163,12 +163,27 @@ export default function MarketplaceCloseursPage() {
             ))}
           </Select>
 
-          {filtersActive && (
-            <button onClick={reset} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[12.5px] font-semibold text-kamoo-orange-600 transition hover:bg-kamoo-orange-50">
-              Effacer
-            </button>
-          )}
         </div>
+
+        {/* FILTRES ACTIFS — chips visibles sous la barre */}
+        {chips.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[12px] font-semibold text-ink-500">Filtres actifs :</span>
+            {chips.map((ch, i) => (
+              <button
+                key={i}
+                onClick={ch.clear}
+                className="inline-flex items-center gap-1.5 rounded-full border border-kamoo-blue-200 bg-kamoo-blue-50 px-2.5 py-1 text-[11.5px] font-semibold text-kamoo-blue-800 transition hover:bg-kamoo-blue-100"
+              >
+                {ch.label}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
+            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-orange-600 hover:underline">
+              Tout effacer
+            </button>
+          </div>
+        )}
 
         {/* COMPTEUR + TRI */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">

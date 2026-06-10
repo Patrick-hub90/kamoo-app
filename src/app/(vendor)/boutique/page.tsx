@@ -48,6 +48,7 @@ import {
 } from "@/lib/types/produit";
 import { dateFilterFromSearchParams } from "@/lib/utils/date-filter-url";
 import { formatXOF } from "@/lib/format";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { cn } from "@/lib/utils";
 
 /**
@@ -259,6 +260,7 @@ export default function BoutiquePage() {
             </div>
             <div className="text-[19px] font-bold tracking-tight text-ink-900">Catalogue</div>
           </div>
+          <NotificationsBell />
           <Link
             href="/boutique/nouveau"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"

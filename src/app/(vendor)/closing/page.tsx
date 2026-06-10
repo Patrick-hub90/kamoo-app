@@ -29,6 +29,7 @@ import {
   formatDuration,
 } from "@/lib/data/mock-closing";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
+import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CANCELLATION_REASON_LABELS,
@@ -149,6 +150,7 @@ export default function ClosingPage() {
             <p className="mt-1 text-[13px] text-ink-500">Suivez les appels de votre closeuse pour valider les commandes.</p>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationsBell />
             <div className="hidden items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5 shadow-kamoo-sm sm:flex">
               <span
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
