@@ -55,6 +55,9 @@ export async function POST(request: Request) {
     }
     return Response.json({ shopifyProductId: data.productSet.product?.id });
   } catch (e) {
+    if (e instanceof ShopifyApiError && e.status === 403) {
+      return Response.json({ error: "scopes_manquants", detail: e.message }, { status: 403 });
+    }
     const status = e instanceof ShopifyApiError ? e.status : 500;
     return Response.json({ error: "echec_publication", detail: String(e) }, { status });
   }

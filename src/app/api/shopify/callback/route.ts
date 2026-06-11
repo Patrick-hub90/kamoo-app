@@ -43,6 +43,19 @@ export async function GET(request: Request) {
       scope,
       installedAt: new Date().toISOString(),
     });
+    /* Auto-diagnostic : un token SANS scopes signifie que l'app n'a aucun
+     * scope déclaré dans sa CONFIGURATION (Partner Dashboard) — l'URL OAuth
+     * ne suffit pas avec la « Shopify managed installation ». On connecte
+     * quand même, mais on remonte l'alerte à l'UI. */
+    if (!scope || scope.trim() === "") {
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: `/parametres/connexions?shopify_connected=${encodeURIComponent(shop)}&market=${encodeURIComponent(market)}&shopify_error=scopes_manquants`,
+          "Set-Cookie": "shopify_oauth_state=; Path=/; HttpOnly; Max-Age=0",
+        },
+      });
+    }
   } catch {
     return fail("echec_token");
   }

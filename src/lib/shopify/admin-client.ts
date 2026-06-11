@@ -41,9 +41,19 @@ export async function shopifyGraphQL<T = unknown>(
   if (!res.ok) {
     throw new ShopifyApiError(`Shopify ${res.status}`, res.status, await res.text());
   }
-  const json = (await res.json()) as { data?: T; errors?: unknown };
-  if (json.errors) {
-    throw new ShopifyApiError("Erreur GraphQL Shopify", 200, json.errors);
+  const json = (await res.json()) as {
+    data?: T;
+    errors?: { message?: string; extensions?: { code?: string } }[];
+  };
+  if (json.errors && json.errors.length > 0) {
+    const codes = json.errors.map((e) => e.extensions?.code).filter(Boolean);
+    const messages = json.errors.map((e) => e.message).filter(Boolean).join(" | ");
+    // Scopes manquants : erreur la plus fréquente sur une app fraîchement
+    // créée (les scopes se déclarent dans la CONFIG de l'app, pas dans l'URL).
+    if (codes.includes("ACCESS_DENIED")) {
+      throw new ShopifyApiError(`ACCESS_DENIED: ${messages}`, 403, json.errors);
+    }
+    throw new ShopifyApiError(`Erreur GraphQL Shopify: ${messages}`, 200, json.errors);
   }
   return json.data as T;
 }

@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { MOCK_CLOSING_ASSIGNMENTS } from "@/lib/data/mock-closing";
 import { createSyncedStore } from "@/lib/sync/synced-store";
+import { getShopifyConnectionsSnapshot } from "@/lib/hooks/use-shopify";
 import type {
   AssignedDelivery,
   CancellationReason,
@@ -158,12 +159,30 @@ export function useClosingState() {
   );
 
   const markDelivered = useCallback(
-    (id: string) =>
+    (id: string) => {
       update(id, {
         status: "livre",
         deliveryProgress: "effectue",
         deliveredAt: new Date().toISOString(),
-      }),
+      });
+      /* Push de statut Shopify (automatique) : si la commande vient de la
+       * boutique et qu'une connexion RÉELLE existe, on la marque honorée
+       * côté Shopify. Best-effort : un échec ne bloque jamais le flux COD. */
+      const a = [...closingStore.get().extraOrders, ...MOCK_CLOSING_ASSIGNMENTS].find(
+        (x) => x.id === id,
+      );
+      if (a?.shopifyOrderId && !a.shopifyOrderId.includes("/demo-")) {
+        const conns = Object.values(getShopifyConnectionsSnapshot());
+        const live = conns.find((c) => c.isConnected && c.mode === "live");
+        if (live) {
+          fetch("/api/shopify/fulfill", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ shop: live.domain, shopifyOrderId: a.shopifyOrderId }),
+          }).catch(() => {});
+        }
+      }
+    },
     [update],
   );
 

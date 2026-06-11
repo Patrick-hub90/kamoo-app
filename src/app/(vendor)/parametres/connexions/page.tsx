@@ -72,12 +72,36 @@ function ConnexionsInner() {
           )}
         </div>
 
-        {oauthError && (
+        {oauthError === "scopes_manquants" ? (
+          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[12.5px] leading-relaxed text-amber-900">
+            <b>Boutique connectée, mais l&apos;app n&apos;a aucune autorisation API.</b>{" "}
+            Les autorisations se déclarent dans la <b>configuration de l&apos;app</b> sur
+            ton Partner Dashboard (pas dans Kamoo) :
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>
+                <b>partners.shopify.com</b> → Apps → ton app <b>Kamoo</b> → onglet{" "}
+                <b>Configuration</b> (ou « API access »)
+              </li>
+              <li>
+                Section <b>Admin API integration / access scopes</b> → coche :{" "}
+                <span className="font-mono-kamoo">read_orders, write_orders, read_products, write_products, read_customers, write_merchant_managed_fulfillment_orders</span>
+              </li>
+              <li>
+                Section <b>Protected customer data access</b> → demande l&apos;accès
+                (motif « App functionality ») + champs Nom, Téléphone, Adresse
+              </li>
+              <li>
+                Enregistre, puis reviens ici et clique{" "}
+                <b>« Mettre à jour les autorisations »</b> sur la boutique.
+              </li>
+            </ol>
+          </div>
+        ) : oauthError ? (
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-700">
             Connexion Shopify échouée ({oauthError}). Vérifie tes clés API et
             l&apos;URL de redirection, puis réessaie.
           </div>
-        )}
+        ) : null}
 
         {liveMode === false && (
           <div className="mt-4 rounded-xl border border-kamoo-blue-100 bg-kamoo-blue-50/50 px-3.5 py-2.5 text-[12px] leading-relaxed text-kamoo-blue-800">
@@ -129,21 +153,40 @@ function ShopifyRow({ market }: { market: Market }) {
   const [syncing, setSyncing] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
+  /* Bilan de santé de la connexion réelle (token + scopes) */
+  const [health, setHealth] = useState<string | null>(null);
+  useEffect(() => {
+    if (!connected || conn?.mode !== "live") {
+      setHealth(null);
+      return;
+    }
+    let alive = true;
+    fetch(`/api/shopify/health?shop=${encodeURIComponent(conn.domain)}`)
+      .then((r) => r.json())
+      .then((d: { status: string }) => alive && setHealth(d.status))
+      .catch(() => alive && setHealth(null));
+    return () => {
+      alive = false;
+    };
+  }, [connected, conn?.mode, conn?.domain]);
+
   async function handleSync() {
     setSyncing(true);
     setFlash(null);
     const res = await syncNow(market.id);
     setSyncing(false);
     setFlash(
-      res.error
-        ? `Échec : ${res.error}`
-        : res.imported > 0
-          ? `${res.imported} commande${res.imported > 1 ? "s" : ""} importée${res.imported > 1 ? "s" : ""} → Closing`
-          : res.fetched > 0
-            ? `${res.fetched} commande${res.fetched > 1 ? "s" : ""} déjà importée${res.fetched > 1 ? "s" : ""}`
-            : "Aucune commande trouvée dans la boutique",
+      res.error === "scopes_manquants"
+        ? "⚠ Autorisations API manquantes — configure les scopes de ton app (voir l'encadré jaune) puis « Mettre à jour les autorisations »"
+        : res.error
+          ? `Échec : ${res.error}`
+          : res.imported > 0
+            ? `${res.imported} commande${res.imported > 1 ? "s" : ""} importée${res.imported > 1 ? "s" : ""} → Closing`
+            : res.fetched > 0
+              ? `${res.fetched} commande${res.fetched > 1 ? "s" : ""} déjà importée${res.fetched > 1 ? "s" : ""}`
+              : "Aucune commande trouvée dans la boutique",
     );
-    setTimeout(() => setFlash(null), 5000);
+    setTimeout(() => setFlash(null), 8000);
   }
 
   return (
@@ -179,6 +222,21 @@ function ShopifyRow({ market }: { market: Market }) {
                 Démo
               </span>
             )}
+            {health === "ok" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                <Check className="h-2.5 w-2.5" /> API opérationnelle
+              </span>
+            )}
+            {health === "scopes_manquants" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800" title="Déclare les scopes dans la configuration de ton app (Partner Dashboard), puis « Mettre à jour les autorisations »">
+                ⚠ Autorisations API manquantes
+              </span>
+            )}
+            {health === "token_absent" && (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+                Token absent — reconnecte la boutique
+              </span>
+            )}
           </div>
           <div className="mt-0.5 truncate text-[11.5px] text-ink-500">
             {conn ? (
@@ -202,7 +260,16 @@ function ShopifyRow({ market }: { market: Market }) {
               <span className="italic">Aucune boutique connectée</span>
             )}
           </div>
-          {flash && <div className="mt-1 text-[11px] font-semibold text-emerald-700">{flash}</div>}
+          {flash && (
+            <div
+              className={cn(
+                "mt-1 text-[11px] font-semibold",
+                flash.startsWith("⚠") || flash.startsWith("Échec") ? "text-amber-700" : "text-emerald-700",
+              )}
+            >
+              {flash}
+            </div>
+          )}
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:ml-0">
@@ -218,6 +285,16 @@ function ShopifyRow({ market }: { market: Market }) {
                 {syncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
                 Sync
               </button>
+              {conn!.mode === "live" && (
+                <button
+                  type="button"
+                  onClick={() => connectLive(market.id, conn!.domain)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11.5px] font-bold text-amber-800 transition hover:bg-amber-100"
+                  title="Relance l'autorisation Shopify (après modification des scopes de l'app)"
+                >
+                  Mettre à jour les autorisations
+                </button>
+              )}
               <a
                 href={`https://${conn!.domain}/admin`}
                 target="_blank"

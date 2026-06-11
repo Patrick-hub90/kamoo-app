@@ -29,6 +29,11 @@ type ShopifyState = {
 
 const store = createSyncedStore<ShopifyState>("shopify", { connections: {} });
 
+/** Lecture hors-React (ex. push fulfillment depuis la machine d'états closing). */
+export function getShopifyConnectionsSnapshot(): Record<string, ShopifyConnection> {
+  return store.get().connections;
+}
+
 export function useShopify() {
   const state = store.use();
 

@@ -38,3 +38,40 @@ données dans Kamoo. Pour passer en **réel** :
   les webhooks `orders/create` + `customers/create`.
 - Le token est stocké dans `.shopify-tokens.json` (gitignoré) — OK pour le dev local.
   En V2 : table chiffrée Supabase.
+
+---
+
+## 🚨 Dépannage : « Sync » dit *Autorisations API manquantes* (scopes vides)
+
+**Cause** : sur une app créée dans le Partner Dashboard, les autorisations ne
+viennent PAS de l'URL OAuth — elles doivent être déclarées dans la
+**configuration de l'app**. Sans ça, le token obtenu n'a AUCUN droit
+(symptôme exact : `ACCESS_DENIED: Access denied for orders field`).
+
+**Réparation (2 minutes)** :
+1. **partners.shopify.com** → *Apps* → ton app **Kamoo** → **Configuration**.
+2. Section **Admin API integration** (ou *API access scopes*) → coche :
+   `read_orders`, `write_orders`, `read_products`, `write_products`,
+   `read_customers`, `write_merchant_managed_fulfillment_orders` → **Save**.
+3. Section **API access → Protected customer data access** → *Request access* :
+   - motif : **App functionality** ;
+   - champs : **Name**, **Phone**, **Address** (nécessaires au closing COD).
+   - Sur une dev store, l'accès est accordé immédiatement.
+4. Dans Kamoo → *Paramètres → Connexions* → **« Mettre à jour les
+   autorisations »** sur la boutique → écran Shopify → **Installer**.
+5. Le badge passe à **« API opérationnelle »** → la synchro coule toute seule
+   (auto-sync toutes les 60 s + bouton Sync).
+
+## Temps réel & multi-boutiques
+- **Une seule app Kamoo pour toutes les boutiques** : chaque boutique se
+  connecte via le même OAuth (token par domaine). Aucun vendeur n'a besoin de
+  créer une app — il saisit juste son domaine et autorise.
+- **Local** : auto-sync (polling 60 s) = les commandes Shopify tombent dans
+  Closing sans aucun clic. **Production** : la route `/api/shopify/webhooks`
+  (HMAC vérifié) est prête — il suffira d'enregistrer `orders/create` +
+  `customers/create` quand Kamoo aura une URL publique.
+- **Push automatique** : commande Shopify livrée & encaissée dans Kamoo →
+  marquée *honorée* sur Shopify sans intervention.
+- Note pour plus tard : pour installer l'app sur une **boutique de production**
+  (pas une dev store), Shopify exige de choisir une distribution (custom ou
+  publique non listée) dans le Partner Dashboard — à faire au moment du lancement.

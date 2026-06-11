@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ConsoleRail } from "@/components/console/console-rail";
 import { ChatProvider } from "@/components/kamoo/chat";
 import { GlobalSearch } from "@/components/kamoo/global-search";
+import { ShopifyAutoSync } from "@/components/kamoo/shopify-auto-sync";
 import { Topbar } from "@/components/layout/topbar";
 import { TopbarSlotProvider } from "@/components/layout/topbar-slot";
 
@@ -56,6 +57,7 @@ export default function VendorLayout({
     >
       {/* Recherche globale (Ctrl+K) — montée une seule fois pour toute l'app */}
       <GlobalSearch />
+      <ShopifyAutoSync />
 
       {/* ConsoleRail — slim 72px ≥ lg (expand 240px au hover), drawer < lg */}
       <ConsoleRail
