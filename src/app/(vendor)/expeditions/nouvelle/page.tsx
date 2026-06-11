@@ -93,15 +93,22 @@ export default function NewExpeditionPage() {
   const [mode, setMode] = useState<TransportMode>("air_standard");
   const [responsibilityAccepted, setResponsibilityAccepted] = useState(false);
 
-  /* Une expédition Kamoo passe par VOTRE transitaire : sans partenariat
-   * actif, le wizard est bloqué (workflow de connexion ci-dessous). Les
-   * modes, tarifs, délais et catégories sont SYNCHRONISÉS avec lui. */
+  /* Une expédition Kamoo passe par VOS transitaires : sans AUCUN partenariat
+   * actif, le wizard est bloqué (workflow de connexion ci-dessous). On peut
+   * être connecté à plusieurs transitaires : on SÉLECTIONNE celui de cette
+   * expédition à l'étape Transport — modes, tarifs, délais et catégories
+   * sont synchronisés avec lui. */
   const { partners } = usePartners();
-  const tPartnership = partners.transitaire;
+  const activeTransitaires = partners.transitaires
+    .filter((p) => p.status === "active")
+    .map((p) => MOCK_TRANSITAIRES.find((t) => t.slug === p.slug))
+    .filter((t): t is NonNullable<ReturnType<typeof MOCK_TRANSITAIRES.find>> => !!t);
+  const [selectedTransitaireSlug, setSelectedTransitaireSlug] = useState<string | null>(null);
   const transitaire =
-    tPartnership?.status === "active"
-      ? MOCK_TRANSITAIRES.find((t) => t.slug === tPartnership.slug) ?? null
-      : null;
+    activeTransitaires.find((t) => t.slug === selectedTransitaireSlug) ??
+    activeTransitaires[0] ??
+    null;
+  const tPartnership = partners.transitaires.find((p) => p.status === "pending");
 
   const { addExpedition } = useExpeditionsState();
 
@@ -316,6 +323,8 @@ export default function NewExpeditionPage() {
         {step === 2 && (
           <Step2Transport
             transitaire={transitaire}
+            transitaires={activeTransitaires}
+            onTransitaireChange={setSelectedTransitaireSlug}
             mode={mode}
             onModeChange={setMode}
             isModeAllowed={isModeAllowed}
@@ -777,12 +786,16 @@ function PhotoSlot({
 
 function Step2Transport({
   transitaire,
+  transitaires,
+  onTransitaireChange,
   mode,
   onModeChange,
   isModeAllowed,
   countryName,
 }: {
   transitaire: Transitaire;
+  transitaires: Transitaire[];
+  onTransitaireChange: (slug: string) => void;
   mode: TransportMode;
   onModeChange: (m: TransportMode) => void;
   isModeAllowed: (m: TransportMode) => boolean;
@@ -797,12 +810,49 @@ function Step2Transport({
   return (
     <div>
       <h2 className="font-display text-2xl font-extrabold text-ink-900">
-        Mode de transport
+        Transitaire &amp; mode de transport
       </h2>
       <p className="mt-1 text-[13px] text-ink-500">
-        Modes, tarifs et délais de <b className="text-ink-700">{transitaire.name}</b>, votre
-        transitaire — synchronisés avec son profil.
+        Choisissez le transitaire de cette expédition — modes, tarifs et délais sont
+        synchronisés avec son profil.
       </p>
+
+      {/* Sélecteur de transitaire (multi-connexions) */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {transitaires.map((t) => {
+          const isSel = t.slug === transitaire.slug;
+          return (
+            <button
+              key={t.slug}
+              onClick={() => onTransitaireChange(t.slug)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-left transition",
+                isSel ? "border-kamoo-blue-700 bg-kamoo-blue-50" : "border-line bg-white hover:border-ink-300",
+              )}
+            >
+              <span
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
+                style={{ background: t.avatarBg }}
+              >
+                {t.avatar}
+              </span>
+              <span className="leading-tight">
+                <span className="block text-[12.5px] font-bold text-ink-900">{t.name}</span>
+                <span className="block text-[10.5px] text-ink-500">
+                  ★ {t.rating} · {t.modes.length} mode{t.modes.length > 1 ? "s" : ""}
+                </span>
+              </span>
+              {isSel && <Check className="ml-1 h-4 w-4 shrink-0 text-kamoo-blue-700" />}
+            </button>
+          );
+        })}
+        <Link
+          href="/marketplace/transitaires"
+          className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-line px-3 py-2.5 text-[12px] font-semibold text-ink-500 transition hover:border-kamoo-blue-300 hover:text-kamoo-blue-700"
+        >
+          <Plus className="h-3.5 w-3.5" /> Connecter un autre transitaire
+        </Link>
+      </div>
 
       <div className="mt-6 grid grid-cols-[1fr_1.1fr] gap-6">
         {/* GAUCHE — Trajet visuel + récap */}

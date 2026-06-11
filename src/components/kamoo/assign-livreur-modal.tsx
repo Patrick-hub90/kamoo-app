@@ -1,14 +1,16 @@
 "use client";
 
-import { X } from "lucide-react";
+import Link from "next/link";
+import { Bike, X } from "lucide-react";
 import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { usePartners } from "@/lib/hooks/use-partners";
 import type { AssignedDelivery } from "@/lib/types/closing";
 
 /**
  * Modale « Assigner un livreur » — partagée entre la liste Closing et la
- * page détail commande. Liste les livreurs du marché courant ; le choix
- * crée l'AssignedDelivery (progress en_attente, ETA +3 h).
+ * page détail commande. Ne propose que VOS livreurs partenaires (actifs)
+ * du marché courant ; le choix crée l'AssignedDelivery (en_attente, +3 h).
  */
 export function AssignLivreurModal({
   onClose,
@@ -18,8 +20,13 @@ export function AssignLivreurModal({
   onAssign: (d: AssignedDelivery) => void;
 }) {
   const { currentMarket } = useCurrentMarket();
+  const { partners } = usePartners();
+  /* Seulement MES livreurs (partenariat actif) — pas toute la marketplace. */
+  const activeSlugs = partners.livreurs
+    .filter((p) => p.status === "active")
+    .map((p) => p.slug);
   const livreurs = MOCK_LIVREURS.filter(
-    (l) => l.countryCode === currentMarket.country.code,
+    (l) => l.countryCode === currentMarket.country.code && activeSlugs.includes(l.slug),
   );
 
   function pick(slug: string) {
@@ -50,6 +57,26 @@ export function AssignLivreurModal({
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-3">
+          {livreurs.length === 0 && (
+            <div className="px-4 py-8 text-center">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-kamoo-blue-50 text-kamoo-blue-700">
+                <Bike className="h-5 w-5" />
+              </div>
+              <p className="mt-3 text-[13.5px] font-semibold text-ink-900">
+                Aucun livreur partenaire
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
+                Connectez-vous d&apos;abord à un livreur dans la marketplace —
+                vous pourrez ensuite lui assigner vos livraisons.
+              </p>
+              <Link
+                href="/marketplace/livreurs"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-4 py-2 text-[12.5px] font-bold text-white transition hover:bg-kamoo-orange-600"
+              >
+                Trouver un livreur
+              </Link>
+            </div>
+          )}
           {livreurs.map((l) => (
             <button
               key={l.slug}

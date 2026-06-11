@@ -80,7 +80,12 @@ export function PartnerCta({
   const [manageServices, setManageServices] = useState(false);
 
   const partnership = getPartnership(role, slug);
-  const other = partners[role] && partners[role]!.slug !== slug ? partners[role]! : null;
+  /* Remplacement : seulement pour la closeuse (mono) — transitaires et
+   * livreurs sont multi-connexions, on AJOUTE sans rien remplacer. */
+  const other =
+    role === "closeuse" && partners.closeuse && partners.closeuse.slug !== slug
+      ? partners.closeuse
+      : null;
 
   const roleLabel =
     role === "closeuse" ? "closeuse" : role === "transitaire" ? "transitaire" : "livreur";
@@ -182,7 +187,7 @@ export function PartnerCta({
             Envoyer un message
           </button>
           <button
-            onClick={() => cancelRequest(role)}
+            onClick={() => cancelRequest(role, slug)}
             className="mt-3 w-full text-center text-[12px] font-semibold text-ink-400 transition hover:text-red-600"
           >
             Annuler la demande
@@ -244,7 +249,7 @@ export function PartnerCta({
           initial={subscribedServices}
           onClose={() => setManageServices(false)}
           onSave={(services) => {
-            partnersApi.setServices(role, services);
+            partnersApi.setServices(role, slug, services);
             setManageServices(false);
           }}
         />

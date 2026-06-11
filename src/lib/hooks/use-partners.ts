@@ -1,26 +1,27 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback } from "react";
+import { createSyncedStore } from "@/lib/sync/synced-store";
 import type { LivreurService } from "@/lib/types/livreur";
 
 /**
  * Partenaires du vendeur (par marché, V1 mono-marché).
  *
- * Règle Kamoo : PAS d'annonces ni de candidatures — le vendeur se rend dans
- * la Marketplace et CHOISIT directement son partenaire.
+ * Cardinalités (validées avec le fondateur) :
+ *  - closeuse    : UNE seule (un seul pipeline d'appels) ;
+ *  - transitaires : PLUSIEURS (on choisit le transitaire à chaque expédition) ;
+ *  - livreurs     : PLUSIEURS (zones différentes).
  *
- * Workflow de demande :
- *   choisir → `pending` (en attente de validation par le partenaire)
- *   → `active` (le partenaire accepte — démo : acceptation auto après ~12 s)
+ * Workflow de demande : choisir → `pending` (en attente de validation par le
+ * partenaire) → `active`. Démo : transitaires et livreurs acceptent
+ * automatiquement après ~12 s (pas encore d'app pour eux) ; la CLOSEUSE
+ * accepte RÉELLEMENT depuis l'app partenaires (port 3001) — pas d'auto-accept.
  *
- * Workflow de fin : motif obligatoire + évaluation (note/commentaire),
- * l'évaluation est conservée et modifiable (kamoo.partnerReviews).
+ * Fin de partenariat : motif + évaluation (note/commentaire) conservée et
+ * modifiable (elle s'ajoute aussi à la liste d'avis du profil).
  *
- * Architecture : STORE SINGLETON module-level (même pattern que
- * use-products-state) — les cartes marketplace, les profils et le CTA
- * lisent tous le même état, sans race condition entre instances.
- *
- * V2 : tables partnerships + partner_reviews (Supabase).
+ * État synchronisé via le mini-backend de démo (/api/demo-state) : la
+ * console vendeur ET l'app partenaires voient le même état.
  */
 
 export type PartnerRole = "closeuse" | "transitaire" | "livreur";
@@ -43,10 +44,14 @@ export type PartnerReview = {
   at: string; // ISO
 };
 
-type PartnersMap = Partial<Record<PartnerRole, Partnership>>;
 type ReviewsMap = Record<string, PartnerReview>; // par slug
 
-type PartnersState = { partners: PartnersMap; reviews: ReviewsMap };
+export type PartnersState = {
+  closeuse?: Partnership;
+  transitaires: Partnership[];
+  livreurs: Partnership[];
+  reviews: ReviewsMap;
+};
 
 export const END_REASONS = [
   "Je n'ai plus besoin de ce service",
@@ -57,230 +62,155 @@ export const END_REASONS = [
   "Autre raison",
 ] as const;
 
-/** Démo : le partenaire « accepte » la demande après ce délai. */
+/** Démo : transitaires/livreurs « acceptent » après ce délai (pas d'app encore). */
 const ACCEPT_DELAY_MS = 12_000;
 
-const PARTNERS_KEY = "kamoo.partners";
-const REVIEWS_KEY = "kamoo.partnerReviews";
-
-const DEFAULT_PARTNERS: PartnersMap = {
-  // La closeuse active des fixtures est déjà un partenariat en cours.
-  closeuse: {
-    slug: "aminata-sene",
-    status: "active",
-    requestedAt: "2025-09-20T10:00:00Z",
-  },
+const DEFAULT_STATE: PartnersState = {
+  // La closeuse active des fixtures + les 2 livreurs utilisés par les
+  // commandes mock sont déjà des partenariats en cours.
+  closeuse: { slug: "aminata-sene", status: "active", requestedAt: "2025-09-20T10:00:00Z" },
+  transitaires: [],
+  livreurs: [
+    { slug: "moussa-sow", status: "active", requestedAt: "2024-10-01T10:00:00Z" },
+    { slug: "ibrahima-sarr", status: "active", requestedAt: "2024-08-15T10:00:00Z" },
+  ],
+  reviews: {},
 };
 
-/** Migration : l'ancien format stockait un simple slug (string) par rôle. */
-function normalizePartners(raw: unknown): PartnersMap {
-  if (!raw || typeof raw !== "object") return DEFAULT_PARTNERS;
-  const out: PartnersMap = {};
-  for (const [role, v] of Object.entries(raw as Record<string, unknown>)) {
-    if (typeof v === "string") {
-      out[role as PartnerRole] = {
-        slug: v,
-        status: "active",
-        requestedAt: "2025-09-20T10:00:00Z",
-      };
-    } else if (v && typeof v === "object" && "slug" in v) {
-      out[role as PartnerRole] = v as Partnership;
-    }
-  }
-  return out;
-}
+const store = createSyncedStore<PartnersState>("partners", DEFAULT_STATE);
 
-/* ─── Store module-level (singleton client) ─── */
-
-let state: PartnersState = { partners: DEFAULT_PARTNERS, reviews: {} };
-let hydrated = false;
-const listeners = new Set<() => void>();
+/* Acceptation auto (démo) — transitaires et livreurs uniquement : la
+ * closeuse accepte réellement depuis l'app partenaires. */
 const acceptTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-function notify() {
-  listeners.forEach((l) => l());
-}
-
-function persist() {
+function scheduleAcceptances(state: PartnersState) {
   if (typeof window === "undefined") return;
-  try {
-    sessionStorage.setItem(PARTNERS_KEY, JSON.stringify(state.partners));
-    sessionStorage.setItem(REVIEWS_KEY, JSON.stringify(state.reviews));
-  } catch {
-    /* ignore */
-  }
-}
-
-function setState(updater: (prev: PartnersState) => PartnersState) {
-  state = updater(state);
-  persist();
-  notify();
-  scheduleAcceptances();
-}
-
-/** Démo : programme l'acceptation auto de chaque demande pending. */
-function scheduleAcceptances() {
-  if (typeof window === "undefined") return;
-  for (const [role, p] of Object.entries(state.partners) as [PartnerRole, Partnership | undefined][]) {
-    if (!p || p.status !== "pending") continue;
-    const key = `${role}:${p.slug}`;
-    if (acceptTimers.has(key)) continue;
+  const pendings: Array<{ list: "transitaires" | "livreurs"; p: Partnership }> = [
+    ...state.transitaires.filter((p) => p.status === "pending").map((p) => ({ list: "transitaires" as const, p })),
+    ...state.livreurs.filter((p) => p.status === "pending").map((p) => ({ list: "livreurs" as const, p })),
+  ];
+  for (const { list, p } of pendings) {
+    const timerKey = `${list}:${p.slug}`;
+    if (acceptTimers.has(timerKey)) continue;
     const elapsed = Date.now() - new Date(p.requestedAt).getTime();
     const remaining = Math.max(300, ACCEPT_DELAY_MS - elapsed);
     acceptTimers.set(
-      key,
+      timerKey,
       setTimeout(() => {
-        acceptTimers.delete(key);
-        const cur = state.partners[role];
-        if (cur && cur.slug === p.slug && cur.status === "pending") {
-          setState((s) => ({
-            ...s,
-            partners: { ...s.partners, [role]: { ...cur, status: "active" } },
-          }));
-        }
+        acceptTimers.delete(timerKey);
+        store.set((s) => ({
+          ...s,
+          [list]: s[list].map((x) =>
+            x.slug === p.slug && x.status === "pending" ? { ...x, status: "active" as const } : x,
+          ),
+        }));
       }, remaining),
     );
   }
 }
 
-function hydrateOnce() {
-  if (hydrated || typeof window === "undefined") return;
-  hydrated = true;
-  try {
-    const rawPartners = sessionStorage.getItem(PARTNERS_KEY);
-    const rawReviews = sessionStorage.getItem(REVIEWS_KEY);
-    state = {
-      partners: rawPartners ? normalizePartners(JSON.parse(rawPartners)) : DEFAULT_PARTNERS,
-      reviews: rawReviews ? (JSON.parse(rawReviews) as ReviewsMap) : {},
-    };
-  } catch {
-    /* ignore — storage corrompu */
-  }
-  scheduleAcceptances();
-}
-
-function subscribe(callback: () => void): () => void {
-  hydrateOnce();
-  listeners.add(callback);
-  return () => {
-    listeners.delete(callback);
-  };
-}
-
-function getSnapshot(): PartnersState {
-  return state;
-}
-
-const SERVER_STATE: PartnersState = Object.freeze({
-  partners: DEFAULT_PARTNERS,
-  reviews: {},
-}) as PartnersState;
-
-function getServerSnapshot(): PartnersState {
-  return SERVER_STATE;
-}
-
-/* ─── Hook React ─── */
-
 export function usePartners() {
-  const { partners, reviews } = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const state = store.use();
+  // (Re)programme l'acceptation auto à chaque rendu — idempotent par clé.
+  scheduleAcceptances(state);
 
   /** Envoie une demande de partenariat → statut « en attente de validation ». */
   const request = useCallback(
-    (role: PartnerRole, slug: string, services?: LivreurService[]) =>
-      setState((s) => ({
-        ...s,
-        partners: {
-          ...s.partners,
-          [role]: {
-            slug,
-            status: "pending" as const,
-            requestedAt: new Date().toISOString(),
-            ...(services ? { services } : {}),
-          },
-        },
-      })),
+    (role: PartnerRole, slug: string, services?: LivreurService[]) => {
+      const p: Partnership = {
+        slug,
+        status: "pending",
+        requestedAt: new Date().toISOString(),
+        ...(services ? { services } : {}),
+      };
+      store.set((s) => {
+        if (role === "closeuse") return { ...s, closeuse: p }; // mono : remplace
+        const list = role === "transitaire" ? "transitaires" : "livreurs";
+        return { ...s, [list]: [...s[list].filter((x) => x.slug !== slug), p] };
+      });
+    },
     [],
   );
 
   /** Annule une demande encore en attente. */
-  const cancelRequest = useCallback(
-    (role: PartnerRole) =>
-      setState((s) =>
-        s.partners[role]?.status === "pending"
-          ? { ...s, partners: { ...s.partners, [role]: undefined } }
-          : s,
-      ),
-    [],
-  );
+  const cancelRequest = useCallback((role: PartnerRole, slug: string) => {
+    store.set((s) => {
+      if (role === "closeuse")
+        return s.closeuse?.slug === slug && s.closeuse.status === "pending"
+          ? { ...s, closeuse: undefined }
+          : s;
+      const list = role === "transitaire" ? "transitaires" : "livreurs";
+      return {
+        ...s,
+        [list]: s[list].filter((x) => !(x.slug === slug && x.status === "pending")),
+      };
+    });
+  }, []);
 
   /** Met fin au partenariat : motif + évaluation (conservée, modifiable). */
   const end = useCallback(
-    (
-      role: PartnerRole,
-      slug: string,
-      data: { reason: string; rating: number; comment: string },
-    ) =>
-      setState((s) => ({
-        partners: { ...s.partners, [role]: undefined },
-        reviews: {
-          ...s.reviews,
-          [slug]: {
-            rating: data.rating,
-            comment: data.comment,
-            endReason: data.reason,
-            at: new Date().toISOString(),
+    (role: PartnerRole, slug: string, data: { reason: string; rating: number; comment: string }) => {
+      store.set((s) => {
+        const next: PartnersState = {
+          ...s,
+          reviews: {
+            ...s.reviews,
+            [slug]: {
+              rating: data.rating,
+              comment: data.comment,
+              endReason: data.reason,
+              at: new Date().toISOString(),
+            },
           },
-        },
-      })),
+        };
+        if (role === "closeuse") {
+          if (s.closeuse?.slug === slug) next.closeuse = undefined;
+        } else {
+          const list = role === "transitaire" ? "transitaires" : "livreurs";
+          next[list] = s[list].filter((x) => x.slug !== slug);
+        }
+        return next;
+      });
+    },
     [],
   );
 
-  /** Met à jour l'évaluation d'un partenaire (sans mettre fin). */
-  const saveReview = useCallback(
-    (slug: string, data: { rating: number; comment: string }) =>
-      setState((s) => ({
-        ...s,
-        reviews: {
-          ...s.reviews,
-          [slug]: {
-            ...s.reviews[slug],
-            rating: data.rating,
-            comment: data.comment,
-            at: new Date().toISOString(),
-          },
-        },
-      })),
-    [],
-  );
+  /** Laisse / met à jour une évaluation SANS mettre fin au partenariat. */
+  const saveReview = useCallback((slug: string, data: { rating: number; comment: string }) => {
+    store.set((s) => ({
+      ...s,
+      reviews: {
+        ...s.reviews,
+        [slug]: { ...s.reviews[slug], rating: data.rating, comment: data.comment, at: new Date().toISOString() },
+      },
+    }));
+  }, []);
 
   /** Modifie les services souscrits chez un livreur partenaire. */
-  const setServices = useCallback(
-    (role: PartnerRole, services: LivreurService[]) =>
-      setState((s) => {
-        const cur = s.partners[role];
-        if (!cur) return s;
-        return { ...s, partners: { ...s.partners, [role]: { ...cur, services } } };
-      }),
-    [],
-  );
+  const setServices = useCallback((role: PartnerRole, slug: string, services: LivreurService[]) => {
+    store.set((s) => {
+      if (role !== "livreur") return s;
+      return {
+        ...s,
+        livreurs: s.livreurs.map((x) => (x.slug === slug ? { ...x, services } : x)),
+      };
+    });
+  }, []);
 
   const getPartnership = useCallback(
     (role: PartnerRole, slug: string): Partnership | null => {
-      const p = partners[role];
-      return p && p.slug === slug ? p : null;
+      if (role === "closeuse") return state.closeuse?.slug === slug ? state.closeuse : null;
+      const list = role === "transitaire" ? state.transitaires : state.livreurs;
+      return list.find((x) => x.slug === slug) ?? null;
     },
-    [partners],
+    [state],
   );
 
-  const getReview = useCallback((slug: string) => reviews[slug] ?? null, [reviews]);
+  const getReview = useCallback((slug: string) => state.reviews[slug] ?? null, [state]);
 
   return {
-    partners,
+    /** État brut : closeuse (mono), transitaires[], livreurs[], reviews. */
+    partners: state,
     getPartnership,
     request,
     cancelRequest,

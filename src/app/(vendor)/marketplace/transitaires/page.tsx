@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { TransitaireCard } from "@/components/kamoo/transitaire-card";
 import { MOCK_TRANSITAIRES } from "@/lib/data/mock-transitaires";
+import { usePartners } from "@/lib/hooks/use-partners";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
 import type { Transitaire } from "@/lib/types/transitaire";
@@ -55,6 +56,7 @@ function minDelayDays(t: Transitaire): number {
 
 export default function MarketplaceTransitairesPage() {
   const all = MOCK_TRANSITAIRES;
+  const { partners } = usePartners();
 
   const [search, setSearch] = useState("");
   const [minRating, setMinRating] = useState(0);
@@ -103,9 +105,17 @@ export default function MarketplaceTransitairesPage() {
           return b.rating - a.rating;
       }
     });
-    // Les transitaires enregistrés remontent en tête de liste.
-    return [...sorted.filter((t) => saved.includes(t.slug)), ...sorted.filter((t) => !saved.includes(t.slug))];
-  }, [all, search, certifiedOnly, minRating, mode, maxDelay, sortBy, saved]);
+    // Priorité d'affichage : mes partenaires actifs > demandes envoyées >
+    // enregistrés > le reste (chaque groupe garde le tri choisi).
+    const rank = (t: (typeof sorted)[number]): number => {
+      const p = partners.transitaires.find((x) => x.slug === t.slug);
+      if (p?.status === "active") return 0;
+      if (p?.status === "pending") return 1;
+      if (saved.includes(t.slug)) return 2;
+      return 3;
+    };
+    return [...sorted].sort((a, b) => rank(a) - rank(b));
+  }, [all, search, certifiedOnly, minRating, mode, maxDelay, sortBy, saved, partners.transitaires]);
 
   const filtersActive =
     search.trim() !== "" || certifiedOnly || minRating > 0 || mode !== "all" || maxDelay > 0;

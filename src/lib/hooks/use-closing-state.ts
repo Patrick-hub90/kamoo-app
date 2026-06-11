@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { MOCK_CLOSING_ASSIGNMENTS } from "@/lib/data/mock-closing";
-import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
+import { createSyncedStore } from "@/lib/sync/synced-store";
 import type {
   AssignedDelivery,
   CancellationReason,
@@ -73,14 +73,21 @@ function applyOverride(
   };
 }
 
+type ClosingSyncedState = {
+  extraOrders: ClosingAssignment[];
+  overrides: Record<string, ClosingOverride>;
+};
+
+/* État SYNCHRONISÉ via le mini-backend (/api/demo-state) : la console
+ * vendeur ET l'app closeuse (port 3001) pilotent les MÊMES commandes —
+ * une confirmation côté closeuse apparaît côté vendeur en ~2 s. */
+const closingStore = createSyncedStore<ClosingSyncedState>("closing", {
+  extraOrders: [],
+  overrides: {},
+});
+
 export function useClosingState() {
-  const [extraOrders, setExtraOrders] = useSessionStorageState<ClosingAssignment[]>(
-    "closing.extraOrders",
-    [],
-  );
-  const [overrides, setOverrides] = useSessionStorageState<
-    Record<string, ClosingOverride>
-  >("closing.overrides", {});
+  const { extraOrders, overrides } = closingStore.use();
 
   const all = useMemo(
     () =>
@@ -90,24 +97,23 @@ export function useClosingState() {
     [extraOrders, overrides],
   );
 
-  const update = useCallback(
-    (id: string, patch: ClosingOverride) => {
-      setOverrides({
-        ...overrides,
+  const update = useCallback((id: string, patch: ClosingOverride) => {
+    closingStore.set((s) => ({
+      ...s,
+      overrides: {
+        ...s.overrides,
         [id]: {
-          ...overrides[id],
+          ...s.overrides[id],
           ...patch,
           lastActivityAt: patch.lastActivityAt ?? new Date().toISOString(),
         },
-      });
-    },
-    [overrides, setOverrides],
-  );
+      },
+    }));
+  }, []);
 
-  const addOrder = useCallback(
-    (order: ClosingAssignment) => setExtraOrders([order, ...extraOrders]),
-    [extraOrders, setExtraOrders],
-  );
+  const addOrder = useCallback((order: ClosingAssignment) => {
+    closingStore.set((s) => ({ ...s, extraOrders: [order, ...s.extraOrders] }));
+  }, []);
 
   const getById = useCallback(
     (id: string) => all.find((a) => a.id === id),
