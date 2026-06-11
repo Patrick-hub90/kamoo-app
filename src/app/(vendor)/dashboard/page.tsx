@@ -38,10 +38,11 @@ import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { useProductsState } from "@/lib/hooks/use-products-state";
+import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { formatXOF } from "@/lib/format";
-import { orderTotalXof } from "@/lib/types/closing";
+import { orderTotalXof, type ClosingAssignment } from "@/lib/types/closing";
 import { getStockLevel } from "@/lib/types/produit";
 import {
   bucketingForDateFilter,
@@ -62,6 +63,8 @@ import {
 export default function DashboardPage() {
   const { currentMarket } = useCurrentMarket();
   const { products: liveProducts } = useProductsState();
+  /* Commandes LIVE : la machine d'etats closing (synchronisee app closeuse) */
+  const liveOrders = useClosingState().all;
   const searchParams = useSearchParams();
   void searchParams; // réservé (deep-link période à venir)
   const router = useRouter();
@@ -158,8 +161,8 @@ export default function DashboardPage() {
 
   /* ─── Compute principal ─── */
   const computed = useMemo(
-    () => computeDashboardData({ normalizedFilter }),
-    [normalizedFilter],
+    () => computeDashboardData({ normalizedFilter, assignments: liveOrders }),
+    [normalizedFilter, liveOrders],
   );
   void currentMarket.country.code;
 
@@ -342,8 +345,10 @@ type DashboardData = {
 
 function computeDashboardData(args: {
   normalizedFilter: DateFilterValue;
+  /** Commandes LIVE (machine d etats closing) — pas les fixtures brutes */
+  assignments: ClosingAssignment[];
 }): DashboardData {
-  const { normalizedFilter } = args;
+  const { normalizedFilter, assignments } = args;
 
   const range = dateFilterRange(normalizedFilter, MOCK_TODAY);
   const inRange = (iso: string | undefined): boolean => {
@@ -434,7 +439,7 @@ function computeDashboardData(args: {
 
   /* Top products (période) */
   const salesByProductPeriod = new Map<string, { sales: number; ca: number }>();
-  for (const a of MOCK_CLOSING_ASSIGNMENTS) {
+  for (const a of assignments) {
     if (a.delivery?.progress !== "effectue") continue;
     if (!inRange(a.delivery.deliveredAt)) continue;
     for (const item of a.items) {
@@ -501,14 +506,14 @@ function computeDashboardData(args: {
 
   /* Closing */
   const toCallStatuses = ["nouvelle", "rappele", "injoignable"];
-  const toCallList = MOCK_CLOSING_ASSIGNMENTS.filter((a) =>
+  const toCallList = assignments.filter((a) =>
     toCallStatuses.includes(a.status),
   );
   const aAppeler = toCallList.length;
-  const confirmes = MOCK_CLOSING_ASSIGNMENTS.filter(
+  const confirmes = assignments.filter(
     (a) => a.status === "livraison_en_cours" || a.status === "livre",
   ).length;
-  const annules = MOCK_CLOSING_ASSIGNMENTS.filter((a) => a.status === "annule").length;
+  const annules = assignments.filter((a) => a.status === "annule").length;
   const leadsPreview: ClosingLead[] = toCallList.slice(0, 4).map((a) => {
     const firstItem = a.items[0];
     const productLabel = firstItem ? `${firstItem.quantity}× ${firstItem.productName}` : "—";
@@ -525,7 +530,7 @@ function computeDashboardData(args: {
   });
 
   /* Live deliveries */
-  const activeDeliveriesAll = MOCK_CLOSING_ASSIGNMENTS.filter(
+  const activeDeliveriesAll = assignments.filter(
     (a) => a.delivery && (a.delivery.progress === "en_attente" || a.delivery.progress === "alerte"),
   );
   const enCoursCount = activeDeliveriesAll.filter(
@@ -562,7 +567,7 @@ function computeDashboardData(args: {
     .map(([productId, { sales, ca }]) => {
       const product = MOCK_PRODUITS.find((p) => p.id === productId);
       if (!product) return null;
-      const called = MOCK_CLOSING_ASSIGNMENTS.filter(
+      const called = assignments.filter(
         (a) =>
           a.status !== "nouvelle" &&
           inRange(a.createdAt) &&
@@ -609,7 +614,7 @@ function computeDashboardData(args: {
     },
     recentOps,
     closing: {
-      totalCalled: MOCK_CLOSING_ASSIGNMENTS.filter((a) => a.status !== "nouvelle").length,
+      totalCalled: assignments.filter((a) => a.status !== "nouvelle").length,
       buckets,
       leads: leadsPreview,
     },
