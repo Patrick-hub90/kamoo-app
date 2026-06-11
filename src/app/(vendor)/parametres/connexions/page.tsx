@@ -139,9 +139,11 @@ function ShopifyRow({ market }: { market: Market }) {
         ? `Échec : ${res.error}`
         : res.imported > 0
           ? `${res.imported} commande${res.imported > 1 ? "s" : ""} importée${res.imported > 1 ? "s" : ""} → Closing`
-          : "Aucune nouvelle commande",
+          : res.fetched > 0
+            ? `${res.fetched} commande${res.fetched > 1 ? "s" : ""} déjà importée${res.fetched > 1 ? "s" : ""}`
+            : "Aucune commande trouvée dans la boutique",
     );
-    setTimeout(() => setFlash(null), 4000);
+    setTimeout(() => setFlash(null), 5000);
   }
 
   return (

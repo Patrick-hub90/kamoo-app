@@ -58,9 +58,9 @@ export function useShopifySync() {
    * importées. Mode auto-détecté (live si la connexion est en mode live).
    */
   const syncNow = useCallback(
-    async (marketId: string): Promise<{ imported: number; error?: string }> => {
+    async (marketId: string): Promise<{ imported: number; fetched: number; error?: string }> => {
       const conn = getConnection(marketId);
-      if (!conn?.isConnected) return { imported: 0, error: "non_connecte" };
+      if (!conn?.isConnected) return { imported: 0, fetched: 0, error: "non_connecte" };
 
       let orders: LiveOrder[] = [];
 
@@ -72,14 +72,15 @@ export function useShopifySync() {
             body: JSON.stringify({ shop: conn.domain }),
           });
           const data = (await res.json()) as { orders?: LiveOrder[]; error?: string };
-          if (!res.ok) return { imported: 0, error: data.error ?? "echec_pull" };
+          if (!res.ok) return { imported: 0, fetched: 0, error: data.error ?? "echec_pull" };
           orders = data.orders ?? [];
         } catch {
-          return { imported: 0, error: "reseau" };
+          return { imported: 0, fetched: 0, error: "reseau" };
         }
       } else {
         orders = generateDemoOrders();
       }
+      const fetched = orders.length;
 
       // Dédup : ne pas réimporter une commande déjà présente (par shopifyOrderId)
       const existingShopifyIds = new Set(
@@ -96,7 +97,7 @@ export function useShopifySync() {
       }
 
       recordSync(marketId, n);
-      return { imported: n };
+      return { imported: n, fetched };
     },
     [getConnection, recordSync, closing, clients],
   );

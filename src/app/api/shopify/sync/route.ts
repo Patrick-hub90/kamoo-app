@@ -22,7 +22,7 @@ type NormalizedOrder = {
 
 const ORDERS_QUERY = `
   query RecentOrders {
-    orders(first: 25, sortKey: CREATED_AT, reverse: true, query: "financial_status:pending OR fulfillment_status:unfulfilled") {
+    orders(first: 50, sortKey: CREATED_AT, reverse: true, query: "status:any") {
       edges {
         node {
           id
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         unitPriceXof: Math.round(parseFloat(e.node.originalUnitPriceSet.shopMoney.amount) || 0),
       })),
     }));
-    return Response.json({ orders });
+    return Response.json({ orders, fetched: orders.length });
   } catch (e) {
     const status = e instanceof ShopifyApiError ? e.status : 500;
     return Response.json({ error: "echec_pull", detail: String(e) }, { status });
