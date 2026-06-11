@@ -23,6 +23,7 @@ import {
 import { useChat } from "@/components/kamoo/chat";
 import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
+import { useDisputes } from "@/lib/hooks/use-disputes";
 import { usePartners } from "@/lib/hooks/use-partners";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import { ALL_DAYS } from "@/lib/types/closeuse";
@@ -39,6 +40,8 @@ function formatHour(hhmm: string) {
 export function LivreurProfileView({ livreur: raw }: { livreur: Livreur }) {
   const { openChat } = useChat();
   const { getReview } = usePartners();
+  const { activeFor } = useDisputes();
+  const dispute = activeFor(raw.slug);
   const [tab, setTab] = useState<"avis" | "faq">("avis");
   const [allReviews, setAllReviews] = useState(false);
 
@@ -112,6 +115,11 @@ export function LivreurProfileView({ livreur: raw }: { livreur: Livreur }) {
                 <b>{l.rating}</b>
                 <span className="text-white/60">{l.reviewsCount} avis</span>
               </span>
+              {dispute && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[11.5px] font-bold text-white">
+                  ⚠ En dispute
+                </span>
+              )}
               {top && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[11.5px] font-semibold text-amber-200 ring-1 ring-inset ring-amber-300/30">
                   <Crown className="h-3.5 w-3.5" /> Top livreur

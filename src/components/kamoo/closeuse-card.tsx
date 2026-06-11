@@ -3,12 +3,14 @@
 import Link from "next/link";
 import {
   BadgeCheck,
+  AlertTriangle,
   Crown,
   MapPin,
   MessageCircle,
   Sparkles,
   Star,
 } from "lucide-react";
+import { useDisputes } from "@/lib/hooks/use-disputes";
 import { usePartners } from "@/lib/hooks/use-partners";
 import type { Closeuse } from "@/lib/types/closeuse";
 import { isTopPerformer } from "@/lib/data/mock-closeuses";
@@ -34,6 +36,8 @@ type Props = {
 export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props) {
   const top = isTopPerformer(c);
   const { getPartnership } = usePartners();
+  const { activeFor } = useDisputes();
+  const dispute = activeFor(c.slug);
   const partnership = getPartnership("closeuse", c.slug);
   return (
     <div
@@ -47,6 +51,11 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
       {/* Badges en absolu : la hauteur des cartes reste identique
           avec ou sans Top performer / partenariat. */}
       <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
+        {dispute && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <AlertTriangle className="h-3 w-3" /> En dispute
+          </span>
+        )}
         {partnership?.status === "active" && (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
             <BadgeCheck className="h-3 w-3" /> Votre closeuse

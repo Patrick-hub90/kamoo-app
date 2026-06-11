@@ -18,10 +18,12 @@ import {
   Settings,
   ShoppingBag,
   Store,
+  ShieldAlert,
   Truck,
   Users,
   Wallet,
 } from "lucide-react";
+import { useDisputes } from "@/lib/hooks/use-disputes";
 import { cn } from "@/lib/utils";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { MARKET_STATUS_LABELS, MARKET_STATUS_TONE } from "@/lib/types/market";
@@ -87,6 +89,7 @@ const SECTIONS: Section[] = [
       { href: "/clients", label: "Clients", icon: Users },
       { href: "/closing", label: "Closing", icon: Phone },
       { href: "/livraisons", label: "Livraisons", icon: Truck },
+      { href: "/disputes", label: "Disputes", icon: ShieldAlert },
       {
         href: "/finances",
         label: "Finances",
@@ -116,6 +119,10 @@ export function ConsoleRail({
 }: ConsoleRailProps = {}) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  /* Badge rouge « Disputes » : nombre de disputes actives (synchronisé). */
+  const { active: activeDisputes } = useDisputes();
+  const dynamicBadge = (href: string, base?: number): number | undefined =>
+    href === "/disputes" ? (activeDisputes.length || undefined) : base;
 
   // Auto-expand un parent quand un enfant est actif
   useEffect(() => {
@@ -271,16 +278,18 @@ export function ConsoleRail({
                           )}
                           <Icon className="h-[17px] w-[17px] shrink-0" />
                           <span className="flex-1">{item.label}</span>
-                          {item.badge && (
+                          {dynamicBadge(item.href, item.badge) ? (
                             <span
                               className={cn(
                                 "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                                active ? "bg-kamoo-orange-500 text-white" : "bg-white/10 text-white/80",
+                                item.href === "/disputes"
+                                  ? "bg-red-500 text-white"
+                                  : active ? "bg-kamoo-orange-500 text-white" : "bg-white/10 text-white/80",
                               )}
                             >
-                              {item.badge}
+                              {dynamicBadge(item.href, item.badge)}
                             </span>
-                          )}
+                          ) : null}
                         </Link>
                       )}
 

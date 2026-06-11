@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useChat, type ChatPartner } from "@/components/kamoo/chat";
+import { OpenDisputeModal } from "@/components/kamoo/open-dispute-modal";
 import {
   END_REASONS,
   usePartners,
@@ -78,6 +79,7 @@ export function PartnerCta({
   const [chooseOpen, setChooseOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
   const [manageServices, setManageServices] = useState(false);
 
   const partnership = getPartnership(role, slug);
@@ -154,12 +156,21 @@ export function PartnerCta({
             <Star className="h-3.5 w-3.5 text-amber-400" />
             {partnersApi.getReview(slug) ? "Modifier mon avis" : "Laisser un avis"}
           </button>
-          <button
-            onClick={() => setEndOpen(true)}
-            className="mt-3 w-full text-center text-[12px] font-semibold text-ink-400 transition hover:text-red-600"
-          >
-            Mettre fin au partenariat
-          </button>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <button
+              onClick={() => setDisputeOpen(true)}
+              className="text-center text-[12px] font-semibold text-ink-400 transition hover:text-red-600"
+            >
+              Signaler un problème
+            </button>
+            <span className="h-3 w-px bg-line" />
+            <button
+              onClick={() => setEndOpen(true)}
+              className="text-center text-[12px] font-semibold text-ink-400 transition hover:text-red-600"
+            >
+              Mettre fin au partenariat
+            </button>
+          </div>
         </>
       )}
 
@@ -271,6 +282,15 @@ export function PartnerCta({
           roleLabel={roleLabel}
           partnersApi={partnersApi}
           onClose={() => setEndOpen(false)}
+        />
+      )}
+
+      {disputeOpen && (
+        <OpenDisputeModal
+          againstRole={role}
+          againstSlug={slug}
+          againstName={name}
+          onClose={() => setDisputeOpen(false)}
         />
       )}
 

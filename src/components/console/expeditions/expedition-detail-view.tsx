@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Calendar,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { useChat } from "@/components/kamoo/chat";
+import { OpenDisputeModal } from "@/components/kamoo/open-dispute-modal";
 import { STATUS_LABELS, TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import type { ExpeditionDetail } from "@/lib/types/expedition-detail";
 import { formatXOF } from "@/lib/format";
@@ -38,6 +40,7 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
   const { openChat } = useChat();
   const [tab, setTab] = useState<TabKey>("vue");
   const [modal, setModal] = useState<"none" | "pay" | "proof" | "proofSent">("none");
+  const [disputeOpen, setDisputeOpen] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
   const [proofFileName, setProofFileName] = useState<string | null>(null);
   const [proofRef, setProofRef] = useState("");
@@ -429,7 +432,25 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
                 }
               />
             </div>
+            {/* Problème avec cette expédition → dispute contre le transitaire */}
+            <button
+              onClick={() => setDisputeOpen(true)}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white py-2 text-[12px] font-semibold text-red-600 transition hover:bg-red-50"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Signaler un problème sur cette expédition
+            </button>
           </div>
+
+          {disputeOpen && (
+            <OpenDisputeModal
+              againstRole="transitaire"
+              againstSlug={exp.transitaire.name.toLowerCase().replace(/\s+/g, "-").replace(/&/g, "et")}
+              againstName={exp.transitaire.name}
+              context={`Expédition ${exp.publicCode}`}
+              onClose={() => setDisputeOpen(false)}
+            />
+          )}
         </div>
       </div>
 

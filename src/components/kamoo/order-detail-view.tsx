@@ -22,6 +22,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { AssignLivreurModal } from "@/components/kamoo/assign-livreur-modal";
+import { OpenDisputeModal } from "@/components/kamoo/open-dispute-modal";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { useChat } from "@/components/kamoo/chat";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
@@ -307,6 +308,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
   const history = buildClosingHistory(a, closeuse.name);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [livreurDisputeOpen, setLivreurDisputeOpen] = useState(false);
 
   const total = orderTotalXof(a);
 
@@ -699,6 +701,21 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
                   <MessageSquare className="h-3.5 w-3.5" />
                   Contacter {a.delivery.name.split(" ")[0]}
                 </button>
+                <button
+                  onClick={() => setLivreurDisputeOpen(true)}
+                  className="mt-2 w-full text-center text-[11.5px] font-semibold text-ink-400 transition hover:text-red-600"
+                >
+                  Signaler un problème avec ce livreur
+                </button>
+                {livreurDisputeOpen && a.delivery && (
+                  <OpenDisputeModal
+                    againstRole="livreur"
+                    againstSlug={a.delivery.id.replace(/^lv_/, "")}
+                    againstName={a.delivery.name}
+                    context={`Commande ${a.id}`}
+                    onClose={() => setLivreurDisputeOpen(false)}
+                  />
+                )}
               </>
             ) : (
               <div className="rounded-xl border border-dashed border-line bg-paper-2/30 px-3 py-5 text-center">

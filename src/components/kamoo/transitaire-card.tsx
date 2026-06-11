@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowRight,
   BadgeCheck,
   Bookmark,
@@ -17,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { useDisputes } from "@/lib/hooks/use-disputes";
 import { usePartners } from "@/lib/hooks/use-partners";
 import type { Transitaire } from "@/lib/types/transitaire";
 import type { TransportMode } from "@/lib/types/expedition";
@@ -40,6 +42,8 @@ type Props = {
 
 export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }: Props) {
   const { getPartnership } = usePartners();
+  const { activeFor } = useDisputes();
+  const dispute = activeFor(t.slug);
   const partnership = getPartnership("transitaire", t.slug);
 
   return (
@@ -61,6 +65,12 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
         <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+          {/* En dispute : visible par TOUS — prudence avant de s'engager */}
+          {dispute && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-600/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <AlertTriangle className="h-2.5 w-2.5" /> En dispute
+            </span>
+          )}
           {/* On travaille déjà ensemble : badge prioritaire sur « Enregistré » */}
           {partnership?.status === "active" && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">

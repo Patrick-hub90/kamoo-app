@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import {
+  AlertTriangle,
   BadgeCheck,
   Bike,
   Building2,
@@ -9,6 +12,8 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
+import { useDisputes } from "@/lib/hooks/use-disputes";
+import { usePartners } from "@/lib/hooks/use-partners";
 import { LIVREUR_SERVICE_SHORT, type Livreur } from "@/lib/types/livreur";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +23,30 @@ const fmt = (n: number) => n.toLocaleString("fr-FR");
 export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
   const minPrice = Math.min(...l.zones.map((z) => z.priceXof));
   const isAgence = l.type === "agence";
+  const { getPartnership } = usePartners();
+  const { activeFor } = useDisputes();
+  const partnership = getPartnership("livreur", l.slug);
+  const dispute = activeFor(l.slug);
   return (
-    <div className="flex flex-col rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]">
+    <div className="relative flex flex-col rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300 hover:shadow-[var(--shadow-kamoo-md)]">
+      {/* Badges en absolu — hauteur de carte inchangée */}
+      <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
+        {dispute && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <AlertTriangle className="h-3 w-3" /> En dispute
+          </span>
+        )}
+        {partnership?.status === "active" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <BadgeCheck className="h-3 w-3" /> Votre livreur
+          </span>
+        )}
+        {partnership?.status === "pending" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            Demande envoyée
+          </span>
+        )}
+      </div>
       {/* Identité */}
       <div className="flex gap-3">
         {l.photoUrl ? (

@@ -18,6 +18,7 @@ import { useChat } from "@/components/kamoo/chat";
 import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
+import { useDisputes } from "@/lib/hooks/use-disputes";
 import { usePartners } from "@/lib/hooks/use-partners";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import type { Transitaire } from "@/lib/types/transitaire";
@@ -27,6 +28,8 @@ import { cn } from "@/lib/utils";
 export function TransitaireProfileView({ transitaire: raw }: { transitaire: Transitaire }) {
   const { openChat } = useChat();
   const { getReview } = usePartners();
+  const { activeFor } = useDisputes();
+  const dispute = activeFor(raw.slug);
   const [tab, setTab] = useState<"avis" | "faq">("avis");
   const [allReviews, setAllReviews] = useState(false);
 
@@ -104,6 +107,11 @@ export function TransitaireProfileView({ transitaire: raw }: { transitaire: Tran
                     <b className="text-ink-900">{t.rating}</b>
                     <span className="text-ink-500">{t.reviewsCount} avis</span>
                   </span>
+                  {dispute && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[11.5px] font-bold text-white">
+                      ⚠ En dispute
+                    </span>
+                  )}
                   {t.status === "certified" ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-kamoo-orange-200 bg-kamoo-orange-50 px-2.5 py-0.5 text-[11.5px] font-semibold text-kamoo-orange-700">
                       <BadgeCheck className="h-3.5 w-3.5" /> Certifié Kamoo
