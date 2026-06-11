@@ -18,6 +18,7 @@
 export type ClientSegment = "prospect" | "nouveau" | "fidele";
 
 export type AcquisitionChannel =
+  | "boutique"
   | "whatsapp"
   | "instagram"
   | "facebook"
@@ -124,6 +125,7 @@ export const SEGMENT_TONE: Record<
 };
 
 export const CHANNEL_LABELS: Record<AcquisitionChannel, string> = {
+  boutique: "Boutique Shopify",
   whatsapp: "WhatsApp",
   instagram: "Instagram",
   facebook: "Facebook",

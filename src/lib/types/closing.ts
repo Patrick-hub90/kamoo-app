@@ -121,8 +121,12 @@ export type ClosingAssignment = {
   createdAt: string;
   /** Nombre de tentatives d'appel déjà faites */
   callAttempts: number;
-  /** Origine de la commande (ex: "Instagram", "WhatsApp", "Site") */
+  /** Origine de la commande (ex: "Instagram", "WhatsApp", "Site", "Shopify") */
   source?: string;
+  /** ID de la commande Shopify d'origine (import auto + dédup + push statut) */
+  shopifyOrderId?: string;
+  /** Numéro lisible Shopify, ex "#1042" */
+  shopifyName?: string;
 };
 
 /** Helper : montant total d'une commande (somme des lignes) */

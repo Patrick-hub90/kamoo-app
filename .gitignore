@@ -43,3 +43,5 @@ next-env.d.ts
 # Logs
 .dev*.log
 .demo-state.json
+.shopify-tokens.json
+.env.local
