@@ -1,18 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  ImagePlus,
   Info,
   Package,
   Save,
   Sparkles,
   X,
 } from "lucide-react";
+import { toStoredDataUrl } from "@/components/kamoo/product-image-manager";
 import { useProductsState } from "@/lib/hooks/use-products-state";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +74,31 @@ export function ProductForm({
   );
   const [isActive, setIsActive] = useState(initial.isActive);
 
+  /* Photos (max 5) — sélectionnées depuis l'explorateur de fichiers.
+   * La 1ʳᵉ est la couverture (catalogue + expéditions via useSavedCovers). */
+  const [photos, setPhotos] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!initial.id) return;
+    try {
+      const raw = localStorage.getItem(`boutique.photos.${initial.id}`);
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        if (Array.isArray(arr)) setPhotos(arr.slice(0, 5));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [initial.id]);
+
+  const addPhotoFiles = (files: FileList | null) => {
+    if (!files) return;
+    const urls = Array.from(files)
+      .filter((f) => f.type.startsWith("image/"))
+      .map((f) => URL.createObjectURL(f));
+    if (urls.length) setPhotos((prev) => [...prev, ...urls].slice(0, 5));
+  };
+
   const [saved, setSaved] = useState(false);
 
   const priceNum = parseInt(priceXof, 10) || 0;
@@ -127,12 +154,23 @@ export function ProductForm({
       ? Math.round(((priceNum - costNum) / priceNum) * 100)
       : null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isValid) return;
     // V1 mock : persistance réelle via le store produits (sessionStorage).
     // V2 : server action createProduct() / updateProduct() (Supabase).
+    const persistPhotos = async (productId: string) => {
+      if (photos.length === 0) return;
+      try {
+        const stored = await Promise.all(photos.map((u) => toStoredDataUrl(u)));
+        localStorage.setItem(`boutique.photos.${productId}`, JSON.stringify(stored));
+        window.dispatchEvent(new Event("storage")); // rafraîchit les couvertures
+      } catch {
+        /* stockage plein — non bloquant */
+      }
+    };
     if (mode === "create") {
       const id = `p_new_${Date.now().toString(36)}`;
+      await persistPhotos(id);
       addProduct({
         id,
         sku: initial.sku,
@@ -152,6 +190,7 @@ export function ProductForm({
         createdAt: new Date().toISOString(),
       });
     } else if (initial.id) {
+      await persistPhotos(initial.id);
       updateProduct(initial.id, {
         name: name.trim(),
         description: description.trim(),
@@ -283,6 +322,77 @@ export function ProductForm({
                 className="w-full resize-none rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
               />
             </Field>
+          </Section>
+
+          {/* PHOTOS — depuis l'explorateur de fichiers, 1ʳᵉ = couverture */}
+          <Section title="Photos du produit">
+            <p className="-mt-1 mb-3 text-[12px] text-ink-500">
+              Jusqu&apos;à 5 photos. La première est la <b>couverture</b> — visible au
+              catalogue et dans vos expéditions.
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              {photos.map((url, i) => (
+                <div key={i} className="group relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`Photo ${i + 1}`}
+                    className={cn(
+                      "h-20 w-20 rounded-xl border-2 object-cover",
+                      i === 0 ? "border-kamoo-blue-600" : "border-line",
+                    )}
+                  />
+                  {i === 0 && (
+                    <span className="absolute -left-1.5 -top-1.5 rounded-full bg-kamoo-blue-600 px-1.5 py-0.5 text-[8.5px] font-bold uppercase text-white shadow-sm">
+                      Couv.
+                    </span>
+                  )}
+                  {i !== 0 && (
+                    <button
+                      type="button"
+                      title="Définir en couverture"
+                      onClick={() =>
+                        setPhotos((prev) => [prev[i], ...prev.filter((_, j) => j !== i)])
+                      }
+                      className="absolute inset-x-0 bottom-0 rounded-b-[10px] bg-ink-900/70 py-0.5 text-[9px] font-bold text-white opacity-0 transition group-hover:opacity-100"
+                    >
+                      Couverture
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                    className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-red-600 text-white opacity-0 shadow-sm transition group-hover:opacity-100"
+                    aria-label="Retirer cette photo"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < 5 && (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="grid h-20 w-20 place-items-center rounded-xl border-2 border-dashed border-line text-ink-400 transition hover:border-kamoo-blue-600 hover:text-kamoo-blue-700"
+                >
+                  <span className="flex flex-col items-center gap-1 text-[10px] font-semibold">
+                    <ImagePlus className="h-5 w-5" />
+                    Parcourir
+                  </span>
+                </button>
+              )}
+            </div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                addPhotoFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
           </Section>
 
           {/* PRICING */}

@@ -79,7 +79,7 @@ export function useSavedCovers(): Record<string, string> {
 
 /** Redimensionne (max 900px) + convertit une url (blob/data) en data-URL
  *  JPEG compacte, pour un stockage localStorage raisonnable. */
-function toStoredDataUrl(url: string): Promise<string> {
+export function toStoredDataUrl(url: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
