@@ -66,7 +66,7 @@ function applyOverride(
     ...a,
     status: o.status ?? a.status,
     callbackAt: o.callbackAt ?? a.callbackAt,
-    comment: o.comment ?? a.comment,
+    comment: "comment" in o ? o.comment : a.comment,
     cancellationReason: o.cancellationReason ?? a.cancellationReason,
     lastActivityAt: o.lastActivityAt ?? a.lastActivityAt,
     delivery,

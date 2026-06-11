@@ -125,7 +125,35 @@ export default function LivraisonsPage() {
     <div className="min-h-full bg-paper">
       {/* Header commun : actions + cloche (même ordre partout) */}
       <PageHeader kicker="Mon activité" title="Livraisons">
-        <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"><Download className="h-4 w-4 text-ink-400" /> Exporter</button>
+        <button
+          onClick={() => {
+            /* Export CSV des livraisons filtrées (réel) */
+            const rows = [
+              ["N°", "Produit", "Client", "Téléphone", "Zone", "Montant (F CFA)", "Statut", "Livreur"],
+              ...filtered.map((a) => [
+                a.id,
+                a.items.map((i) => `${i.productName} x${i.quantity}`).join(" + "),
+                a.client.name,
+                a.client.phone,
+                a.client.zone,
+                String(orderTotalXof(a)),
+                a.delivery ? STATUS[a.delivery.progress].label : "—",
+                a.delivery?.name ?? "—",
+              ]),
+            ];
+            const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(";")).join("\n");
+            const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "kamoo-livraisons.csv";
+            link.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"
+        >
+          <Download className="h-4 w-4 text-ink-400" /> Exporter
+        </button>
         {/* Une livraison naît d'une commande confirmée : on assigne le
             livreur depuis la fiche commande, côté Closing. */}
         <Link href="/closing" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"><Plus className="h-4 w-4" /> Assigner un livreur</Link>

@@ -663,13 +663,6 @@ export function formatDuration(minutes: number): string {
   return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
 
-/** Récupère une commande par ID (pour la page détail) */
-export function getClosingAssignment(
-  id: string,
-): ClosingAssignment | undefined {
-  return MOCK_CLOSING_ASSIGNMENTS.find((a) => a.id === id);
-}
-
 /* ─── Module Livraisons : helpers ─────────────────────────── */
 
 /**

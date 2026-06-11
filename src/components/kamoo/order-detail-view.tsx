@@ -108,7 +108,7 @@ function statusPill(s: ClosingStatus): Pill {
     injoignable: { bg: "bg-amber-50", text: "text-amber-800", dot: "bg-amber-700" },
     livraison_en_cours: { bg: "bg-cyan-50", text: "text-cyan-800", dot: "bg-cyan-500" },
     livre: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
-    annule: { bg: "bg-red-50", text: "text-red-600", dot: "bg-red-500" },
+    annule: { bg: "bg-ink-100", text: "text-ink-500", dot: "bg-ink-400" },
   };
   // Libellé EXACT défini par le système.
   return { label: CLOSING_STATUS_LABELS[s], ...tone[s] };
@@ -169,7 +169,7 @@ function OrderHeader({
 
         {/* Droite : actions + navigation */}
         <div className="flex shrink-0 items-center gap-2">
-          {a.status === "livraison_en_cours" && closing && (
+          {a.status === "livraison_en_cours" && a.delivery && closing && (
             <button
               onClick={() => closing.markDelivered(a.id)}
               className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800"
@@ -230,9 +230,13 @@ function EditOrderModal({
   closing: ReturnType<typeof useClosingState>;
   onClose: () => void;
 }) {
-  const initialSlot = a.delivery?.scheduledAt
-    ? new Date(a.delivery.scheduledAt).toISOString().slice(0, 16)
-    : "";
+  // datetime-local attend l heure LOCALE (pas UTC)
+  const initialSlot = (() => {
+    if (!a.delivery?.scheduledAt) return "";
+    const d = new Date(a.delivery.scheduledAt);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  })();
   const [slot, setSlot] = useState(initialSlot);
   const [comment, setComment] = useState(a.comment ?? "");
 

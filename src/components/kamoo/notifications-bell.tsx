@@ -48,7 +48,8 @@ export function NotificationsBell() {
     [],
   );
 
-  const notifications = useMemo(() => buildNotifications(), []);
+  // Recalcule a chaque ouverture du panneau : les alertes refletent l etat courant
+  const notifications = useMemo(() => buildNotifications(), [open]);
   const unread = notifications.filter((n) => !readIds.includes(n.id));
 
   const markRead = (id: string) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { createSyncedStore } from "@/lib/sync/synced-store";
 import type { LivreurService } from "@/lib/types/livreur";
 
@@ -111,8 +111,10 @@ function scheduleAcceptances(state: PartnersState) {
 
 export function usePartners() {
   const state = store.use();
-  // (Re)programme l'acceptation auto à chaque rendu — idempotent par clé.
-  scheduleAcceptances(state);
+  // (Re)programme l acceptation auto — en effet, PAS pendant le render.
+  useEffect(() => {
+    scheduleAcceptances(state);
+  }, [state]);
 
   /** Envoie une demande de partenariat → statut « en attente de validation ». */
   const request = useCallback(

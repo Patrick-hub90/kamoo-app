@@ -8,22 +8,18 @@ import {
   ChevronDown,
   Clock,
   ListChecks,
-  MapPin,
   MessageCircle,
   Phone,
   Plus,
-  RotateCcw,
   Search,
   Star,
   TrendingUp,
   Truck,
-  User,
   Wallet,
   X,
   XCircle,
 } from "lucide-react";
 import {
-  buildClosingHistory,
   computeClosingStats,
   MOCK_ACTIVE_CLOSEUSE,
   MOCK_CLOSING_ASSIGNMENTS,
@@ -33,7 +29,6 @@ import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { PageHeader } from "@/components/kamoo/page-header";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
-import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CANCELLATION_REASON_LABELS,
@@ -72,7 +67,7 @@ const STATUS_STYLE: Record<ClosingStatus, { pill: string; icon: React.ComponentT
   injoignable: { pill: "bg-amber-50 text-amber-700", icon: Phone },
   livraison_en_cours: { pill: "bg-kamoo-blue-50 text-kamoo-blue-700", icon: Truck },
   livre: { pill: "bg-emerald-50 text-emerald-700", icon: CheckCircle2 },
-  annule: { pill: "bg-red-50 text-red-600", icon: XCircle },
+  annule: { pill: "bg-ink-100 text-ink-500", icon: XCircle },
 };
 
 const TO_PROCESS: ClosingStatus[] = ["nouvelle", "rappele", "injoignable"];
@@ -88,6 +83,7 @@ export default function ClosingPage() {
    * (les instances de useSessionStorageState ne se synchronisent pas). */
   const router = useRouter();
   const closing = useClosingState();
+  const { currentMarket } = useCurrentMarket();
   const all = closing.all;
   const stats = useMemo(() => computeClosingStats(all), [all]);
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
@@ -359,6 +355,8 @@ export default function ClosingPage() {
       {createOpen && (
         <CreateOrderModal
           existingIds={all.map((a) => a.id)}
+          countryCode={currentMarket.country.code}
+          defaultCity={currentMarket.country.warehouseCity?.split(",")[0] ?? "Dakar"}
           onClose={() => setCreateOpen(false)}
           onCreate={(order) => {
             closing.addOrder(order);
@@ -374,10 +372,14 @@ export default function ClosingPage() {
 /* ─── Modale « Nouvelle commande » ──────────────────────────────── */
 function CreateOrderModal({
   existingIds,
+  countryCode,
+  defaultCity,
   onClose,
   onCreate,
 }: {
   existingIds: string[];
+  countryCode: string;
+  defaultCity: string;
   onClose: () => void;
   onCreate: (order: ClosingAssignment) => void;
 }) {
@@ -385,7 +387,7 @@ function CreateOrderModal({
   const [qty, setQty] = useState(1);
   const [clientName, setClientName] = useState("");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("Dakar");
+  const [city, setCity] = useState(defaultCity);
   const [zone, setZone] = useState("");
   const [source, setSource] = useState("WhatsApp");
 
@@ -395,12 +397,12 @@ function CreateOrderModal({
 
   function submit() {
     if (!valid || !product) return;
-    // Prochain numéro ORD-SN-00xxx (au-dessus du max existant)
+    // Prochain numéro ORD-{pays}-00xxx (un marché = un pays)
     const maxNum = existingIds.reduce((max, id) => {
       const m = id.match(/(\d+)$/);
       return m ? Math.max(max, parseInt(m[1], 10)) : max;
     }, 0);
-    const id = `ORD-SN-${String(maxNum + 1).padStart(5, "0")}`;
+    const id = `ORD-${countryCode}-${String(maxNum + 1).padStart(5, "0")}`;
     const nowIso = new Date().toISOString();
     onCreate({
       id,
@@ -418,7 +420,7 @@ function CreateOrderModal({
         id: `cli_new_${maxNum + 1}`,
         name: clientName.trim(),
         phone: phone.trim(),
-        city: city.trim() || "Dakar",
+        city: city.trim() || defaultCity,
         zone: zone.trim() || city.trim() || "—",
         isReturning: false,
       },
@@ -523,21 +525,6 @@ function CreateOrderModal({
   );
 }
 
-function nextActionLabel(status: ClosingStatus): string | null {
-  switch (status) {
-    case "nouvelle":
-      return "Premier appel à passer";
-    case "rappele":
-      return "Rappeler le client";
-    case "injoignable":
-      return "Nouvelle tentative d'appel";
-    case "livraison_en_cours":
-      return "Confirmer le créneau de livraison";
-    default:
-      return null;
-  }
-}
-
 /* ─── Sous-composants ──────────────────────────────────────────── */
 function Kpi({
   icon: Icon,
@@ -625,37 +612,3 @@ function DropdownItem({ active, onClick, children }: { active: boolean; onClick:
   );
 }
 
-function ActionBtn({
-  icon: Icon,
-  label,
-  className,
-  onClick,
-  href,
-  external,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  className?: string;
-  onClick?: () => void;
-  href?: string;
-  external?: boolean;
-}) {
-  const cls = cn(
-    "flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold transition",
-    className,
-  );
-  if (href) {
-    return (
-      <a href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} className={cls}>
-        <Icon className="h-4 w-4" />
-        {label}
-      </a>
-    );
-  }
-  return (
-    <button onClick={onClick} className={cls}>
-      <Icon className="h-4 w-4" />
-      {label}
-    </button>
-  );
-}

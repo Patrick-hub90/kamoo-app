@@ -34,6 +34,7 @@ import {
   MOCK_TODAY,
 } from "@/lib/data/mock-finances";
 import { MOCK_CLOSING_ASSIGNMENTS } from "@/lib/data/mock-closing";
+import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { useProductsState } from "@/lib/hooks/use-products-state";
@@ -633,6 +634,14 @@ function computeStockAlerts(
       alerts.push({ name: p.name, sub: `Stock bas · ${p.stock} unités restantes`, level: "bas" });
     }
   }
-  alerts.push({ name: "Power Banks", sub: "Réception prévue · J+4 (8 juin)", level: "info" });
+  // Réception prévue : dérivée de la première expédition réellement en transit
+  const inbound = MOCK_EXPEDITIONS.find((e) => e.status !== "arrived_destination");
+  if (inbound) {
+    alerts.push({
+      name: inbound.productName,
+      sub: `Réception prévue · ${inbound.eta}`,
+      level: "info",
+    });
+  }
   return alerts.slice(0, 4);
 }
