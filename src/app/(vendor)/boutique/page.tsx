@@ -43,6 +43,9 @@ import {
 } from "@/lib/data/product-profitability";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { useProductsState } from "@/lib/hooks/use-products-state";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { useShopify } from "@/lib/hooks/use-shopify";
+import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
 import {
   getStockLevel,
   type Produit,
@@ -138,6 +141,14 @@ function filterMovementsByPeriod(
 export default function BoutiquePage() {
   const { products: all, bulkSetActive, bulkSetArchived, removeProducts } = useProductsState();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [publishOpen, setPublishOpen] = useState(false);
+
+  /* Publication Shopify (façon DSers) — sur la boutique du marché courant. */
+  const { currentMarket } = useCurrentMarket();
+  const { getConnection, liveMode } = useShopify();
+  const shopifyConn = getConnection(currentMarket.id);
+  const shopifyConnected = shopifyConn?.isConnected === true;
+  const { getStatus: getPublishStatus, publish: publishProduct } = useShopifyPublish();
 
   const [search, setSearch] = useSessionStorageState("boutique.search", "");
   const [view, setView] = useSessionStorageState<StatusView>("boutique.view", "all");
@@ -439,6 +450,14 @@ export default function BoutiquePage() {
                   {selectedIds.length} sélectionné{selectedIds.length > 1 ? "s" : ""}
                 </span>
                 <span className="mx-1 h-4 w-px bg-kamoo-blue-200" />
+                {/* Publication Shopify — workflow explicite façon DSers */}
+                {shopifyConnected && (
+                  <BulkBtn
+                    icon={ShoppingBag}
+                    label="Publier sur Shopify"
+                    onClick={() => setPublishOpen(true)}
+                  />
+                )}
                 <BulkBtn
                   icon={CheckCircle2}
                   label="Mettre en vente"
@@ -504,6 +523,7 @@ export default function BoutiquePage() {
                 getStats={getStats}
                 getCover={getCover}
                 isPeriodFiltered={isPeriodMode}
+                publishStatus={getPublishStatus}
                 selectedIds={selectedIds}
                 onToggleSelect={(id) =>
                   setSelectedIds((prev) =>
@@ -551,6 +571,101 @@ export default function BoutiquePage() {
             </span>
           </div>
         )}
+      </div>
+
+      {publishOpen && (
+        <PublishModal
+          products={all.filter((p) => selectedIds.includes(p.id))}
+          shopDomain={shopifyConn?.domain ?? ""}
+          alreadyPublished={(id) => getPublishStatus(id) === "publie"}
+          onClose={() => setPublishOpen(false)}
+          onConfirm={async () => {
+            const targets = all.filter(
+              (p) => selectedIds.includes(p.id) && getPublishStatus(p.id) !== "publie",
+            );
+            for (const p of targets) {
+              await publishProduct(
+                p.id,
+                { name: p.name, description: p.description, priceXof: p.priceXof },
+                { live: liveMode === true, shop: shopifyConn?.domain },
+              );
+            }
+            setPublishOpen(false);
+            setSelectedIds([]);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Modale « Publier sur Shopify » (workflow façon DSers) ─────────── */
+function PublishModal({
+  products,
+  shopDomain,
+  alreadyPublished,
+  onClose,
+  onConfirm,
+}: {
+  products: Produit[];
+  shopDomain: string;
+  alreadyPublished: (id: string) => boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const toPublish = products.filter((p) => !alreadyPublished(p.id));
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h3 className="inline-flex items-center gap-2 text-[15px] font-bold text-ink-900">
+            <ShoppingBag className="h-4 w-4 text-emerald-600" />
+            Publier sur Shopify
+          </h3>
+          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
+            ✕
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-[12.5px] leading-relaxed text-ink-500">
+            {toPublish.length > 0 ? (
+              <>
+                Ces produits seront <b className="text-ink-700">publiés sur ta boutique</b>{" "}
+                <span className="font-mono-kamoo text-ink-700">{shopDomain}</span> (statut « actif »).
+                Rien n&apos;est publié sans cette confirmation.
+              </>
+            ) : (
+              <>Tous les produits sélectionnés sont déjà publiés sur Shopify.</>
+            )}
+          </p>
+          {toPublish.length > 0 && (
+            <ul className="mt-3 flex max-h-48 flex-col gap-1.5 overflow-y-auto">
+              {toPublish.map((p) => (
+                <li key={p.id} className="flex items-center gap-2.5 rounded-lg border border-line bg-paper-2/40 px-3 py-2">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[14px]" style={{ background: p.bg }}>{p.emoji}</span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-ink-900">{p.name}</span>
+                  <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-ink-700">{formatXOF(p.priceXof)} F</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="flex gap-2 border-t border-line px-5 py-3.5">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2">
+            Annuler
+          </button>
+          <button
+            disabled={toPublish.length === 0 || busy}
+            onClick={async () => {
+              setBusy(true);
+              await onConfirm();
+            }}
+            className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-[13px] font-bold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+          >
+            {busy ? "Publication…" : `Publier ${toPublish.length} produit${toPublish.length > 1 ? "s" : ""}`}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -802,6 +917,7 @@ function ProduitsTable({
   getStats,
   getCover,
   isPeriodFiltered,
+  publishStatus,
   selectedIds,
   onToggleSelect,
   onToggleAll,
@@ -810,6 +926,7 @@ function ProduitsTable({
   getStats: (p: Produit) => ProductStats;
   getCover: (p: Produit) => string | null;
   isPeriodFiltered: boolean;
+  publishStatus: (id: string) => "non_publie" | "publie";
   selectedIds: string[];
   onToggleSelect: (id: string) => void;
   onToggleAll: () => void;
@@ -968,19 +1085,26 @@ function ProduitsTable({
                 )}
               </Td>
               <Td align="center">
-                {p.archived ? (
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
-                    <Archive className="h-3 w-3" />
-                    Archivé
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">
-                    <span className={cn("h-1.5 w-1.5 rounded-full", p.isActive ? "bg-emerald-500" : "bg-ink-300")} />
-                    <span className={p.isActive ? "text-ink-900" : "text-ink-400"}>
-                      {p.isActive ? "En vente" : "Inactif"}
+                <div className="flex flex-col items-center gap-1">
+                  {p.archived ? (
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
+                      <Archive className="h-3 w-3" />
+                      Archivé
                     </span>
-                  </span>
-                )}
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">
+                      <span className={cn("h-1.5 w-1.5 rounded-full", p.isActive ? "bg-emerald-500" : "bg-ink-300")} />
+                      <span className={p.isActive ? "text-ink-900" : "text-ink-400"}>
+                        {p.isActive ? "En vente" : "Inactif"}
+                      </span>
+                    </span>
+                  )}
+                  {publishStatus(p.id) === "publie" && (
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-700" title="Publié sur Shopify">
+                      <ShoppingBag className="h-2.5 w-2.5" /> Shopify
+                    </span>
+                  )}
+                </div>
               </Td>
             </tr>
           );

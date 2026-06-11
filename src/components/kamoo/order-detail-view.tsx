@@ -17,6 +17,7 @@ import {
   PhoneOff,
   Plus,
   Star,
+  ShoppingBag,
   Truck,
   User,
   XCircle,
@@ -337,6 +338,27 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
   return (
     <div className="px-8 py-6">
       <OrderHeader a={a} backHref={backHref} closing={closing} />
+
+      {/* Bandeau Shopify — commande importée de la boutique + push de statut */}
+      {a.shopifyOrderId && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+            <ShoppingBag className="h-4.5 w-4.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10.5px] font-bold uppercase tracking-wider text-emerald-700">
+              Commande Shopify {a.shopifyName ?? ""}
+            </div>
+            <p className="mt-0.5 text-[12.5px] font-medium text-ink-700">
+              {a.status === "livre"
+                ? "Honorée & payée sur Shopify ✓ — statut synchronisé automatiquement."
+                : a.status === "annule"
+                  ? "Commande annulée — non honorée sur Shopify."
+                  : "Sera marquée « honorée & payée » sur Shopify dès la livraison encaissée."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Barre d'actions closing — la page détail est le poste de pilotage */}
       {closing && !isClosed && (
