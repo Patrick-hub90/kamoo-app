@@ -1,3 +1,4 @@
+import { averageRating, generateReviews } from "@/lib/data/review-generator";
 import type { Livreur, ServiceOffering } from "@/lib/types/livreur";
 
 /**
@@ -479,12 +480,30 @@ const SERVICE_OFFERINGS: Record<string, ServiceOffering[]> = {
  * INDÉPENDANTS uniquement, servie depuis /public/livreurs/{slug}.jpg.
  * Les AGENCES gardent leur avatar à initiales (placeholder logo).
  */
-export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => ({
-  ...l,
-  photoUrl: l.type === "particulier" ? `/livreurs/${l.slug}.jpg` : undefined,
-  services: SERVICES[l.slug] ?? ["livraison"],
-  serviceOfferings: SERVICE_OFFERINGS[l.slug] ?? [LIVRAISON_OFFERING],
-}));
+export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => {
+  /* Avis : fixtures + generes (stables) — compteur = nombre reel liste. */
+  const reviews = [
+    ...l.reviews,
+    ...generateReviews(l.slug, "livreur", l.rating).map((g) => ({
+      vendorName: g.vendorName,
+      vendorAvatarBg: g.avatarBg,
+      vendorCity: g.vendorCity,
+      vendorCountryCode: g.vendorCountryCode,
+      rating: g.rating,
+      comment: g.comment,
+      at: g.at,
+    })),
+  ];
+  return {
+    ...l,
+    photoUrl: l.type === "particulier" ? `/livreurs/${l.slug}.jpg` : undefined,
+    services: SERVICES[l.slug] ?? ["livraison"],
+    serviceOfferings: SERVICE_OFFERINGS[l.slug] ?? [LIVRAISON_OFFERING],
+    reviews,
+    reviewsCount: reviews.length,
+    rating: averageRating(reviews.map((r) => r.rating)),
+  };
+});
 
 export function getLivreur(slug: string): Livreur | undefined {
   return MOCK_LIVREURS.find((l) => l.slug === slug);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
 import { useChat } from "@/components/kamoo/chat";
 import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
+import { usePartners } from "@/lib/hooks/use-partners";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import { isTopPerformer } from "@/lib/data/mock-closeuses";
 import {
@@ -37,10 +38,30 @@ function formatHour(hhmm: string) {
   return m && m !== "00" ? `${h}h${m}` : `${h}h`;
 }
 
-export function CloseuseProfileView({ closeuse: c }: { closeuse: Closeuse }) {
+export function CloseuseProfileView({ closeuse: raw }: { closeuse: Closeuse }) {
   const { openChat } = useChat();
+  const { getReview } = usePartners();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
   const [allReviews, setAllReviews] = useState(false);
+
+  /* MON avis s'ajoute en tête de liste — compteur et note suivent. */
+  const c: Closeuse = useMemo(() => {
+    const mine = getReview(raw.slug);
+    if (!mine) return raw;
+    const myEntry = {
+      vendorName: "Aïcha Diop (vous)",
+      vendorAvatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
+      vendorCity: "Dakar",
+      vendorCountryCode: "SN",
+      rating: mine.rating,
+      comment: mine.comment || "(Sans commentaire)",
+      at: mine.at,
+    };
+    const reviews = [myEntry, ...raw.reviews];
+    const avg = Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
+    return { ...raw, reviews, reviewsCount: reviews.length, rating: avg };
+  }, [raw, getReview]);
+
   const firstName = c.name.split(" ")[0];
   const top = isTopPerformer(c);
   const chatPartner = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -18,15 +18,38 @@ import { useChat } from "@/components/kamoo/chat";
 import { NotificationsBell } from "@/components/kamoo/notifications-bell";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
+import { usePartners } from "@/lib/hooks/use-partners";
 import { ReviewsModal } from "@/components/kamoo/reviews-modal";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
 import { cn } from "@/lib/utils";
 
-export function TransitaireProfileView({ transitaire: t }: { transitaire: Transitaire }) {
+export function TransitaireProfileView({ transitaire: raw }: { transitaire: Transitaire }) {
   const { openChat } = useChat();
+  const { getReview } = usePartners();
   const [tab, setTab] = useState<"avis" | "faq">("avis");
   const [allReviews, setAllReviews] = useState(false);
+
+  /* MON avis (laissé via « Laisser un avis » ou à la fin d'un partenariat)
+   * s'ajoute en tête de la liste — compteur et note suivent. */
+  const t: Transitaire = useMemo(() => {
+    const mine = getReview(raw.slug);
+    if (!mine) return raw;
+    const myEntry = {
+      id: "review_mine",
+      vendorName: "Aïcha Diop (vous)",
+      vendorCity: "Dakar",
+      vendorCountryFlag: "🇸🇳",
+      rating: mine.rating,
+      date: new Date(mine.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
+      comment: mine.comment || "(Sans commentaire)",
+      avatarBg: "linear-gradient(135deg,#F97316,#FB923C)",
+    };
+    const reviews = [myEntry, ...raw.reviews];
+    const avg = Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
+    return { ...raw, reviews, reviewsCount: reviews.length, rating: avg };
+  }, [raw, getReview]);
+
   const firstName = t.name.split(" ")[0];
   const chatPartner = {
     id: `transitaire:${t.slug}`,

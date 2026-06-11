@@ -1,3 +1,4 @@
+import { averageRating, generateReviews } from "@/lib/data/review-generator";
 import { MOCK_ACTIVE_CLOSEUSE } from "./mock-closing";
 import type { Closeuse } from "@/lib/types/closeuse";
 
@@ -413,12 +414,31 @@ const EXTRA: Record<string, { skills: string[]; availableNow: boolean }> = {
   "amina-kone": { skills: ["Télévente B2C", "Relance & Fidélisation"], availableNow: true },
 };
 
-export const MOCK_CLOSEUSES: Closeuse[] = RAW_CLOSEUSES.map((c) => ({
-  ...c,
-  photoUrl: `/closeuses/${c.slug}.jpg`,
-  skills: EXTRA[c.slug]?.skills ?? [],
-  availableNow: EXTRA[c.slug]?.availableNow ?? false,
-}));
+export const MOCK_CLOSEUSES: Closeuse[] = RAW_CLOSEUSES.map((c) => {
+  /* Avis : fixtures + generes (stables) — compteur = nombre reel liste,
+   * note = vraie moyenne. */
+  const reviews = [
+    ...c.reviews,
+    ...generateReviews(c.slug, "closeuse", c.rating).map((g) => ({
+      vendorName: g.vendorName,
+      vendorAvatarBg: g.avatarBg,
+      vendorCity: g.vendorCity,
+      vendorCountryCode: g.vendorCountryCode,
+      rating: g.rating,
+      comment: g.comment,
+      at: g.at,
+    })),
+  ];
+  return {
+    ...c,
+    photoUrl: `/closeuses/${c.slug}.jpg`,
+    skills: EXTRA[c.slug]?.skills ?? [],
+    availableNow: EXTRA[c.slug]?.availableNow ?? false,
+    reviews,
+    reviewsCount: reviews.length,
+    rating: averageRating(reviews.map((r) => r.rating)),
+  };
+});
 
 /** Une closeuse est "top performer" si son taux de confirmation est élevé. */
 export function isTopPerformer(c: Closeuse): boolean {

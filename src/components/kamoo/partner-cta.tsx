@@ -77,6 +77,7 @@ export function PartnerCta({
 
   const [chooseOpen, setChooseOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
   const [manageServices, setManageServices] = useState(false);
 
   const partnership = getPartnership(role, slug);
@@ -145,6 +146,13 @@ export function PartnerCta({
           >
             <MessageCircle className="h-4 w-4" />
             Envoyer un message
+          </button>
+          <button
+            onClick={() => setRateOpen(true)}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+          >
+            <Star className="h-3.5 w-3.5 text-amber-400" />
+            {partnersApi.getReview(slug) ? "Modifier mon avis" : "Laisser un avis"}
           </button>
           <button
             onClick={() => setEndOpen(true)}
@@ -265,7 +273,88 @@ export function PartnerCta({
           onClose={() => setEndOpen(false)}
         />
       )}
+
+      {rateOpen && (
+        <RateModal
+          slug={slug}
+          name={name}
+          partnersApi={partnersApi}
+          onClose={() => setRateOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+/* ─── Modale « Laisser / modifier un avis » (partenaire actif) ──── */
+
+function RateModal({
+  slug,
+  name,
+  partnersApi,
+  onClose,
+}: {
+  slug: string;
+  name: string;
+  partnersApi: ReturnType<typeof usePartners>;
+  onClose: () => void;
+}) {
+  const existing = partnersApi.getReview(slug);
+  const [rating, setRating] = useState(existing?.rating ?? 0);
+  const [comment, setComment] = useState(existing?.comment ?? "");
+
+  return (
+    <ModalShell onClose={onClose} title={existing ? "Modifier mon avis" : "Laisser un avis"}>
+      <div className="flex flex-col gap-4 px-5 py-4">
+        <p className="text-[12.5px] leading-relaxed text-ink-500">
+          Votre avis sur <b className="text-ink-700">{name}</b> est visible par les autres
+          e-commerçants sur son profil. Vous pouvez le modifier à tout moment.
+        </p>
+        <div>
+          <label className="mb-1 block text-[11.5px] font-semibold text-ink-600">
+            Votre note <span className="text-red-500">*</span>
+          </label>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} onClick={() => setRating(n)} aria-label={`${n} étoile${n > 1 ? "s" : ""}`}>
+                <Star
+                  className={cn(
+                    "h-7 w-7 transition",
+                    n <= rating ? "fill-amber-400 text-amber-400" : "text-ink-200 hover:text-amber-300",
+                  )}
+                />
+              </button>
+            ))}
+            {rating > 0 && <span className="ml-2 text-[12.5px] font-semibold text-ink-700">{rating}/5</span>}
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-[11.5px] font-semibold text-ink-600">Commentaire</label>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+            placeholder={`Votre expérience avec ${name.split(" ")[0]}…`}
+            className="w-full resize-none rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2 border-t border-line px-5 py-3.5">
+        <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2">
+          Annuler
+        </button>
+        <button
+          disabled={rating === 0}
+          onClick={() => {
+            partnersApi.saveReview(slug, { rating, comment: comment.trim() });
+            onClose();
+          }}
+          className="flex-1 rounded-lg bg-kamoo-blue-900 py-2.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800 disabled:opacity-40"
+        >
+          Publier l&apos;avis
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 

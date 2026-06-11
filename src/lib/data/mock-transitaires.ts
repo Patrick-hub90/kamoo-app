@@ -1,4 +1,5 @@
 import type { Review, Transitaire } from "@/lib/types/transitaire";
+import { averageRating, formatReviewDate, generateReviews } from "@/lib/data/review-generator";
 
 /**
  * Données mockées pour les transitaires de la Marketplace.
@@ -390,15 +391,35 @@ const ORDERS_HANDLED: Record<string, number> = {
   "shenzhen-tech-logistics": 740,
 };
 
-export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => ({
-  ...t,
-  coverImageUrl: `/transitaires/${t.slug}.jpg`,
-  logoImageUrl: undefined,
-  countriesServed: COUNTRIES_SERVED[t.slug] ?? 10,
-  ordersHandled: ORDERS_HANDLED[t.slug] ?? 1000,
-  localWarehouse: LOCAL_WAREHOUSE[t.slug],
-  ...EXTRA[t.slug],
-}));
+export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => {
+  /* Avis : fixtures + générés (stables). Le compteur affiché = le nombre
+   * RÉEL d'avis listés, et la note = la vraie moyenne. */
+  const reviews = [
+    ...t.reviews,
+    ...generateReviews(t.slug, "transitaire", t.rating).map((g) => ({
+      id: g.id,
+      vendorName: g.vendorName,
+      vendorCity: g.vendorCity,
+      vendorCountryFlag: g.vendorCountryFlag,
+      rating: g.rating,
+      date: formatReviewDate(g.at),
+      comment: g.comment,
+      avatarBg: g.avatarBg,
+    })),
+  ];
+  return {
+    ...t,
+    coverImageUrl: `/transitaires/${t.slug}.jpg`,
+    logoImageUrl: undefined,
+    countriesServed: COUNTRIES_SERVED[t.slug] ?? 10,
+    ordersHandled: ORDERS_HANDLED[t.slug] ?? 1000,
+    localWarehouse: LOCAL_WAREHOUSE[t.slug],
+    ...EXTRA[t.slug],
+    reviews,
+    reviewsCount: reviews.length,
+    rating: averageRating(reviews.map((r) => r.rating)),
+  };
+});
 
 export function getTransitaireBySlug(slug: string) {
   return MOCK_TRANSITAIRES.find((t) => t.slug === slug);
