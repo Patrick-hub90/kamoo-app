@@ -166,7 +166,7 @@ const RAW_EXPEDITIONS: Expedition[] = [
  * sur aujourd'hui (même écart relatif) pour que les filtres de période
  * fonctionnent en permanence. Les `eta` restent des libellés d'affichage.
  */
-export const MOCK_EXPEDITIONS: Expedition[] = RAW_EXPEDITIONS.map((e) => {
+const __seed_EXPEDITIONS: Expedition[] = RAW_EXPEDITIONS.map((e) => {
   // Source unique de verite : le produit du catalogue fournit nom + visuel.
   const p = e.productId ? MOCK_PRODUITS.find((x) => x.id === e.productId) : undefined;
   return {
@@ -192,3 +192,6 @@ export function computeListStats(expeditions: Expedition[]) {
 
   return { total, enCours, enAttenteAction, arriveesTotal, totalAPayer };
 }
+
+export const MOCK_EXPEDITIONS: Expedition[] = [];
+void __seed_EXPEDITIONS;

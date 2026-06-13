@@ -185,6 +185,11 @@ export function ClosingCard({ buckets, leads, title = "Closing en direct" }: { b
         ))}
       </div>
       <ul className="divide-y divide-[#F4F5F6]">
+        {leads.length === 0 && (
+          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
+            Aucune commande à appeler.
+          </li>
+        )}
         {leads.map((l) => (
           <li key={l.id} className="flex items-center gap-3 px-5 py-2.5">
             <div className="min-w-0 flex-1">
@@ -234,6 +239,13 @@ export function TopProducts({ rows, title = "Top produits" }: { rows: ProdRow[];
           </tr>
         </thead>
         <tbody className="divide-y divide-[#F4F5F6]">
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-5 py-10 text-center text-[12.5px] text-ink-400">
+                Aucune vente sur la période.
+              </td>
+            </tr>
+          )}
           {rows.map((r) => (
             <tr key={r.name} className="transition hover:bg-[#FAFBFC]">
               <td className="px-5 py-2.5">
@@ -279,6 +291,11 @@ export function LiveDeliveries({ rows, activeCount, title = "Livraisons en direc
       }
     >
       <ul className="divide-y divide-[#F4F5F6]">
+        {rows.length === 0 && (
+          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
+            Aucune livraison en cours.
+          </li>
+        )}
         {rows.map((r) => (
           <li key={r.id} className="flex items-center gap-3 px-5 py-2.5">
             <div className="min-w-0 flex-1">
@@ -309,6 +326,11 @@ export function RecentOps({ rows, title = "Dernières opérations" }: { rows: Op
   return (
     <Panel title={title} right={<VoirTout />}>
       <ul className="divide-y divide-[#F4F5F6]">
+        {rows.length === 0 && (
+          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
+            Aucune opération récente.
+          </li>
+        )}
         {rows.map((r, i) => (
           <li key={i} className="flex items-center gap-3 px-5 py-2.5">
             <span
@@ -354,6 +376,11 @@ export function StockAlerts({ rows, title = "Alertes stock" }: { rows: AlertRow[
   return (
     <Panel title={title} right={<VoirTout />}>
       <ul className="divide-y divide-[#F4F5F6]">
+        {rows.length === 0 && (
+          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
+            Aucune alerte stock.
+          </li>
+        )}
         {rows.map((r, i) => {
           const tn = tone[r.level];
           const Icon = tn.icon;

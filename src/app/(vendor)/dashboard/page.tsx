@@ -41,8 +41,8 @@ import { useProductsState } from "@/lib/hooks/use-products-state";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
-import { formatXOF } from "@/lib/format";
-import { orderTotalXof, type ClosingAssignment } from "@/lib/types/closing";
+import { formatMoney, formatXOF } from "@/lib/format";
+import { displayOrderNo, orderTotalXof, type ClosingAssignment } from "@/lib/types/closing";
 import { getStockLevel } from "@/lib/types/produit";
 import {
   bucketingForDateFilter,
@@ -191,7 +191,7 @@ export default function DashboardPage() {
   const chartLabels = caTimeline.map((p, i) => (i % step === 0 ? p.label : ""));
 
   const closingLeads: Lead[] = computed.closing.leads.map((l: ClosingLead) => ({
-    id: l.orderId.toUpperCase(),
+    id: l.orderId,
     product: l.productLabel,
     extra: l.extraItemsCount,
     amount: l.amountLabel,
@@ -210,7 +210,7 @@ export default function DashboardPage() {
   }));
 
   const deliveryRows: DelRow[] = computed.liveDeliveries.map((d: DeliveryFeedItem) => ({
-    id: d.orderId.toUpperCase(),
+    id: d.orderId,
     product: d.productLabel,
     extra: d.extraItemsCount,
     amount: d.amountLabel,
@@ -518,9 +518,9 @@ function computeDashboardData(args: {
     const firstItem = a.items[0];
     const productLabel = firstItem ? `${firstItem.quantity}× ${firstItem.productName}` : "—";
     const extraItemsCount = Math.max(0, a.items.length - 1);
-    const amountLabel = `${formatXOF(orderTotalXof(a), false)} F`;
+    const amountLabel = formatMoney(orderTotalXof(a), a.currencyCode);
     return {
-      orderId: a.id,
+      orderId: displayOrderNo(a),
       amountLabel,
       productLabel,
       extraItemsCount,
@@ -553,8 +553,8 @@ function computeDashboardData(args: {
       const productLabel = firstItem ? `${firstItem.quantity}× ${firstItem.productName}` : "—";
       const extraItemsCount = Math.max(0, a.items.length - 1);
       return {
-        orderId: a.id,
-        amountLabel: `${formatXOF(orderTotalXof(a), false)} F`,
+        orderId: displayOrderNo(a),
+        amountLabel: formatMoney(orderTotalXof(a), a.currencyCode),
         productLabel,
         extraItemsCount,
         lastActivityLabel: formatLastActivity(a.lastActivityAt),
