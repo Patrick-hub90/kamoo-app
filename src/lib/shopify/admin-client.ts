@@ -17,6 +17,21 @@ export class ShopifyApiError extends Error {
   }
 }
 
+/**
+ * Classe une erreur Shopify pour un message utilisateur précis :
+ *  - "donnees_client" : l'app n'a pas l'accès aux DONNÉES CLIENT PROTÉGÉES
+ *    (objet Order/Customer) → à demander dans « Protected customer data access ».
+ *    Distinct des scopes : on peut avoir read_orders ET être bloqué ici.
+ *  - "scopes" : un scope manque purement et simplement.
+ *  - "autre" : autre erreur.
+ */
+export function classifyShopifyError(e: unknown): "donnees_client" | "scopes" | "autre" {
+  if (!(e instanceof ShopifyApiError) || e.status !== 403) return "autre";
+  const m = e.message.toLowerCase();
+  if (m.includes("protected") || m.includes("not approved to access")) return "donnees_client";
+  return "scopes";
+}
+
 /** Exécute une requête GraphQL sur l'Admin API d'une boutique. */
 export async function shopifyGraphQL<T = unknown>(
   shop: string,

@@ -1,5 +1,5 @@
 import { isLiveMode } from "@/lib/shopify/config";
-import { shopifyGraphQL, ShopifyApiError } from "@/lib/shopify/admin-client";
+import { shopifyGraphQL, ShopifyApiError, classifyShopifyError } from "@/lib/shopify/admin-client";
 
 /**
  * Pull RÉEL des commandes récentes d'une boutique (mode live).
@@ -85,9 +85,15 @@ export async function POST(request: Request) {
     }));
     return Response.json({ orders, fetched: orders.length });
   } catch (e) {
-    if (e instanceof ShopifyApiError && e.status === 403) {
-      // Token sans les scopes nécessaires (config de l'app incomplète)
-      return Response.json({ error: "scopes_manquants", detail: e.message }, { status: 403 });
+    const cls = classifyShopifyError(e);
+    if (cls !== "autre") {
+      return Response.json(
+        {
+          error: cls === "donnees_client" ? "donnees_client_a_approuver" : "scopes_manquants",
+          detail: e instanceof Error ? e.message : String(e),
+        },
+        { status: 403 },
+      );
     }
     const status = e instanceof ShopifyApiError ? e.status : 500;
     return Response.json({ error: "echec_pull", detail: String(e) }, { status });

@@ -176,10 +176,12 @@ function ShopifyRow({ market }: { market: Market }) {
     const res = await syncNow(market.id);
     setSyncing(false);
     setFlash(
-      res.error === "scopes_manquants"
-        ? "⚠ Autorisations API manquantes — configure les scopes de ton app (voir l'encadré jaune) puis « Mettre à jour les autorisations »"
-        : res.error
-          ? `Échec : ${res.error}`
+      res.error === "donnees_client_a_approuver"
+        ? "⚠ Accès données client à approuver — onglet « API access » de ton app → « Protected customer data access » → Request access, puis « Mettre à jour les autorisations »"
+        : res.error === "scopes_manquants"
+          ? "⚠ Autorisations API manquantes — configure les scopes de ton app puis « Mettre à jour les autorisations »"
+          : res.error
+            ? `Échec : ${res.error}`
           : res.imported > 0
             ? `${res.imported} commande${res.imported > 1 ? "s" : ""} importée${res.imported > 1 ? "s" : ""} → Closing`
             : res.fetched > 0
@@ -230,6 +232,11 @@ function ShopifyRow({ market }: { market: Market }) {
             {health === "scopes_manquants" && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800" title="Déclare les scopes dans la configuration de ton app (Partner Dashboard), puis « Mettre à jour les autorisations »">
                 ⚠ Autorisations API manquantes
+              </span>
+            )}
+            {health === "donnees_client" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800" title="Demande « Protected customer data access » dans l'onglet API access de ton app, puis « Mettre à jour les autorisations »">
+                ⚠ Accès données client à approuver
               </span>
             )}
             {health === "token_absent" && (
@@ -323,6 +330,41 @@ function ShopifyRow({ market }: { market: Market }) {
             </button>
           )}
         </div>
+
+        {/* Encadré d'action persistant quand la config Shopify est incomplète */}
+        {health === "donnees_client" && (
+          <div className="mt-2 w-full rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-900">
+            <b>Dernière étape : approuver l&apos;accès aux données client.</b> Tes scopes
+            sont bons, mais Shopify protège l&apos;objet <b>Commande</b> derrière une
+            autorisation séparée.
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>
+                <b>partners.shopify.com</b> → Apps → ton app <b>Kamoo</b> → onglet{" "}
+                <b>API access</b>
+              </li>
+              <li>
+                Section <b>Protected customer data access</b> → <b>Request access</b>
+              </li>
+              <li>
+                Coche <b>Protected customer data</b> + les champs <b>Name, Phone,
+                Address</b> (motif : <i>App functionality</i>) → Save
+              </li>
+              <li>
+                Reviens ici → <b>« Mettre à jour les autorisations »</b> → puis{" "}
+                <b>Sync</b>.
+              </li>
+            </ol>
+          </div>
+        )}
+        {health === "scopes_manquants" && (
+          <div className="mt-2 w-full rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-900">
+            <b>Ton app n&apos;a aucune autorisation API.</b> Dans{" "}
+            <b>partners.shopify.com</b> → ton app → <b>Configuration</b> → coche les
+            scopes{" "}
+            <span className="font-mono-kamoo text-[11px]">read_orders, write_orders, read_products, write_products, read_customers, write_merchant_managed_fulfillment_orders</span>{" "}
+            → Save → reviens ici → <b>« Mettre à jour les autorisations »</b>.
+          </div>
+        )}
       </div>
 
       {connectOpen && (

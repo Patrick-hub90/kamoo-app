@@ -1,5 +1,5 @@
 import { isLiveMode } from "@/lib/shopify/config";
-import { shopifyGraphQL, ShopifyApiError } from "@/lib/shopify/admin-client";
+import { shopifyGraphQL, ShopifyApiError, classifyShopifyError } from "@/lib/shopify/admin-client";
 import { getToken } from "@/lib/shopify/token-store";
 
 /**
@@ -23,7 +23,11 @@ export async function GET(request: Request) {
     await shopifyGraphQL(shop, `query { orders(first: 1) { edges { node { id } } } }`);
     return Response.json({ status: "ok", scopes: token.scope });
   } catch (e) {
-    if (e instanceof ShopifyApiError && e.status === 403) {
+    const cls = classifyShopifyError(e);
+    if (cls === "donnees_client") {
+      return Response.json({ status: "donnees_client", scopes: token.scope });
+    }
+    if (cls === "scopes") {
       return Response.json({ status: "scopes_manquants", scopes: token.scope });
     }
     if (e instanceof ShopifyApiError && e.status === 401) {
