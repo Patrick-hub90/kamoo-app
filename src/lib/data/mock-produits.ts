@@ -7,7 +7,7 @@ import type { Approvisionnement, Produit } from "@/lib/types/produit";
  *  - Mix états : 7 actifs / 2 inactifs / 1 rupture
  *  - Mix stocks : full / bas / rupture
  */
-export const MOCK_PRODUITS: Produit[] = [
+const __seed_PRODUITS: Produit[] = [
   {
     id: "p_creme",
     sku: "SKU-CRM-001",
@@ -327,3 +327,6 @@ export function computeBoutiqueStats(produits: Produit[]) {
     caTotal,
   };
 }
+
+export const MOCK_PRODUITS: Produit[] = [];
+void __seed_PRODUITS;

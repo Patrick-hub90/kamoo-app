@@ -8,6 +8,50 @@
  */
 const NBSP = " ";
 
+/** Devises sans décimales (le montant est affiché en entier). */
+const ZERO_DECIMAL = new Set(["XOF", "XAF", "JPY", "KRW", "GNF", "RWF"]);
+
+/** Symbole/suffixe court par devise (sinon on retombe sur le code ISO). */
+const CURRENCY_SUFFIX: Record<string, string> = {
+  XOF: "F CFA",
+  XAF: "FCFA",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  NGN: "₦",
+  GHS: "₵",
+  MAD: "DH",
+};
+
+/**
+ * Formate un montant dans la devise réelle (auto-détectée depuis Shopify).
+ * XOF garde le format historique « 3 456 222 F CFA » ; les autres devises
+ * sont affichées avec leur symbole et le bon nombre de décimales.
+ *
+ * C'est LE formateur à utiliser pour toute donnée issue de la boutique :
+ * la devise n'est plus supposée XOF, elle suit la boutique connectée.
+ */
+export function formatMoney(
+  amount: number,
+  currencyCode = "XOF",
+  withCurrency = true,
+): string {
+  const code = currencyCode.toUpperCase();
+  const isNegative = amount < 0;
+  const abs = Math.abs(amount);
+  const decimals = ZERO_DECIMAL.has(code) ? 0 : 2;
+  const fixed = decimals === 0 ? String(Math.round(abs)) : abs.toFixed(2);
+  const [intPart, decPart] = fixed.split(".");
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  const num = decPart ? `${grouped},${decPart}` : grouped;
+  const body = isNegative ? `−${num}` : num;
+  if (!withCurrency) return body;
+  const suffix = CURRENCY_SUFFIX[code];
+  // Symboles courts ($, €, £, ₦…) en préfixe ; suffixes mots (F CFA) en suffixe.
+  if (suffix && suffix.length <= 2 && !/[A-Z]/.test(suffix)) return `${suffix}${body}`;
+  return `${body}${NBSP}${suffix ?? code}`;
+}
+
 export function formatXOF(amount: number, withCurrency = true): string {
   // Format manuel pour avoir un séparateur cohérent dans toutes les polices.
   // Ex: 3456222 → "3 456 222" (avec U+00A0 entre chaque groupe de 3 digits)

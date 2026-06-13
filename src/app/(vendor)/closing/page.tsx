@@ -29,16 +29,19 @@ import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { PageHeader } from "@/components/kamoo/page-header";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { useShopify } from "@/lib/hooks/use-shopify";
+import { usePartners } from "@/lib/hooks/use-partners";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import {
   CANCELLATION_REASON_LABELS,
   CLOSING_STATUS_LABELS,
+  displayOrderNo,
   orderTotalXof,
   type AssignedDelivery,
   type ClosingAssignment,
   type ClosingStatus,
 } from "@/lib/types/closing";
-import { formatXOF } from "@/lib/format";
+import { formatMoney, formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type ViewKey = "all" | ClosingStatus;
@@ -84,6 +87,10 @@ export default function ClosingPage() {
   const router = useRouter();
   const closing = useClosingState();
   const { currentMarket } = useCurrentMarket();
+  const { currencyFor } = useShopify();
+  const { partners } = usePartners();
+  const hasCloseuse = partners.closeuse?.status === "active";
+  const currency = currencyFor(currentMarket.id);
   const all = closing.all;
   const stats = useMemo(() => computeClosingStats(all), [all]);
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
@@ -111,6 +118,7 @@ export default function ClosingPage() {
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
+          !displayOrderNo(a).toLowerCase().includes(q) &&
           !a.id.toLowerCase().includes(q) &&
           !a.client.name.toLowerCase().includes(q) &&
           !a.client.phone.replace(/\s/g, "").includes(q.replace(/\s/g, ""))
@@ -137,24 +145,26 @@ export default function ClosingPage() {
 
   return (
     <div className="min-h-full bg-paper">
-      {/* Header commun : chip closeuse + CTA + cloche (même ordre partout) */}
+      {/* Header commun : chip closeuse (si partenariat actif) + CTA + cloche */}
       <PageHeader kicker="Mon activité" title="Closing">
-        <div className="hidden items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5 sm:flex">
-          <span
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
-            style={{ background: closeuse.avatarBg }}
-          >
-            {closeuse.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-          </span>
-          <div className="leading-tight">
-            <div className="text-[12px] font-semibold text-ink-900">{closeuse.name}</div>
-            <div className="flex items-center gap-1 text-[10px] text-ink-500">
-              Closeuse active
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-              {closeuse.rating}
+        {hasCloseuse && (
+          <div className="hidden items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5 sm:flex">
+            <span
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
+              style={{ background: closeuse.avatarBg }}
+            >
+              {closeuse.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+            </span>
+            <div className="leading-tight">
+              <div className="text-[12px] font-semibold text-ink-900">{closeuse.name}</div>
+              <div className="flex items-center gap-1 text-[10px] text-ink-500">
+                Closeuse active
+                <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                {closeuse.rating}
+              </div>
             </div>
           </div>
-        </div>
+        )}
         <button
           onClick={() => setCreateOpen(true)}
           className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
@@ -171,7 +181,7 @@ export default function ClosingPage() {
           <Kpi icon={TrendingUp} tone="blue" label="Taux de confirmation" value={`${stats.conversionRate}%`} sub={`${stats.confirmedCount}/${stats.closedCount} confirmées`} />
           <Kpi icon={ListChecks} tone="amber" label="À traiter" value={String(toProcessCount)} sub="commandes" />
           <Kpi icon={Clock} tone="purple" label="Temps moyen" value={formatDuration(stats.avgProcessingMinutes)} sub="par commande" />
-          <Kpi icon={Wallet} tone="green" label="CA confirmé" value={`${formatXOF(stats.confirmedRevenue, false)} F`} sub="en cours + livré" />
+          <Kpi icon={Wallet} tone="green" label="CA confirmé" value={formatMoney(stats.confirmedRevenue, currency)} sub="en cours + livré" />
         </div>
 
         {/* CONTENU : liste + fiche */}
@@ -243,8 +253,8 @@ export default function ClosingPage() {
                           onClick={() => router.push(`/closing/${a.id}`)}
                           className="cursor-pointer transition hover:bg-paper-2/50"
                         >
-                          {/* N° */}
-                          <td className="whitespace-nowrap px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{a.id}</td>
+                          {/* N° — celui de Shopify si la commande en vient */}
+                          <td className="whitespace-nowrap px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{displayOrderNo(a)}</td>
                           {/* Date */}
                           <td className="whitespace-nowrap px-3 py-2.5 text-[11.5px] tabular-nums text-ink-600">{fmtDateTime(a.createdAt)}</td>
                           {/* Contact (canaux) */}
@@ -286,9 +296,9 @@ export default function ClosingPage() {
                               {CLOSING_STATUS_LABELS[a.status]}
                             </span>
                           </td>
-                          {/* Total */}
+                          {/* Total — dans la devise réelle de la commande */}
                           <td className="whitespace-nowrap px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">
-                            {formatXOF(orderTotalXof(a), false)} <span className="text-[10px] text-ink-400">F</span>
+                            {formatMoney(orderTotalXof(a), a.currencyCode)}
                           </td>
                           {/* Articles */}
                           <td className="px-3 py-2.5 text-right text-[12px] tabular-nums text-ink-600">

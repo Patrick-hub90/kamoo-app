@@ -16,6 +16,7 @@ type NormalizedOrder = {
   shopifyOrderId: string;
   name: string; // ex "#1042"
   createdAt: string;
+  currencyCode: string; // devise réelle de la boutique (ex "USD")
   customer: { name: string; phone: string; city: string; zone: string };
   items: { productName: string; quantity: number; unitPriceXof: number }[];
 };
@@ -28,10 +29,11 @@ const ORDERS_QUERY = `
           id
           name
           createdAt
+          currencyCode
           shippingAddress { city province address1 phone }
           customer { firstName lastName phone defaultAddress { city } }
           lineItems(first: 20) {
-            edges { node { title quantity originalUnitPriceSet { shopMoney { amount } } } }
+            edges { node { title quantity originalUnitPriceSet { shopMoney { amount currencyCode } } } }
           }
         }
       }
@@ -45,9 +47,10 @@ type GqlOrders = {
         id: string;
         name: string;
         createdAt: string;
+        currencyCode?: string;
         shippingAddress?: { city?: string; province?: string; address1?: string; phone?: string };
         customer?: { firstName?: string; lastName?: string; phone?: string; defaultAddress?: { city?: string } };
-        lineItems: { edges: { node: { title: string; quantity: number; originalUnitPriceSet: { shopMoney: { amount: string } } } }[] };
+        lineItems: { edges: { node: { title: string; quantity: number; originalUnitPriceSet: { shopMoney: { amount: string; currencyCode?: string } } } }[] };
       };
     }[];
   };
@@ -71,16 +74,18 @@ export async function POST(request: Request) {
       shopifyOrderId: node.id,
       name: node.name,
       createdAt: node.createdAt,
+      currencyCode: node.currencyCode ?? "XOF",
       customer: {
         name: [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(" ") || "Client Shopify",
         phone: node.shippingAddress?.phone ?? node.customer?.phone ?? "",
         city: node.shippingAddress?.city ?? node.customer?.defaultAddress?.city ?? "—",
         zone: node.shippingAddress?.address1 ?? node.shippingAddress?.city ?? "—",
       },
+      // Montant fidèle (on NE round PAS : USD/EUR ont des décimales).
       items: node.lineItems.edges.map((e) => ({
         productName: e.node.title,
         quantity: e.node.quantity,
-        unitPriceXof: Math.round(parseFloat(e.node.originalUnitPriceSet.shopMoney.amount) || 0),
+        unitPriceXof: parseFloat(e.node.originalUnitPriceSet.shopMoney.amount) || 0,
       })),
     }));
     return Response.json({ orders, fetched: orders.length });

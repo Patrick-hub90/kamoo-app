@@ -391,7 +391,7 @@ const ORDERS_HANDLED: Record<string, number> = {
   "shenzhen-tech-logistics": 740,
 };
 
-export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => {
+const __seed_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => {
   /* Avis : fixtures + générés (stables). Le compteur affiché = le nombre
    * RÉEL d'avis listés, et la note = la vraie moyenne. */
   const reviews = [
@@ -424,3 +424,6 @@ export const MOCK_TRANSITAIRES: Transitaire[] = RAW_TRANSITAIRES.map((t) => {
 export function getTransitaireBySlug(slug: string) {
   return MOCK_TRANSITAIRES.find((t) => t.slug === slug);
 }
+
+export const MOCK_TRANSITAIRES: Transitaire[] = [];
+void __seed_TRANSITAIRES;

@@ -564,7 +564,9 @@ function generateMovements(): FinanceMovement[] {
   return out;
 }
 
-export const MOCK_FINANCE_MOVEMENTS: FinanceMovement[] = generateMovements();
+const __seed_FINANCE: FinanceMovement[] = generateMovements();
+void __seed_FINANCE;
+export const MOCK_FINANCE_MOVEMENTS: FinanceMovement[] = [];
 
 export function getMovementById(id: string): FinanceMovement | undefined {
   return MOCK_FINANCE_MOVEMENTS.find((m) => m.id === id);

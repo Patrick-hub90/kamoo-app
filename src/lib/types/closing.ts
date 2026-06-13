@@ -125,9 +125,16 @@ export type ClosingAssignment = {
   source?: string;
   /** ID de la commande Shopify d'origine (import auto + dédup + push statut) */
   shopifyOrderId?: string;
-  /** Numéro lisible Shopify, ex "#1042" */
+  /** Numéro lisible Shopify, ex "#1042" — devient le numéro affiché */
   shopifyName?: string;
+  /** Devise réelle de la commande (auto-détectée depuis Shopify, ex "USD") */
+  currencyCode?: string;
 };
+
+/** Numéro à AFFICHER : celui de Shopify si présent, sinon l'id Kamoo. */
+export function displayOrderNo(a: ClosingAssignment): string {
+  return a.shopifyName ?? a.id;
+}
 
 /** Helper : montant total d'une commande (somme des lignes) */
 export function orderTotalXof(a: ClosingAssignment): number {

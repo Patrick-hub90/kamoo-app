@@ -12,7 +12,7 @@ import type { AdCampaign } from "@/lib/types/ad-campaign";
  *
  * Date de référence : 2026-05-04.
  */
-export const MOCK_AD_CAMPAIGNS: AdCampaign[] = [
+const __seed_ADS: AdCampaign[] = [
   /* ─── Crème éclaircissante — top vente, 2 campagnes ─── */
   {
     id: "cmp_creme_fb_avr",
@@ -197,3 +197,7 @@ export function computeCampaignsStats(campaigns: AdCampaign[]) {
     avgCostPerDelivered,
   };
 }
+
+/* Tout à zéro : la console vit sur du réel (Shopify) + créations manuelles. */
+export const MOCK_AD_CAMPAIGNS: AdCampaign[] = [];
+void __seed_ADS;

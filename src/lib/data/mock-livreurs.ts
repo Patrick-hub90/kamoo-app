@@ -480,7 +480,7 @@ const SERVICE_OFFERINGS: Record<string, ServiceOffering[]> = {
  * INDÉPENDANTS uniquement, servie depuis /public/livreurs/{slug}.jpg.
  * Les AGENCES gardent leur avatar à initiales (placeholder logo).
  */
-export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => {
+const __seed_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => {
   /* Avis : fixtures + generes (stables) — compteur = nombre reel liste. */
   const reviews = [
     ...l.reviews,
@@ -508,3 +508,6 @@ export const MOCK_LIVREURS: Livreur[] = RAW_LIVREURS.map((l) => {
 export function getLivreur(slug: string): Livreur | undefined {
   return MOCK_LIVREURS.find((l) => l.slug === slug);
 }
+
+export const MOCK_LIVREURS: Livreur[] = [];
+void __seed_LIVREURS;

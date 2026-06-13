@@ -20,6 +20,8 @@ export type ShopifyConnection = {
   lastSyncAt?: string;
   /** Compteur cumulé de commandes importées (pour l'affichage) */
   ordersImported: number;
+  /** Devise réelle de la boutique (auto-détectée depuis Shopify, ex "USD") */
+  currencyCode?: string;
 };
 
 type ShopifyState = {
@@ -117,23 +119,33 @@ export function useShopify() {
     }
   }, []);
 
-  /** Met à jour l'horodatage + compteur après une synchronisation. */
-  const recordSync = useCallback((marketId: string, importedCount: number) => {
-    store.set((s) => {
-      const c = s.connections[marketId];
-      if (!c) return s;
-      return {
-        connections: {
-          ...s.connections,
-          [marketId]: {
-            ...c,
-            lastSyncAt: new Date().toISOString(),
-            ordersImported: c.ordersImported + importedCount,
+  /** Met à jour l'horodatage + compteur (+ devise détectée) après une sync. */
+  const recordSync = useCallback(
+    (marketId: string, importedCount: number, currencyCode?: string) => {
+      store.set((s) => {
+        const c = s.connections[marketId];
+        if (!c) return s;
+        return {
+          connections: {
+            ...s.connections,
+            [marketId]: {
+              ...c,
+              lastSyncAt: new Date().toISOString(),
+              ordersImported: c.ordersImported + importedCount,
+              currencyCode: currencyCode ?? c.currencyCode,
+            },
           },
-        },
-      };
-    });
-  }, []);
+        };
+      });
+    },
+    [],
+  );
+
+  /** Devise active du marché : celle de la boutique connectée, sinon XOF. */
+  const currencyFor = useCallback(
+    (marketId: string): string => state.connections[marketId]?.currencyCode ?? "XOF",
+    [state.connections],
+  );
 
   return {
     connections: state.connections,
@@ -144,5 +156,6 @@ export function useShopify() {
     registerLiveConnection,
     disconnect,
     recordSync,
+    currencyFor,
   };
 }

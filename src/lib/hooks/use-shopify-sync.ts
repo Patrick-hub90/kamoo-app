@@ -44,6 +44,7 @@ type LiveOrder = {
   shopifyOrderId: string;
   name: string;
   createdAt: string;
+  currencyCode?: string;
   customer: { name: string; phone: string; city: string; zone: string };
   items: { productName: string; quantity: number; unitPriceXof: number }[];
 };
@@ -90,13 +91,15 @@ export function useShopifySync() {
 
       let n = 0;
       for (const o of fresh) {
-        const order = toClosingAssignment(o, closing.all.length + n);
+        const order = toClosingAssignment(o);
         closing.addOrder(order);
         upsertClient(o, clients);
         n++;
       }
 
-      recordSync(marketId, n);
+      // Devise détectée depuis les commandes réelles → stockée sur la connexion
+      const detectedCurrency = orders.find((o) => o.currencyCode)?.currencyCode;
+      recordSync(marketId, n, detectedCurrency);
       return { imported: n, fetched };
     },
     [getConnection, recordSync, closing, clients],
@@ -129,10 +132,12 @@ function generateDemoOrders(): LiveOrder[] {
 
 /* ─── Mapping Shopify → Kamoo ──────────────────────────────────────── */
 
-function toClosingAssignment(o: LiveOrder, seq: number): ClosingAssignment {
-  const nowIso = new Date().toISOString();
+function toClosingAssignment(o: LiveOrder): ClosingAssignment {
+  // Le numéro Kamoo MIROIR du numéro Shopify : id URL-safe dérivé du nom
+  // (« #1002 » → « SH-1002 »), affichage = le nom Shopify exact (#1002).
+  const safeId = `SH-${o.name.replace(/[^0-9A-Za-z]/g, "")}`;
   return {
-    id: `ORD-SN-${String(90000 + seq).padStart(5, "0")}`,
+    id: safeId,
     items: o.items.map((it) => {
       const p = MOCK_PRODUITS.find((x) => x.name === it.productName);
       return {
@@ -153,13 +158,15 @@ function toClosingAssignment(o: LiveOrder, seq: number): ClosingAssignment {
       isReturning: false,
     },
     status: "nouvelle",
-    lastActivityAt: nowIso,
-    createdAt: nowIso,
+    // createdAt = la VRAIE date de la commande Shopify (pas l'heure d'import)
+    lastActivityAt: o.createdAt,
+    createdAt: o.createdAt,
     callAttempts: 0,
     source: "Shopify",
     /** Lien vers la commande Shopify (pour le push de statut + dédup) */
     shopifyOrderId: o.shopifyOrderId,
     shopifyName: o.name,
+    currencyCode: o.currencyCode,
   };
 }
 

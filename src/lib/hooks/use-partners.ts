@@ -66,14 +66,11 @@ export const END_REASONS = [
 const ACCEPT_DELAY_MS = 12_000;
 
 const DEFAULT_STATE: PartnersState = {
-  // La closeuse active des fixtures + les 2 livreurs utilisés par les
-  // commandes mock sont déjà des partenariats en cours.
-  closeuse: { slug: "aminata-sene", status: "active", requestedAt: "2025-09-20T10:00:00Z" },
+  // Tout à zéro : aucun partenariat pré-câblé. Le vendeur recrute lui-même
+  // depuis la marketplace (vide tant qu'il n'y a pas de vrais partenaires).
+  closeuse: undefined,
   transitaires: [],
-  livreurs: [
-    { slug: "moussa-sow", status: "active", requestedAt: "2024-10-01T10:00:00Z" },
-    { slug: "ibrahima-sarr", status: "active", requestedAt: "2024-08-15T10:00:00Z" },
-  ],
+  livreurs: [],
   reviews: {},
 };
 

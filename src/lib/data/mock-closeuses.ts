@@ -414,7 +414,7 @@ const EXTRA: Record<string, { skills: string[]; availableNow: boolean }> = {
   "amina-kone": { skills: ["Télévente B2C", "Relance & Fidélisation"], availableNow: true },
 };
 
-export const MOCK_CLOSEUSES: Closeuse[] = RAW_CLOSEUSES.map((c) => {
+const __seed_CLOSEUSES: Closeuse[] = RAW_CLOSEUSES.map((c) => {
   /* Avis : fixtures + generes (stables) — compteur = nombre reel liste,
    * note = vraie moyenne. */
   const reviews = [
@@ -457,3 +457,6 @@ export function getCloseuse(slug: string): Closeuse | undefined {
 export function isActiveCloseusePartner(c: Closeuse): boolean {
   return c.name === MOCK_ACTIVE_CLOSEUSE.name;
 }
+
+export const MOCK_CLOSEUSES: Closeuse[] = [];
+void __seed_CLOSEUSES;

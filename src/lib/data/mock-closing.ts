@@ -576,7 +576,7 @@ const RAW_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [
  * décalée du même nombre de jours entiers (heures préservées), si bien que
  * « créée le jour de l'ancre à 12:30 » devient « créée aujourd'hui à 12:30 ».
  */
-export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] =
+const __seed_CLOSING: ClosingAssignment[] =
   RAW_CLOSING_ASSIGNMENTS.map((a) => ({
     ...a,
     createdAt: shiftToNow(a.createdAt),
@@ -1068,3 +1068,6 @@ export function buildClosingHistory(
     (x, y) => new Date(x.at).getTime() - new Date(y.at).getTime(),
   );
 }
+
+export const MOCK_CLOSING_ASSIGNMENTS: ClosingAssignment[] = [];
+void __seed_CLOSING;

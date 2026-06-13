@@ -211,7 +211,7 @@ const RAW_DISPUTES: Dispute[] = [
 ];
 
 /** Exports publics : dates legacy recalées sur aujourd'hui (cf. lib/clock). */
-export const MOCK_VERSEMENTS: Versement[] = RAW_VERSEMENTS.map((v) => ({
+const __seed_VERSEMENTS: Versement[] = RAW_VERSEMENTS.map((v) => ({
   ...v,
   date: shiftToNow(v.date),
   validatedAt: v.validatedAt ? shiftToNow(v.validatedAt) : undefined,
@@ -236,3 +236,6 @@ export function getActiveDisputes(): Dispute[] {
     (d) => d.status === "ouvert" || d.status === "en_resolution",
   );
 }
+
+export const MOCK_VERSEMENTS: Versement[] = [];
+void __seed_VERSEMENTS;

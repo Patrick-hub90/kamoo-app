@@ -12,7 +12,7 @@ import { getClientSegment, type Client } from "@/lib/types/client";
  *
  * Date de référence : aujourd'hui = 2026-05-04.
  */
-export const MOCK_CLIENTS: Client[] = [
+const __seed_CLIENTS: Client[] = [
   /* ─── Top clients (anciens, gros volume) ───────────────── */
   {
     id: "cu_aminata_diallo",
@@ -437,3 +437,6 @@ export function clientIdsHavingOrdered(productId: string): Set<string> {
   }
   return set;
 }
+
+export const MOCK_CLIENTS: Client[] = [];
+void __seed_CLIENTS;
