@@ -71,7 +71,7 @@ function statusPill(s: ClosingStatus): Pill {
     nouvelle: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
     rappele: { bg: "bg-kamoo-orange-50", text: "text-kamoo-orange-600", dot: "bg-kamoo-orange-500" },
     injoignable: { bg: "bg-amber-50", text: "text-amber-800", dot: "bg-amber-700" },
-    livraison_en_cours: { bg: "bg-cyan-50", text: "text-cyan-800", dot: "bg-cyan-500" },
+    livraison_en_cours: { bg: "bg-kamoo-blue-50", text: "text-kamoo-blue-700", dot: "bg-kamoo-blue-600" },
     livre: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
     annule: { bg: "bg-paper-2", text: "text-ink-500", dot: "bg-ink-400" },
   };
@@ -80,7 +80,7 @@ function statusPill(s: ClosingStatus): Pill {
 
 function StatusPill({ label, bg, text, dot }: Pill) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold", bg, text)}>
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium", bg, text)}>
       <span className={cn("h-2 w-2 rounded-full", dot)} />
       {label}
     </span>
@@ -133,7 +133,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
   return (
     <div className="min-h-full bg-paper">
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
-        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm">
+        <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
           {/* HEADER */}
           <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-6 py-4">
             <Link
@@ -143,7 +143,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="font-mono-kamoo text-[22px] font-semibold tracking-tight text-ink-900">
+            <h1 className="font-mono-kamoo text-[22px] font-medium tracking-tight text-ink-900">
               {displayOrderNo(a)}
             </h1>
             <CopyButton value={displayOrderNo(a)} />
@@ -154,7 +154,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
               {a.status === "livraison_en_cours" && (
                 <button
                   onClick={() => closing.markDelivered(a.id)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
                 >
                   <CheckCircle2 className="h-4 w-4" /> Marquer livrée
                 </button>
@@ -162,14 +162,14 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
               {alerte && (
                 <button
                   onClick={() => closing.retryDelivery(a.id)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 text-[13px] font-semibold text-amber-800 transition hover:bg-amber-100"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 text-[13px] font-medium text-amber-800 transition hover:bg-amber-100"
                 >
                   Relancer la livraison
                 </button>
               )}
               <button
                 onClick={contactCloseuse}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2"
               >
                 <MessageSquare className="h-3.5 w-3.5" /> Closeuse
               </button>
@@ -179,15 +179,15 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
           <div className="p-6">
             {/* Alerte livreur */}
             {alerte && (
-              <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-100 text-red-700">
+              <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-100 text-red-700">
                   <AlertTriangle className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-red-700">
+                  <div className="text-[10.5px] font-medium uppercase tracking-wider text-red-700">
                     Alerte du livreur · {d.name}
                   </div>
-                  <p className="mt-1 text-[13.5px] font-semibold leading-snug text-ink-900">
+                  <p className="mt-1 text-[13.5px] font-medium leading-snug text-ink-900">
                     « {d.livreurNote || "Aucune note fournie"} »
                   </p>
                 </div>
@@ -195,27 +195,27 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
             )}
 
             {/* HÉROS — COD + suivi de livraison */}
-            <div className="rounded-2xl border border-line p-5">
+            <div className="rounded-xl border border-line p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
                     {delivered ? "Encaissé à la livraison" : "À encaisser à la livraison"}
                   </div>
-                  <div className="mt-1 font-display text-[28px] font-semibold leading-none tracking-tight text-ink-900 tabular-nums">
+                  <div className="mt-1 font-display text-[28px] font-medium leading-none tracking-tight text-ink-900 tabular-nums">
                     {formatMoney(total, currency)}{" "}
-                    <span className="text-[14px] font-semibold text-ink-400">
+                    <span className="text-[14px] font-medium text-ink-400">
                       {currency === "XOF" ? "F CFA" : currency}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
                   {delivered ? (
-                    <div className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700">
+                    <div className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-emerald-700">
                       <CheckCircle2 className="h-4 w-4" />
                       {d.deliveredAt ? `Livrée ${fmtDay(d.deliveredAt)}` : "Livrée & encaissée"}
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-amber-700">
+                    <div className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-500">
                       <Clock className="h-4 w-4" />
                       {eta ? `Prévue ${fmtDay(eta)}` : "Créneau à planifier"}
                     </div>
@@ -259,16 +259,16 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                       const p = getProduit(item.productId ?? "");
                       const lineTotal = item.quantity * item.unitPriceXof;
                       return (
-                        <div key={idx} className="flex items-center gap-3 rounded-xl bg-paper-2/40 p-3">
+                        <div key={idx} className="flex items-center gap-3 rounded-lg bg-paper-2/40 p-3">
                           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-ink-400 ring-1 ring-line">
                             <Package className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-[13.5px] font-semibold text-ink-900">{item.productName}</div>
+                            <div className="truncate text-[13.5px] font-medium text-ink-900">{item.productName}</div>
                             <div className="font-mono-kamoo text-[11px] text-ink-400">{p?.sku ?? "—"}</div>
                           </div>
                           <span className="font-mono-kamoo text-[12.5px] text-ink-400">×{item.quantity}</span>
-                          <div className="w-24 text-right font-display text-[14px] font-semibold text-ink-900">
+                          <div className="w-24 text-right font-display text-[14px] font-medium text-ink-900">
                             {formatMoney(lineTotal, currency)}
                           </div>
                         </div>
@@ -276,10 +276,10 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                     })}
                   </div>
                   <div className="mt-4 flex items-baseline justify-between border-t-2 border-ink-200 pt-3">
-                    <span className="text-[14px] font-semibold text-ink-900">Total à encaisser</span>
-                    <span className="font-display text-[18px] font-semibold text-ink-900 tabular-nums">
+                    <span className="text-[14px] font-medium text-ink-900">Total à encaisser</span>
+                    <span className="font-display text-[18px] font-medium text-ink-900 tabular-nums">
                       {formatMoney(total, currency)}{" "}
-                      <span className="text-[12px] font-semibold text-ink-400">
+                      <span className="text-[12px] font-medium text-ink-400">
                         {currency === "XOF" ? "F" : currency}
                       </span>
                     </span>
@@ -310,7 +310,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                           </div>
                           <div className={cn("flex-1", !isLast && "pb-4")}>
                             <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-[13.5px] font-semibold text-ink-900">{e.label}</span>
+                              <span className="text-[13.5px] font-medium text-ink-900">{e.label}</span>
                               <span className="shrink-0 whitespace-nowrap font-mono-kamoo text-[11px] text-ink-400">
                                 {fmtShort(e.at)}
                               </span>
@@ -343,21 +343,21 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <div className="flex items-center gap-3">
                     <Avatar name={d.name} bg={d.avatarBg} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[15px] font-semibold text-ink-900">{d.name}</div>
+                      <div className="text-[15px] font-medium text-ink-900">{d.name}</div>
                       <div className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-500">
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span className="font-semibold text-ink-700">{d.rating}</span>
+                        <span className="font-medium text-ink-700">{d.rating}</span>
                         {d.deliveriesCount != null && <span>· {d.deliveriesCount} livraisons</span>}
                       </div>
                     </div>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
                         alerte
                           ? "bg-red-50 text-red-600"
                           : delivered
                             ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700",
+                            : "bg-kamoo-blue-50 text-kamoo-blue-700",
                       )}
                     >
                       {alerte ? "Alerte" : delivered ? "Livré" : "En course"}
@@ -370,13 +370,13 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   )}
                   <button
                     onClick={contactLivreur}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-semibold text-ink-900 transition hover:bg-paper-2"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-line bg-white py-2.5 text-[12.5px] font-medium text-ink-900 transition hover:bg-paper-2"
                   >
                     <MessageSquare className="h-3.5 w-3.5" /> Contacter {d.name.split(" ")[0]}
                   </button>
                   <button
                     onClick={() => setDisputeOpen(true)}
-                    className="mt-2 w-full text-center text-[11.5px] font-semibold text-ink-400 transition hover:text-red-600"
+                    className="mt-2 w-full text-center text-[11.5px] font-medium text-ink-400 transition hover:text-red-600"
                   >
                     Signaler un problème avec ce livreur
                   </button>
@@ -396,7 +396,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <div className="flex items-center gap-3">
                     <Avatar name={a.client.name} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[15px] font-semibold text-ink-900">{a.client.name}</div>
+                      <div className="text-[15px] font-medium text-ink-900">{a.client.name}</div>
                       <div className="text-[12px] text-ink-500">
                         {a.client.isReturning ? "Client régulier" : "Nouveau client"}
                         {a.client.orderCount ? ` · ${a.client.orderCount}ᵉ commande` : ""}
@@ -415,27 +415,23 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <div className="mt-4 grid grid-cols-2 gap-2.5">
                     <Link
                       href={`/clients/${a.client.id}`}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-semibold text-ink-900 transition hover:bg-paper-2"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-white py-2.5 text-[12.5px] font-medium text-ink-900 transition hover:bg-paper-2"
                     >
                       <User className="h-3.5 w-3.5" /> Voir client
                     </Link>
-                    {a.client.whatsapp ? (
-                      <a
-                        href={`https://wa.me/${a.client.whatsapp.replace(/\D/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-[12.5px] font-semibold text-white transition hover:bg-emerald-700"
-                      >
-                        <PhoneCall className="h-3.5 w-3.5" /> WhatsApp
-                      </a>
-                    ) : (
-                      <a
-                        href={`tel:${a.client.phone.replace(/\s/g, "")}`}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-kamoo-blue-900 py-2.5 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-                      >
-                        <PhoneCall className="h-3.5 w-3.5" /> Appeler
-                      </a>
-                    )}
+                    <a
+                      href={
+                        a.client.whatsapp
+                          ? `https://wa.me/${a.client.whatsapp.replace(/\D/g, "")}`
+                          : `tel:${a.client.phone.replace(/\s/g, "")}`
+                      }
+                      target={a.client.whatsapp ? "_blank" : undefined}
+                      rel={a.client.whatsapp ? "noopener noreferrer" : undefined}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-white py-2.5 text-[12.5px] font-medium text-ink-900 transition hover:bg-paper-2"
+                    >
+                      <PhoneCall className="h-3.5 w-3.5" />
+                      {a.client.whatsapp ? "WhatsApp" : "Appeler"}
+                    </a>
                   </div>
                 </Card>
               </div>
@@ -503,9 +499,9 @@ function NoteCard({
   };
 
   return (
-    <section className="rounded-2xl border border-line bg-white p-5">
+    <section className="rounded-xl border border-line bg-white p-5">
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
           <MessageSquare className="h-3.5 w-3.5" />
           Note pour le livreur
         </div>
@@ -515,7 +511,7 @@ function NoteCard({
               setDraft(a.comment ?? "");
               setEditing(true);
             }}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-semibold text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-medium text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
           >
             <Pencil className="h-3 w-3" /> {a.comment ? "Modifier" : "Ajouter"}
           </button>
@@ -530,25 +526,25 @@ function NoteCard({
               rows={3}
               autoFocus
               placeholder="Ex : appeler avant d'arriver · portail bleu · livrer après 17 h…"
-              className="w-full resize-none rounded-xl border border-line bg-white px-3.5 py-2.5 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+              className="w-full resize-none rounded-lg border border-line bg-white px-3.5 py-2.5 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setEditing(false)}
-                className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2"
+                className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-700 transition hover:bg-paper-2"
               >
                 Annuler
               </button>
               <button
                 onClick={save}
-                className="rounded-lg bg-kamoo-blue-900 px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+                className="rounded-lg bg-kamoo-blue-900 px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:bg-kamoo-blue-800"
               >
                 Enregistrer
               </button>
             </div>
           </div>
         ) : a.comment ? (
-          <p className="rounded-xl bg-amber-50/60 px-3.5 py-3 text-[13px] leading-relaxed text-ink-800">
+          <p className="rounded-lg bg-amber-50/60 px-3.5 py-3 text-[13px] leading-relaxed text-ink-800">
             « {a.comment} »
           </p>
         ) : (
@@ -574,8 +570,8 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-line bg-white p-5">
-      <div className="mb-3.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+    <section className="rounded-xl border border-line bg-white p-5">
+      <div className="mb-3.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
         {icon}
         {title}
         {count != null && <span>· {count}</span>}
@@ -588,8 +584,8 @@ function Card({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">{label}</div>
-      <div className="mt-0.5 text-[13.5px] font-semibold text-ink-800">{children}</div>
+      <div className="text-[11px] font-medium uppercase tracking-wider text-ink-400">{label}</div>
+      <div className="mt-0.5 text-[13.5px] font-medium text-ink-800">{children}</div>
     </div>
   );
 }
@@ -603,7 +599,7 @@ function Avatar({ name, bg }: { name: string; bg?: string }) {
   return (
     <div
       className={cn(
-        "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[13px] font-semibold",
+        "grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[13px] font-medium",
         bg ? "text-white" : "bg-paper-2 text-ink-700",
       )}
       style={bg ? { background: bg } : undefined}
