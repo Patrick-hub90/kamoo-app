@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/kamoo/page-header";
 import {
   KpiRow,
   CaChart,
+  CashflowCard,
   ClosingCard,
   TopProducts,
   LiveDeliveries,
@@ -240,11 +243,32 @@ export default function DashboardPage() {
       </PageHeader>
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-6 py-6">
-        {/* KPI */}
+        {/* Amorçage : aucune commande encore reçue → guider vers la connexion. */}
+        {liveOrders.length === 0 && (
+          <Link
+            href="/parametres/connexions"
+            className="group flex items-center gap-3 rounded-xl border border-kamoo-blue-100 bg-kamoo-blue-50/40 px-4 py-3 transition hover:bg-kamoo-blue-50"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-kamoo-blue-700 ring-1 ring-kamoo-blue-100">
+              <ShoppingBag className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold text-ink-900">
+                Connecte ta boutique Shopify pour démarrer
+              </div>
+              <div className="text-[11.5px] text-ink-500">
+                Tes commandes arriveront automatiquement dans Closing, et ce tableau de bord prendra vie.
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-kamoo-blue-700 transition group-hover:translate-x-0.5" />
+          </Link>
+        )}
+
+        {/* Bande KPI — performance (4 indicateurs, comparaison incluse) */}
         <KpiRow k={kpiData} />
 
-        {/* Chart + Closing */}
-        <div className="grid grid-cols-[1.55fr_1fr] gap-4">
+        {/* Zone principale : graphe héros (évolution CA) + action n°1 (closing) */}
+        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
           <CaChart
             series={chartSeries}
             labels={chartLabels}
@@ -255,8 +279,8 @@ export default function DashboardPage() {
           <ClosingCard buckets={computed.closing.buckets} leads={closingLeads} />
         </div>
 
-        {/* Top produits + Livraisons */}
-        <div className="grid grid-cols-[1.55fr_1fr] gap-4">
+        {/* Opérations : ce qui se vend + ce qui est en livraison */}
+        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
           <TopProducts rows={topRows} title="Top produits" />
           <LiveDeliveries
             rows={deliveryRows}
@@ -264,10 +288,18 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Opérations + Alertes stock */}
-        <div className="grid grid-cols-[1.55fr_1fr] gap-4">
+        {/* Journal + (trésorerie & alertes empilées) */}
+        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
           <RecentOps rows={opRows} />
-          <StockAlerts rows={stockAlerts} />
+          <div className="flex flex-col gap-4">
+            <CashflowCard
+              aEncaisser={kpiData.aEncaisser}
+              aEncaisserN={kpiData.aEncaisserN}
+              aRegler={kpiData.aRegler}
+              aReglerN={kpiData.aReglerN}
+            />
+            <StockAlerts rows={stockAlerts} />
+          </div>
         </div>
       </div>
     </div>

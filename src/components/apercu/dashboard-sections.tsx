@@ -7,11 +7,49 @@
  * par des PROPS de données — donc utilisables aussi bien par le proto (mock)
  * que par le vrai /dashboard (données réelles). C'est ça « afficher
  * l'information selon notre logique » : un seul design, deux sources.
+ *
+ * Doctrine dashboard premium (skill directeur-design-produit) :
+ *  - hiérarchie : tous les widgets ne sont pas au même niveau.
+ *  - couleur = sens (accent navy réservé au graphe héros ; rouge = alerte).
+ *  - états vides soignés (cause + action), pas un simple « aucune donnée ».
  */
 
-import { ArrowDownRight, ArrowUpRight, AlertTriangle, Clock, Package } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  AlertTriangle,
+  Clock,
+  Package,
+  PackageCheck,
+  PhoneCall,
+  Receipt,
+  TrendingUp,
+  Truck,
+  Wallet,
+} from "lucide-react";
 import { Panel, VoirTout, StatusPill, CARD, LABEL } from "@/components/apercu/preview-shell";
 import { formatXOF } from "@/lib/format";
+
+/* ════════════════ État vide partagé ════════════════ */
+function PanelEmpty({
+  icon: Icon,
+  title,
+  sub,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  sub?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
+      <span className="grid h-10 w-10 place-items-center rounded-full bg-paper-2 text-ink-400">
+        <Icon className="h-5 w-5" />
+      </span>
+      <p className="text-[13px] font-semibold text-ink-700">{title}</p>
+      {sub && <p className="max-w-[280px] text-[11.5px] leading-relaxed text-ink-400">{sub}</p>}
+    </div>
+  );
+}
 
 /* ════════════════ KPI ════════════════ */
 export type KpiData = {
@@ -27,14 +65,39 @@ export type KpiData = {
   aReglerN: number;
 };
 
+/**
+ * Bande KPI — 4 indicateurs de PERFORMANCE (la trésorerie « à encaisser /
+ * à régler » vit dans sa propre carte, pas ici : ce sont des soldes, pas des
+ * tendances). Panier moyen dérivé pour éviter d'inventer une donnée.
+ */
 export function KpiRow({ k }: { k: KpiData }) {
+  const panier = k.nbLivre > 0 ? Math.round(k.caEncaisse / k.nbLivre) : 0;
   return (
-    <div className="grid grid-cols-5 gap-4">
-      <Kpi label="CA encaissé" value={formatXOF(k.caEncaisse, false)} unit="F" delta={k.caDelta} />
-      <Kpi label="Marge nette" value={formatXOF(k.margeNette, false)} unit="F" delta={k.margeDelta} />
-      <Kpi label="Commandes livrées" value={String(k.nbLivre)} unit="cmd" delta={k.livreDelta} />
-      <Kpi label="À encaisser" value={formatXOF(k.aEncaisser, false)} unit="F" tone="pos" hint={`${k.aEncaisserN} livreur${k.aEncaisserN > 1 ? "s" : ""}`} />
-      <Kpi label="À régler" value={formatXOF(k.aRegler, false)} unit="F" tone="neg" hint={`${k.aReglerN} partenaire${k.aReglerN > 1 ? "s" : ""}`} />
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <Kpi
+        label="CA encaissé"
+        value={formatXOF(k.caEncaisse, false)}
+        unit="F"
+        delta={k.caDelta}
+      />
+      <Kpi
+        label="Marge nette"
+        value={formatXOF(k.margeNette, false)}
+        unit="F"
+        delta={k.margeDelta}
+      />
+      <Kpi
+        label="Commandes livrées"
+        value={String(k.nbLivre)}
+        unit="cmd"
+        delta={k.livreDelta}
+      />
+      <Kpi
+        label="Panier moyen"
+        value={formatXOF(panier, false)}
+        unit="F"
+        hint="par commande livrée"
+      />
     </div>
   );
 }
@@ -44,49 +107,45 @@ export function Kpi({
   value,
   unit,
   delta,
-  tone,
   hint,
 }: {
   label: string;
   value: string;
   unit?: string;
   delta?: number | null;
-  tone?: "pos" | "neg";
   hint?: string;
 }) {
-  const valueColor = tone === "pos" ? "text-emerald-600" : tone === "neg" ? "text-red-600" : "text-ink-900";
   const hasDelta = delta !== undefined && delta !== null;
   const pos = (delta ?? 0) >= 0;
+  const context = hint ?? (hasDelta ? "vs période précédente" : null);
   return (
-    <div className={`${CARD} flex flex-col gap-2 px-4 py-3`}>
-      <div className={LABEL}>{label}</div>
-      <div className="flex items-end justify-between gap-2">
-        <div className="flex items-baseline gap-1">
-          <span className={`text-[21px] font-bold leading-none tracking-tight tabular-nums ${valueColor}`}>
-            {tone === "pos" ? "+" : ""}
-            {value}
-          </span>
-          {unit && <span className="text-[12px] font-medium text-[#A7AEBA]">{unit}</span>}
-        </div>
-        {hasDelta ? (
+    <div className={`${CARD} flex flex-col gap-1.5 px-4 py-3.5`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className={LABEL}>{label}</span>
+        {hasDelta && (
           <span
             className={[
-              "inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+              "inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
               pos ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600",
             ].join(" ")}
           >
             {pos ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
             {Math.abs(delta as number)}%
           </span>
-        ) : hint ? (
-          <span className="shrink-0 whitespace-nowrap text-[11px] text-[#A7AEBA]">{hint}</span>
-        ) : null}
+        )}
       </div>
+      <div className="flex items-baseline gap-1">
+        <span className="text-[22px] font-bold leading-none tracking-tight tabular-nums text-ink-900">
+          {value}
+        </span>
+        {unit && <span className="text-[12px] font-medium text-[#A7AEBA]">{unit}</span>}
+      </div>
+      {context && <div className="text-[11px] text-[#A7AEBA]">{context}</div>}
     </div>
   );
 }
 
-/* ════════════════ CHART (barres sobres) ════════════════ */
+/* ════════════════ CHART — aire (évolution) ════════════════ */
 function niceMax(v: number): number {
   if (v <= 0) return 100;
   const p = Math.pow(10, Math.floor(Math.log10(v)));
@@ -113,9 +172,24 @@ export function CaChart({
   title?: string;
   periodLabel?: string;
 }) {
-  const peak = Math.max(1, ...series);
-  const max = niceMax(peak);
+  const peak = series.length ? Math.max(0, ...series) : 0;
+  const hasData = total > 0 && peak > 0;
+  const max = niceMax(Math.max(1, peak));
   const lines = [max, (max * 2) / 3, max / 3, 0];
+
+  /* Géométrie SVG (viewBox étiré horizontalement, trait non-scalé) */
+  const W = 1000;
+  const H = 210;
+  const BASE = 204;
+  const TOP = 8;
+  const n = series.length;
+  const xAt = (i: number) => (n <= 1 ? W / 2 : (i / (n - 1)) * W);
+  const yAt = (v: number) => BASE - (v / max) * (BASE - TOP);
+  const linePath = series
+    .map((v, i) => `${i === 0 ? "M" : "L"} ${xAt(i).toFixed(1)} ${yAt(v).toFixed(1)}`)
+    .join(" ");
+  const areaPath = n >= 2 ? `${linePath} L ${W} ${BASE} L 0 ${BASE} Z` : "";
+
   return (
     <Panel
       title={title}
@@ -126,43 +200,145 @@ export function CaChart({
         </span>
       }
     >
-      <div className="px-5 py-4">
-        <div className="flex gap-3">
-          <div className="flex w-10 flex-col justify-between py-1 text-right text-[10px] tabular-nums text-[#B4BAC4]">
-            {lines.map((l, i) => (
-              <div key={i}>{l === 0 ? "0" : axisFmt(l)}</div>
-            ))}
-          </div>
-          <div className="relative flex-1">
-            <div className="absolute inset-0 flex flex-col justify-between">
-              {lines.map((_, i) => (
-                <div key={i} className="border-t border-dashed border-[#F0F1F3]" />
+      {!hasData ? (
+        <PanelEmpty
+          icon={TrendingUp}
+          title="Aucun encaissement sur cette période"
+          sub="Les ventes encaissées par tes livreurs s'afficheront ici, jour après jour."
+        />
+      ) : (
+        <div className="px-5 py-4">
+          <div className="flex gap-3">
+            <div className="flex w-10 flex-col justify-between py-1 text-right text-[10px] tabular-nums text-[#B4BAC4]">
+              {lines.map((l, i) => (
+                <div key={i}>{l === 0 ? "0" : axisFmt(l)}</div>
               ))}
             </div>
-            <div className="relative flex h-[210px] items-stretch gap-[5px]">
-              {series.map((v, i) => (
-                <div key={i} className="group flex h-full flex-1 flex-col items-center justify-end">
-                  <div
-                    className="w-full rounded-t-[3px] bg-kamoo-blue-900/85 transition-all group-hover:bg-kamoo-blue-900"
-                    style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
-                    title={`${formatXOF(v, false)} F`}
-                  />
-                </div>
-              ))}
-            </div>
-            {labels && (
-              <div className="mt-2 flex gap-[5px] text-[10px] tabular-nums text-[#B4BAC4]">
-                {labels.map((lab, i) => (
-                  <div key={i} className="flex-1 truncate text-center">
-                    {lab}
-                  </div>
+            <div className="relative flex-1">
+              <div className="absolute inset-0 flex flex-col justify-between">
+                {lines.map((_, i) => (
+                  <div key={i} className="border-t border-dashed border-[#F0F1F3]" />
                 ))}
               </div>
-            )}
+              <div className="relative h-[230px]">
+                <svg
+                  viewBox={`0 0 ${W} ${H}`}
+                  preserveAspectRatio="none"
+                  className="absolute inset-0 h-full w-full overflow-visible"
+                  aria-hidden
+                >
+                  <defs>
+                    <linearGradient id="caArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-kamoo-blue-900)" stopOpacity="0.16" />
+                      <stop offset="100%" stopColor="var(--color-kamoo-blue-900)" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {areaPath && <path d={areaPath} fill="url(#caArea)" />}
+                  <path
+                    d={linePath}
+                    fill="none"
+                    stroke="var(--color-kamoo-blue-900)"
+                    strokeWidth={2}
+                    vectorEffect="non-scaling-stroke"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              {labels && (
+                <div className="mt-2 flex gap-[5px] text-[10px] tabular-nums text-[#B4BAC4]">
+                  {labels.map((lab, i) => (
+                    <div key={i} className="flex-1 truncate text-center">
+                      {lab}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </Panel>
+  );
+}
+
+/* ════════════════ TRÉSORERIE (à encaisser / à régler) ════════════════ */
+export function CashflowCard({
+  aEncaisser,
+  aEncaisserN,
+  aRegler,
+  aReglerN,
+  title = "Trésorerie",
+}: {
+  aEncaisser: number;
+  aEncaisserN: number;
+  aRegler: number;
+  aReglerN: number;
+  title?: string;
+}) {
+  const empty = aEncaisser === 0 && aRegler === 0;
+  return (
+    <Panel title={title} right={<VoirTout />}>
+      {empty ? (
+        <PanelEmpty
+          icon={Wallet}
+          title="Rien en circulation"
+          sub="Aucun encaissement à recevoir ni règlement à effectuer pour le moment."
+        />
+      ) : (
+        <div className="divide-y divide-[#F4F5F6]">
+          <CashRow
+            tone="in"
+            label="À encaisser"
+            sub={`${aEncaisserN} livreur${aEncaisserN > 1 ? "s" : ""}`}
+            value={aEncaisser}
+          />
+          <CashRow
+            tone="out"
+            label="À régler"
+            sub={`${aReglerN} partenaire${aReglerN > 1 ? "s" : ""}`}
+            value={aRegler}
+          />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function CashRow({
+  tone,
+  label,
+  sub,
+  value,
+}: {
+  tone: "in" | "out";
+  label: string;
+  sub: string;
+  value: number;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-5 py-3.5">
+      <span
+        className={[
+          "grid h-8 w-8 shrink-0 place-items-center rounded-lg",
+          tone === "in" ? "bg-emerald-50 text-emerald-600" : "bg-paper-2 text-ink-500",
+        ].join(" ")}
+      >
+        {tone === "in" ? <ArrowDownRight className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[12.5px] font-medium text-ink-900">{label}</div>
+        <div className="text-[11px] text-[#A7AEBA]">{sub}</div>
+      </div>
+      <div
+        className={[
+          "text-[14px] font-semibold tabular-nums",
+          tone === "in" ? "text-emerald-600" : "text-ink-900",
+        ].join(" ")}
+      >
+        {formatXOF(value, false)} <span className="text-[10px] font-medium text-[#A7AEBA]">F</span>
+      </div>
+    </div>
   );
 }
 
@@ -184,31 +360,34 @@ export function ClosingCard({ buckets, leads, title = "Closing en direct" }: { b
           </div>
         ))}
       </div>
-      <ul className="divide-y divide-[#F4F5F6]">
-        {leads.length === 0 && (
-          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
-            Aucune commande à appeler.
-          </li>
-        )}
-        {leads.map((l) => (
-          <li key={l.id} className="flex items-center gap-3 px-5 py-2.5">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[12.5px] font-semibold text-ink-900">{l.id}</span>
-                <StatusPill status={l.status} />
+      {leads.length === 0 ? (
+        <PanelEmpty
+          icon={PhoneCall}
+          title="Aucune commande à appeler"
+          sub="Les nouvelles commandes à confirmer apparaîtront ici dès leur arrivée."
+        />
+      ) : (
+        <ul className="divide-y divide-[#F4F5F6]">
+          {leads.map((l) => (
+            <li key={l.id} className="flex items-center gap-3 px-5 py-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12.5px] font-semibold text-ink-900">{l.id}</span>
+                  <StatusPill status={l.status} />
+                </div>
+                <div className="truncate text-[11.5px] text-[#8A92A0]">
+                  {l.product}
+                  {l.extra > 0 && <span className="text-[#B4BAC4]"> +{l.extra}</span>}
+                </div>
               </div>
-              <div className="truncate text-[11.5px] text-[#8A92A0]">
-                {l.product}
-                {l.extra > 0 && <span className="text-[#B4BAC4]"> +{l.extra}</span>}
+              <div className="text-right">
+                <div className="text-[12.5px] font-semibold tabular-nums text-ink-900">{l.amount}</div>
+                <div className="text-[10.5px] text-[#B4BAC4]">{l.time}</div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[12.5px] font-semibold tabular-nums text-ink-900">{l.amount}</div>
-              <div className="text-[10.5px] text-[#B4BAC4]">{l.time}</div>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   );
 }
@@ -228,51 +407,52 @@ export type ProdRow = {
 export function TopProducts({ rows, title = "Top produits" }: { rows: ProdRow[]; title?: string }) {
   return (
     <Panel title={title} right={<VoirTout />}>
-      <table className="w-full">
-        <thead>
-          <tr className="text-[10.5px] uppercase tracking-[0.05em] text-[#A7AEBA]">
-            <th className="px-5 py-2 text-left font-semibold">Produit</th>
-            <th className="px-3 py-2 text-right font-semibold">Ventes</th>
-            <th className="px-3 py-2 text-right font-semibold">CA</th>
-            <th className="px-3 py-2 text-right font-semibold">Bénéfice</th>
-            <th className="px-5 py-2 text-right font-semibold">Marge</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#F4F5F6]">
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-5 py-10 text-center text-[12.5px] text-ink-400">
-                Aucune vente sur la période.
-              </td>
+      {rows.length === 0 ? (
+        <PanelEmpty
+          icon={Package}
+          title="Aucune vente sur la période"
+          sub="Le classement de tes meilleurs produits (CA, bénéfice, marge) s'affichera ici."
+        />
+      ) : (
+        <table className="w-full">
+          <thead>
+            <tr className="text-[10.5px] uppercase tracking-[0.05em] text-[#A7AEBA]">
+              <th className="px-5 py-2 text-left font-semibold">Produit</th>
+              <th className="px-3 py-2 text-right font-semibold">Ventes</th>
+              <th className="px-3 py-2 text-right font-semibold">CA</th>
+              <th className="px-3 py-2 text-right font-semibold">Bénéfice</th>
+              <th className="px-5 py-2 text-right font-semibold">Marge</th>
             </tr>
-          )}
-          {rows.map((r) => (
-            <tr key={r.name} className="transition hover:bg-[#FAFBFC]">
-              <td className="px-5 py-2.5">
-                <div className="flex items-center gap-2.5">
-                  {r.cover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.cover} alt={r.name} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
-                  ) : (
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: r.bg }}>
-                      {r.emoji}
-                    </span>
-                  )}
-                  <span className="truncate text-[12.5px] font-medium text-ink-900">{r.name}</span>
-                </div>
-              </td>
-              <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{r.ventes}</td>
-              <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{formatXOF(r.ca, false)}</td>
-              <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(r.benefice, false)}</td>
-              <td className="px-5 py-2.5 text-right">
-                <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-700">
-                  {r.margePct}%
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-[#F4F5F6]">
+            {rows.map((r) => (
+              <tr key={r.name} className="transition hover:bg-[#FAFBFC]">
+                <td className="px-5 py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    {r.cover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.cover} alt={r.name} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: r.bg }}>
+                        {r.emoji}
+                      </span>
+                    )}
+                    <span className="truncate text-[12.5px] font-medium text-ink-900">{r.name}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{r.ventes}</td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{formatXOF(r.ca, false)}</td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(r.benefice, false)}</td>
+                <td className="px-5 py-2.5 text-right">
+                  <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-700">
+                    {r.margePct}%
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </Panel>
   );
 }
@@ -290,31 +470,34 @@ export function LiveDeliveries({ rows, activeCount, title = "Livraisons en direc
         </span>
       }
     >
-      <ul className="divide-y divide-[#F4F5F6]">
-        {rows.length === 0 && (
-          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
-            Aucune livraison en cours.
-          </li>
-        )}
-        {rows.map((r) => (
-          <li key={r.id} className="flex items-center gap-3 px-5 py-2.5">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[12.5px] font-semibold text-ink-900">{r.id}</span>
-                <StatusPill status={r.status} />
+      {rows.length === 0 ? (
+        <PanelEmpty
+          icon={Truck}
+          title="Aucune livraison en cours"
+          sub="Les colis confiés à tes livreurs et leur statut s'afficheront ici en temps réel."
+        />
+      ) : (
+        <ul className="divide-y divide-[#F4F5F6]">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center gap-3 px-5 py-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12.5px] font-semibold text-ink-900">{r.id}</span>
+                  <StatusPill status={r.status} />
+                </div>
+                <div className="truncate text-[11.5px] text-[#8A92A0]">
+                  {r.product}
+                  {r.extra > 0 && <span className="text-[#B4BAC4]"> +{r.extra}</span>}
+                </div>
               </div>
-              <div className="truncate text-[11.5px] text-[#8A92A0]">
-                {r.product}
-                {r.extra > 0 && <span className="text-[#B4BAC4]"> +{r.extra}</span>}
+              <div className="text-right">
+                <div className="text-[12.5px] font-semibold tabular-nums text-ink-900">{r.amount}</div>
+                <div className="text-[10.5px] text-[#B4BAC4]">{r.time}</div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[12.5px] font-semibold tabular-nums text-ink-900">{r.amount}</div>
-              <div className="text-[10.5px] text-[#B4BAC4]">{r.time}</div>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   );
 }
@@ -325,41 +508,44 @@ export type OpRow = { dir: "in" | "out"; label: string; sub: string; amount: num
 export function RecentOps({ rows, title = "Dernières opérations" }: { rows: OpRow[]; title?: string }) {
   return (
     <Panel title={title} right={<VoirTout />}>
-      <ul className="divide-y divide-[#F4F5F6]">
-        {rows.length === 0 && (
-          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
-            Aucune opération récente.
-          </li>
-        )}
-        {rows.map((r, i) => (
-          <li key={i} className="flex items-center gap-3 px-5 py-2.5">
-            <span
-              className={[
-                "grid h-7 w-7 shrink-0 place-items-center rounded-full",
-                r.dir === "in" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500",
-              ].join(" ")}
-            >
-              {r.dir === "in" ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[12.5px] font-medium text-ink-900">{r.label}</div>
-              <div className="truncate text-[11px] text-[#A7AEBA]">{r.sub}</div>
-            </div>
-            <div className="text-right">
-              <div
+      {rows.length === 0 ? (
+        <PanelEmpty
+          icon={Receipt}
+          title="Aucune opération récente"
+          sub="Versements livreurs, commissions et dépenses apparaîtront dans ce journal."
+        />
+      ) : (
+        <ul className="divide-y divide-[#F4F5F6]">
+          {rows.map((r, i) => (
+            <li key={i} className="flex items-center gap-3 px-5 py-2.5">
+              <span
                 className={[
-                  "text-[12.5px] font-semibold tabular-nums",
-                  r.dir === "in" ? "text-emerald-600" : "text-ink-900",
+                  "grid h-7 w-7 shrink-0 place-items-center rounded-full",
+                  r.dir === "in" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500",
                 ].join(" ")}
               >
-                {r.dir === "in" ? "+" : "−"}
-                {formatXOF(r.amount, false)}
+                {r.dir === "in" ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[12.5px] font-medium text-ink-900">{r.label}</div>
+                <div className="truncate text-[11px] text-[#A7AEBA]">{r.sub}</div>
               </div>
-              <div className="text-[10.5px] text-[#B4BAC4]">{r.time}</div>
-            </div>
-          </li>
-        ))}
-      </ul>
+              <div className="text-right">
+                <div
+                  className={[
+                    "text-[12.5px] font-semibold tabular-nums",
+                    r.dir === "in" ? "text-emerald-600" : "text-ink-900",
+                  ].join(" ")}
+                >
+                  {r.dir === "in" ? "+" : "−"}
+                  {formatXOF(r.amount, false)}
+                </div>
+                <div className="text-[10.5px] text-[#B4BAC4]">{r.time}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   );
 }
@@ -375,28 +561,31 @@ export function StockAlerts({ rows, title = "Alertes stock" }: { rows: AlertRow[
   };
   return (
     <Panel title={title} right={<VoirTout />}>
-      <ul className="divide-y divide-[#F4F5F6]">
-        {rows.length === 0 && (
-          <li className="px-5 py-10 text-center text-[12.5px] text-ink-400">
-            Aucune alerte stock.
-          </li>
-        )}
-        {rows.map((r, i) => {
-          const tn = tone[r.level];
-          const Icon = tn.icon;
-          return (
-            <li key={i} className="flex items-center gap-3 px-5 py-3">
-              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${tn.bg} ${tn.color}`}>
-                <Icon className="h-3.5 w-3.5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[12.5px] font-medium text-ink-900">{r.name}</div>
-                <div className="truncate text-[11px] text-[#A7AEBA]">{r.sub}</div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {rows.length === 0 ? (
+        <PanelEmpty
+          icon={PackageCheck}
+          title="Stock sous contrôle"
+          sub="Aucune rupture ni alerte de réapprovisionnement sur tes produits actifs."
+        />
+      ) : (
+        <ul className="divide-y divide-[#F4F5F6]">
+          {rows.map((r, i) => {
+            const tn = tone[r.level];
+            const Icon = tn.icon;
+            return (
+              <li key={i} className="flex items-center gap-3 px-5 py-3">
+                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${tn.bg} ${tn.color}`}>
+                  <Icon className="h-3.5 w-3.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12.5px] font-medium text-ink-900">{r.name}</div>
+                  <div className="truncate text-[11px] text-[#A7AEBA]">{r.sub}</div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Panel>
   );
 }
