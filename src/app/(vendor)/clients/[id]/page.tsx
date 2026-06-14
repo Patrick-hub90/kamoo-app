@@ -113,18 +113,6 @@ export default function ClientDetailPage({ params }: PageProps) {
     `Bonjour ${client.name.split(" ")[0]}, c'est Kamoo. `,
   );
 
-  /* Produits favoris — dérivés des vraies commandes du client */
-  const favCount = new Map<string, { name: string; qty: number }>();
-  for (const o of orders) {
-    for (const it of o.items) {
-      const k = it.productId ?? it.productName;
-      const cur = favCount.get(k) ?? { name: it.productName, qty: 0 };
-      cur.qty += it.quantity;
-      favCount.set(k, cur);
-    }
-  }
-  const favoris = [...favCount.values()].sort((a, b) => b.qty - a.qty).slice(0, 3);
-
   /* Signal de relance / risque (insight) */
   const insight =
     delivRate > 0 && delivRate < 50
@@ -263,25 +251,6 @@ export default function ClientDetailPage({ params }: PageProps) {
                   )}
                 </Card>
 
-                {favoris.length > 0 && (
-                  <Card title="Produits favoris">
-                    <div className="flex flex-col gap-2">
-                      {favoris.map((f) => (
-                        <div key={f.name} className="flex items-center gap-3 rounded-lg bg-paper-2/40 p-2.5">
-                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-ink-400 ring-1 ring-line">
-                            <Package className="h-4 w-4" />
-                          </span>
-                          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-900">
-                            {f.name}
-                          </span>
-                          <span className="text-[12px] text-ink-500">
-                            {f.qty} commandé{f.qty > 1 ? "s" : ""}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
               </div>
 
               {/* DROITE */}
