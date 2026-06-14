@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { getCountryByCode } from "@/lib/data/countries";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -92,41 +96,43 @@ export default function KycPage() {
   const totalRequired = KYC_STEPS.filter((s) => s.id !== "business").length;
 
   return (
-    <div className="space-y-5">
+    <SettingsCard>
       {/* Récap niveau de vérification */}
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
-        <div className="flex items-start gap-3 sm:gap-4">
+      <SettingsSection
+        title="Niveau de vérification"
+        description="Complète chaque étape pour passer en niveau « Pro vérifié » et lever les limites de virement."
+      >
+        <div className="flex items-start gap-3 rounded-xl border border-line bg-paper-2/40 p-4 sm:gap-4">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="font-display text-base font-extrabold text-ink-900">
+            <div className="text-[13.5px] font-bold text-ink-900">
               Niveau de vérification :{" "}
               <span className="text-emerald-700">
                 {verifiedCount} / {totalRequired}
               </span>
-            </h2>
-            <p className="mt-1 text-[13px] text-ink-500">
-              Compte enregistré au {country.flag} {country.name}. Complète
-              chaque étape pour passer en niveau « Pro vérifié » et lever les
-              limites de virement.
+            </div>
+            <p className="mt-1 text-[12.5px] text-ink-500">
+              Compte enregistré au {country.flag} {country.name}.
             </p>
           </div>
         </div>
-      </section>
+      </SettingsSection>
 
-      {/* Étapes */}
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
-        <h3 className="font-display text-base font-extrabold text-ink-900">
-          Étapes
-        </h3>
-        <div className="mt-4 flex flex-col gap-2.5">
+      {/* Documents */}
+      <SettingsSection
+        title="Documents"
+        description="Pièces requises pour vérifier votre compte. Une revue manuelle est effectuée sous 24-48h après chaque soumission."
+        wide
+      >
+        <div className="flex flex-col gap-2.5">
           {KYC_STEPS.map((s) => (
             <KycRow key={s.id} step={s} />
           ))}
         </div>
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsCard>
   );
 }
 

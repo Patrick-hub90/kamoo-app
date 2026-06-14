@@ -10,6 +10,10 @@ import {
 } from "@/lib/types/market";
 import { SUPPORTED_CURRENCIES } from "@/lib/format";
 import { useShopify } from "@/lib/hooks/use-shopify";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -24,34 +28,29 @@ export default function MarchesPage() {
   const markets = MOCK_MARKETS;
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="font-display text-base font-extrabold text-ink-900">
-              Vos marchés
-            </h2>
-            <p className="mt-1 text-[13px] text-ink-500">
-              Chaque marché a ses partenaires, sa boutique Shopify, sa devise
-              et son fuseau horaire. Bascule entre marchés via la topbar.
-            </p>
-          </div>
+    <SettingsCard>
+      <SettingsSection
+        title="Vos marchés"
+        description="Chaque marché a ses partenaires, sa boutique Shopify, sa devise et son fuseau horaire. Bascule entre marchés via la topbar."
+        wide
+      >
+        <div className="flex justify-end">
           <Link
             href="/marches/nouveau"
-            className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-kamoo-orange-500 px-4 py-2 text-[13px] font-bold text-white hover:bg-kamoo-orange-600"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-2 text-[13px] font-bold text-white hover:bg-kamoo-orange-600"
           >
             <Plus className="h-3.5 w-3.5" />
             <span className="whitespace-nowrap">Ajouter un marché</span>
           </Link>
         </div>
 
-        <div className="mt-5 flex flex-col gap-2.5">
+        <div className="mt-4 flex flex-col gap-2.5">
           {markets.map((m) => (
             <MarketRow key={m.id} market={m} />
           ))}
         </div>
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsCard>
   );
 }
 

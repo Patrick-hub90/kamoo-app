@@ -15,6 +15,10 @@ import { MOCK_MARKETS } from "@/lib/data/mock-markets";
 import { useShopify } from "@/lib/hooks/use-shopify";
 import { useShopifySync } from "@/lib/hooks/use-shopify-sync";
 import type { Market } from "@/lib/types/market";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,19 +52,14 @@ function ConnexionsInner() {
   const oauthError = searchParams.get("shopify_error");
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-base font-extrabold text-ink-900">
-              Boutiques Shopify
-            </h2>
-            <p className="mt-1 text-[13px] text-ink-500">
-              Une commande créée sur ta boutique arrive automatiquement dans
-              Closing, et le client est ajouté à ta base. 1 boutique par marché.
-            </p>
-          </div>
-          {liveMode !== null && (
+    <SettingsCard>
+      <SettingsSection
+        title="Boutiques Shopify"
+        description="Une commande créée sur ta boutique arrive automatiquement dans Closing, et le client est ajouté à ta base. 1 boutique par marché."
+        wide
+      >
+        {liveMode !== null && (
+          <div className="mb-4 flex justify-end">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold",
@@ -69,8 +68,8 @@ function ConnexionsInner() {
             >
               {liveMode ? "Mode réel (OAuth)" : "Mode démo"}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {oauthError === "scopes_manquants" ? (
           <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[12.5px] leading-relaxed text-amber-900">
@@ -120,26 +119,30 @@ function ConnexionsInner() {
             <ShopifyRow key={m.id} market={m} />
           ))}
         </div>
-      </section>
+      </SettingsSection>
 
       {/* Autres intégrations à venir */}
-      <section className="rounded-2xl border border-dashed border-line bg-paper-2/40 p-4 sm:p-6">
-        <div className="flex items-center gap-3">
+      <SettingsSection
+        title="Autres intégrations"
+        description="Connecteurs supplémentaires prévus pour automatiser tes notifications, paiements et emails."
+        wide
+      >
+        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-paper-2/40 p-4">
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-white text-ink-400 ring-1 ring-line">
             <Plug className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-[13px] font-bold text-ink-900">
-              Autres intégrations à venir
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-ink-500">
+            <span className="inline-flex items-center rounded-full bg-paper-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">
+              Bientôt disponible
+            </span>
+            <p className="mt-1 text-[11.5px] text-ink-500">
               WhatsApp Business, Moneroo (paiements), Africa&apos;s Talking
               (SMS), Resend (emails transactionnels)…
             </p>
           </div>
         </div>
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsCard>
   );
 }
 

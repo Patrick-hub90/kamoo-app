@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { Check, Mail, Pencil, Phone, Store, User, X } from "lucide-react";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,25 +30,20 @@ export default function ComptePage() {
   };
 
   return (
-    <div className="space-y-5">
-      {/* IDENTITÉ — card avec avatar */}
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-base font-extrabold text-ink-900">
-          Votre identité
-        </h2>
-        <p className="mt-0.5 text-[12.5px] text-ink-500">
-          Ces informations sont visibles par vos partenaires (closeuses,
-          livreurs, transitaires).
-        </p>
-
-        <div className="mt-5 flex items-center gap-5">
-          <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-gradient-to-br from-kamoo-orange-500 to-kamoo-blue-700 text-xl font-extrabold text-white shadow-[var(--shadow-kamoo-sm)]">
+    <SettingsCard>
+      {/* IDENTITÉ */}
+      <SettingsSection
+        title="Votre identité"
+        description="Ces informations sont visibles par vos partenaires (closeuses, livreurs, transitaires)."
+      >
+        <div className="flex items-center gap-4">
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-gradient-to-br from-kamoo-orange-500 to-kamoo-blue-700 text-lg font-extrabold text-white shadow-kamoo-sm">
             {profile.initials}
           </div>
           <div className="flex-1">
             <button
               type="button"
-              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-700 hover:bg-paper-2"
+              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2"
             >
               Changer la photo
             </button>
@@ -54,7 +53,7 @@ export default function ComptePage() {
           </div>
         </div>
 
-        <div className="mt-5 divide-y divide-line">
+        <div className="mt-4 divide-y divide-line border-t border-line">
           <EditableRow
             label="Prénom"
             icon={<User className="h-4 w-4" />}
@@ -75,19 +74,14 @@ export default function ComptePage() {
             hint="Affiché sur vos factures et reçus client"
           />
         </div>
-      </section>
+      </SettingsSection>
 
       {/* CONTACT */}
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-base font-extrabold text-ink-900">
-          Contact
-        </h2>
-        <p className="mt-0.5 text-[12.5px] text-ink-500">
-          Utilisé pour vous notifier des événements importants et pour la
-          double authentification.
-        </p>
-
-        <div className="mt-5 divide-y divide-line">
+      <SettingsSection
+        title="Contact"
+        description="Utilisé pour vous notifier des événements importants et pour la double authentification."
+      >
+        <div className="divide-y divide-line">
           <EditableRow
             label="Adresse email"
             icon={<Mail className="h-4 w-4" />}
@@ -105,14 +99,14 @@ export default function ComptePage() {
             hint="Utilisé pour la connexion par code OTP"
           />
         </div>
-      </section>
+      </SettingsSection>
 
       {/* INFORMATIONS COMPTE — read-only */}
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-base font-extrabold text-ink-900">
-          Informations du compte
-        </h2>
-        <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">
+      <SettingsSection
+        title="Informations du compte"
+        description="Détails techniques de votre espace Kamoo, en lecture seule."
+      >
+        <dl className="grid grid-cols-2 gap-4 text-[13px]">
           <Info label="Plan" value={profile.plan.toUpperCase()} highlight />
           <Info
             label="Compte créé le"
@@ -134,8 +128,8 @@ export default function ComptePage() {
             })}
           />
         </dl>
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsCard>
   );
 }
 

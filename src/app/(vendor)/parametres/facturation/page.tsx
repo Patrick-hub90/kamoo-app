@@ -3,6 +3,10 @@
 import { ArrowRight, Check, Download, Receipt, Sparkles } from "lucide-react";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { formatXOF } from "@/lib/format";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -99,18 +103,18 @@ export default function FacturationPage() {
   const currentPlan = PLANS.find((p) => p.id === MOCK_VENDOR.plan)!;
 
   return (
-    <div className="space-y-5">
-      {/* Plan actuel */}
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
+    <SettingsCard>
+      {/* ABONNEMENT ACTUEL */}
+      <SettingsSection
+        title="Abonnement actuel"
+        description="Votre formule Kamoo en cours, son tarif mensuel et la date du prochain prélèvement."
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-500">
-              Plan actuel
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <h2 className="font-display text-xl font-extrabold text-ink-900 sm:text-2xl">
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-xl font-extrabold text-ink-900 sm:text-2xl">
                 Kamoo {currentPlan.name}
-              </h2>
+              </span>
               {currentPlan.highlight && (
                 <Sparkles className="h-4 w-4 text-kamoo-orange-500" />
               )}
@@ -141,32 +145,34 @@ export default function FacturationPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </SettingsSection>
 
-      {/* Autres plans */}
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
-        <h3 className="font-display text-base font-extrabold text-ink-900">
-          Changer de plan
-        </h3>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* CHANGER DE PLAN */}
+      <SettingsSection
+        title="Changer de plan"
+        description="Comparez les formules et passez à l'offre adaptée à votre croissance."
+        wide
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {PLANS.map((p) => (
             <PlanCard key={p.id} plan={p} isCurrent={p.id === currentPlan.id} />
           ))}
         </div>
-      </section>
+      </SettingsSection>
 
-      {/* Historique des factures */}
-      <section className="rounded-2xl border border-line bg-white p-4 sm:p-6">
-        <h3 className="font-display text-base font-extrabold text-ink-900">
-          Historique des factures
-        </h3>
-        <div className="mt-4 flex flex-col gap-2">
+      {/* HISTORIQUE DES FACTURES */}
+      <SettingsSection
+        title="Historique des factures"
+        description="Retrouvez et téléchargez vos factures payées des derniers mois."
+        wide
+      >
+        <div className="flex flex-col gap-2">
           {MOCK_INVOICES.map((inv) => (
             <InvoiceRow key={inv.id} invoice={inv} />
           ))}
         </div>
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsCard>
   );
 }
 

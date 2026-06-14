@@ -132,9 +132,9 @@ export default function ParametresLayout({
               </nav>
             </aside>
 
-            {/* CONTENU — colonne lisible pour des formulaires */}
+            {/* CONTENU — deux colonnes (rail descriptif + contrôles) */}
             <div className="min-w-0 flex-1">
-              <div className="mx-auto max-w-3xl">{children}</div>
+              <div className="mx-auto max-w-4xl">{children}</div>
             </div>
           </div>
         </>

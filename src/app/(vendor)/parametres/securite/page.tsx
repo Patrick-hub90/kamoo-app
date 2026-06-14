@@ -16,6 +16,10 @@ import {
   MOCK_VENDOR_SESSIONS,
   type VendorSession,
 } from "@/lib/data/mock-vendor";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -47,17 +51,13 @@ export default function SecuritePage() {
     pwd.next === pwd.confirm;
 
   return (
-    <div className="space-y-5">
+    <SettingsCard>
       {/* CHANGEMENT MOT DE PASSE */}
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-base font-extrabold text-ink-900">
-          Mot de passe
-        </h2>
-        <p className="mt-0.5 text-[12.5px] text-ink-500">
-          Choisissez un mot de passe d'au moins 8 caractères, unique à Kamoo.
-        </p>
-
-        <div className="mt-5 space-y-4">
+      <SettingsSection
+        title="Mot de passe"
+        description="Choisissez un mot de passe d'au moins 8 caractères, unique à Kamoo."
+      >
+        <div className="space-y-4">
           <PwdField
             label="Mot de passe actuel"
             value={pwd.current}
@@ -109,61 +109,58 @@ export default function SecuritePage() {
             Mettre à jour
           </button>
         </div>
-      </section>
+      </SettingsSection>
 
       {/* 2FA */}
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <div className="flex items-start gap-4">
+      <SettingsSection
+        title="Double authentification"
+        description="Reçoit un code OTP par SMS à chaque connexion sur un nouvel appareil. Recommandé pour protéger votre activité."
+      >
+        <div className="flex items-start gap-4 rounded-xl border border-line bg-paper-2/40 p-4">
           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
             <Shield className="h-5 w-5" />
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-base font-extrabold text-ink-900">
-                Double authentification
-              </h2>
+              <span className="text-[13.5px] font-bold text-ink-900">
+                {twoFA ? "Protection activée" : "Protection désactivée"}
+              </span>
               <Toggle checked={twoFA} onChange={setTwoFA} />
             </div>
-            <p className="mt-0.5 text-[12.5px] text-ink-500">
-              Reçoit un code OTP par SMS à chaque connexion sur un nouveau
-              appareil. Recommandé pour protéger votre activité.
-            </p>
-            {twoFA && (
-              <div className="mt-3 rounded-lg bg-emerald-50/60 p-3 text-[12px] text-emerald-800">
-                ✓ Activée — un code à 6 chiffres vous sera envoyé sur{" "}
-                <code className="font-mono font-semibold">
-                  +221 77 412 88 03
-                </code>{" "}
+            {twoFA ? (
+              <div className="mt-2 rounded-lg bg-emerald-50/60 p-3 text-[12px] text-emerald-800">
+                ✓ Un code à 6 chiffres vous sera envoyé sur{" "}
+                <code className="font-mono font-semibold">+221 77 412 88 03</code>{" "}
                 à chaque connexion.
               </div>
+            ) : (
+              <p className="mt-1 text-[12px] text-ink-500">
+                Activez la double authentification pour sécuriser l&apos;accès à
+                votre activité.
+              </p>
             )}
           </div>
         </div>
-      </section>
+      </SettingsSection>
 
       {/* SESSIONS ACTIVES */}
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-base font-extrabold text-ink-900">
-              Sessions actives
-            </h2>
-            <p className="mt-0.5 text-[12.5px] text-ink-500">
-              Appareils sur lesquels votre compte est connecté en ce moment.
-            </p>
-          </div>
-          {sessions.filter((s) => !s.isCurrent).length > 0 && (
+      <SettingsSection
+        title="Sessions actives"
+        description="Appareils sur lesquels votre compte est connecté en ce moment."
+      >
+        {sessions.filter((s) => !s.isCurrent).length > 0 && (
+          <div className="mb-3 flex justify-end">
             <button
               type="button"
               onClick={handleRevokeAll}
-              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 hover:bg-red-50"
+              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 transition hover:bg-red-50"
             >
               Déconnecter tous les autres
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="mt-5 flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           {sessions.map((session) => (
             <SessionRow
               key={session.id}
@@ -172,9 +169,8 @@ export default function SecuritePage() {
             />
           ))}
         </div>
-      </section>
-
-    </div>
+      </SettingsSection>
+    </SettingsCard>
   );
 }
 

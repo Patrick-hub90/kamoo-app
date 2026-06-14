@@ -9,6 +9,10 @@ import {
   type VendorWallet,
   type WalletKind,
 } from "@/lib/data/mock-vendor";
+import {
+  SettingsCard,
+  SettingsSection,
+} from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -54,52 +58,49 @@ export default function WalletsPage() {
   });
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-2xl border border-line bg-white p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-base font-extrabold text-ink-900">
-              Vos wallets
-            </h2>
-            <p className="mt-0.5 text-[12.5px] text-ink-500">
-              Numéros sur lesquels vos livreurs envoient le cash encaissé. Le
-              wallet marqué comme défaut est utilisé en priorité.
-            </p>
+    <>
+      <SettingsCard>
+        <SettingsSection
+          title="Vos wallets"
+          description="Numéros sur lesquels vos livreurs envoient le cash encaissé. Le wallet marqué comme défaut est utilisé en priorité."
+          wide
+        >
+          <div className="mb-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-kamoo-orange-500 px-4 py-2 text-[13px] font-bold text-white transition hover:bg-kamoo-orange-600"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-kamoo-orange-500 px-4 py-2 text-[13px] font-bold text-white transition hover:bg-kamoo-orange-600"
-          >
-            <Plus className="h-4 w-4" />
-            Ajouter
-          </button>
-        </div>
 
-        {sortedWallets.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed border-line bg-paper-2/40 p-8 text-center">
-            <Smartphone className="mx-auto h-8 w-8 text-ink-400" />
-            <p className="mt-2 text-[13px] font-semibold text-ink-700">
-              Aucun wallet enregistré
-            </p>
-            <p className="mt-1 text-[11.5px] text-ink-500">
-              Ajoutez au moins un numéro Wave ou Orange Money pour recevoir
-              les versements de vos livreurs.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-5 flex flex-col gap-2">
-            {sortedWallets.map((wallet) => (
-              <WalletRow
-                key={wallet.id}
-                wallet={wallet}
-                onDelete={() => handleDelete(wallet.id)}
-                onSetDefault={() => handleSetDefault(wallet.kind, wallet.id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+          {sortedWallets.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-line bg-paper-2/40 p-8 text-center">
+              <Smartphone className="mx-auto h-8 w-8 text-ink-400" />
+              <p className="mt-2 text-[13px] font-semibold text-ink-700">
+                Aucun wallet enregistré
+              </p>
+              <p className="mt-1 text-[11.5px] text-ink-500">
+                Ajoutez au moins un numéro Wave ou Orange Money pour recevoir
+                les versements de vos livreurs.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {sortedWallets.map((wallet) => (
+                <WalletRow
+                  key={wallet.id}
+                  wallet={wallet}
+                  onDelete={() => handleDelete(wallet.id)}
+                  onSetDefault={() => handleSetDefault(wallet.kind, wallet.id)}
+                />
+              ))}
+            </div>
+          )}
+        </SettingsSection>
+      </SettingsCard>
 
       {addOpen && (
         <AddWalletDialog
@@ -108,7 +109,7 @@ export default function WalletsPage() {
           onAdd={handleAdd}
         />
       )}
-    </div>
+    </>
   );
 }
 
