@@ -143,7 +143,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="font-mono-kamoo text-[22px] font-extrabold tracking-tight text-ink-900">
+            <h1 className="font-mono-kamoo text-[22px] font-semibold tracking-tight text-ink-900">
               {displayOrderNo(a)}
             </h1>
             <CopyButton value={displayOrderNo(a)} />
@@ -154,7 +154,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
               {a.status === "livraison_en_cours" && (
                 <button
                   onClick={() => closing.markDelivered(a.id)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-3.5 text-[13px] font-bold text-white transition hover:bg-kamoo-orange-600"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
                 >
                   <CheckCircle2 className="h-4 w-4" /> Marquer livrée
                 </button>
@@ -162,7 +162,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
               {alerte && (
                 <button
                   onClick={() => closing.retryDelivery(a.id)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 text-[13px] font-bold text-amber-800 transition hover:bg-amber-100"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 text-[13px] font-semibold text-amber-800 transition hover:bg-amber-100"
                 >
                   Relancer la livraison
                 </button>
@@ -184,10 +184,10 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <AlertTriangle className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10.5px] font-bold uppercase tracking-wider text-red-700">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-red-700">
                     Alerte du livreur · {d.name}
                   </div>
-                  <p className="mt-1 text-[13.5px] font-bold leading-snug text-ink-900">
+                  <p className="mt-1 text-[13.5px] font-semibold leading-snug text-ink-900">
                     « {d.livreurNote || "Aucune note fournie"} »
                   </p>
                 </div>
@@ -198,12 +198,12 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
             <div className="rounded-2xl border border-line p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
                     {delivered ? "Encaissé à la livraison" : "À encaisser à la livraison"}
                   </div>
-                  <div className="mt-1 font-display text-[28px] font-extrabold leading-none tracking-tight text-ink-900 tabular-nums">
+                  <div className="mt-1 font-display text-[28px] font-semibold leading-none tracking-tight text-ink-900 tabular-nums">
                     {formatMoney(total, currency)}{" "}
-                    <span className="text-[14px] font-bold text-ink-400">
+                    <span className="text-[14px] font-semibold text-ink-400">
                       {currency === "XOF" ? "F CFA" : currency}
                     </span>
                   </div>
@@ -264,11 +264,11 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                             <Package className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-[13.5px] font-bold text-ink-900">{item.productName}</div>
+                            <div className="truncate text-[13.5px] font-semibold text-ink-900">{item.productName}</div>
                             <div className="font-mono-kamoo text-[11px] text-ink-400">{p?.sku ?? "—"}</div>
                           </div>
                           <span className="font-mono-kamoo text-[12.5px] text-ink-400">×{item.quantity}</span>
-                          <div className="w-24 text-right font-display text-[14px] font-extrabold text-ink-900">
+                          <div className="w-24 text-right font-display text-[14px] font-semibold text-ink-900">
                             {formatMoney(lineTotal, currency)}
                           </div>
                         </div>
@@ -276,10 +276,10 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                     })}
                   </div>
                   <div className="mt-4 flex items-baseline justify-between border-t-2 border-ink-200 pt-3">
-                    <span className="text-[14px] font-extrabold text-ink-900">Total à encaisser</span>
-                    <span className="font-display text-[18px] font-extrabold text-ink-900 tabular-nums">
+                    <span className="text-[14px] font-semibold text-ink-900">Total à encaisser</span>
+                    <span className="font-display text-[18px] font-semibold text-ink-900 tabular-nums">
                       {formatMoney(total, currency)}{" "}
-                      <span className="text-[12px] font-bold text-ink-400">
+                      <span className="text-[12px] font-semibold text-ink-400">
                         {currency === "XOF" ? "F" : currency}
                       </span>
                     </span>
@@ -300,7 +300,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                               className={cn(
                                 "grid h-[26px] w-[26px] place-items-center rounded-full",
                                 isFirst
-                                  ? "bg-kamoo-orange-500 text-white ring-4 ring-kamoo-orange-500/15"
+                                  ? "bg-kamoo-blue-900 text-white"
                                   : "border border-line bg-paper-2 text-ink-500",
                               )}
                             >
@@ -310,7 +310,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                           </div>
                           <div className={cn("flex-1", !isLast && "pb-4")}>
                             <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-[13.5px] font-bold text-ink-900">{e.label}</span>
+                              <span className="text-[13.5px] font-semibold text-ink-900">{e.label}</span>
                               <span className="shrink-0 whitespace-nowrap font-mono-kamoo text-[11px] text-ink-400">
                                 {fmtShort(e.at)}
                               </span>
@@ -343,21 +343,21 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <div className="flex items-center gap-3">
                     <Avatar name={d.name} bg={d.avatarBg} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[15px] font-extrabold text-ink-900">{d.name}</div>
+                      <div className="text-[15px] font-semibold text-ink-900">{d.name}</div>
                       <div className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-500">
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span className="font-bold text-ink-700">{d.rating}</span>
+                        <span className="font-semibold text-ink-700">{d.rating}</span>
                         {d.deliveriesCount != null && <span>· {d.deliveriesCount} livraisons</span>}
                       </div>
                     </div>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider",
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
                         alerte
                           ? "bg-red-50 text-red-600"
                           : delivered
                             ? "bg-emerald-50 text-emerald-700"
-                            : "bg-kamoo-orange-50 text-kamoo-orange-600",
+                            : "bg-amber-50 text-amber-700",
                       )}
                     >
                       {alerte ? "Alerte" : delivered ? "Livré" : "En course"}
@@ -370,7 +370,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   )}
                   <button
                     onClick={contactLivreur}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-bold text-ink-900 transition hover:bg-paper-2"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-semibold text-ink-900 transition hover:bg-paper-2"
                   >
                     <MessageSquare className="h-3.5 w-3.5" /> Contacter {d.name.split(" ")[0]}
                   </button>
@@ -396,7 +396,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <div className="flex items-center gap-3">
                     <Avatar name={a.client.name} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[15px] font-extrabold text-ink-900">{a.client.name}</div>
+                      <div className="text-[15px] font-semibold text-ink-900">{a.client.name}</div>
                       <div className="text-[12px] text-ink-500">
                         {a.client.isReturning ? "Client régulier" : "Nouveau client"}
                         {a.client.orderCount ? ` · ${a.client.orderCount}ᵉ commande` : ""}
@@ -415,7 +415,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                   <div className="mt-4 grid grid-cols-2 gap-2.5">
                     <Link
                       href={`/clients/${a.client.id}`}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-bold text-ink-900 transition hover:bg-paper-2"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-white py-2.5 text-[12.5px] font-semibold text-ink-900 transition hover:bg-paper-2"
                     >
                       <User className="h-3.5 w-3.5" /> Voir client
                     </Link>
@@ -424,14 +424,14 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                         href={`https://wa.me/${a.client.whatsapp.replace(/\D/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-[12.5px] font-bold text-white transition hover:bg-emerald-700"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-[12.5px] font-semibold text-white transition hover:bg-emerald-700"
                       >
                         <PhoneCall className="h-3.5 w-3.5" /> WhatsApp
                       </a>
                     ) : (
                       <a
                         href={`tel:${a.client.phone.replace(/\s/g, "")}`}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-kamoo-blue-900 py-2.5 text-[12.5px] font-bold text-white transition hover:bg-kamoo-blue-800"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-kamoo-blue-900 py-2.5 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
                       >
                         <PhoneCall className="h-3.5 w-3.5" /> Appeler
                       </a>
@@ -503,12 +503,10 @@ function NoteCard({
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-line bg-white">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-        <div className="flex items-center gap-2 text-[15px] font-extrabold text-ink-900">
-          <span className="text-ink-400">
-            <MessageSquare className="h-3.5 w-3.5" />
-          </span>
+    <section className="rounded-2xl border border-line bg-white p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+          <MessageSquare className="h-3.5 w-3.5" />
           Note pour le livreur
         </div>
         {!editing && (
@@ -523,7 +521,7 @@ function NoteCard({
           </button>
         )}
       </div>
-      <div className="p-5">
+      <div>
         {editing ? (
           <div className="flex flex-col gap-2.5">
             <textarea
@@ -543,7 +541,7 @@ function NoteCard({
               </button>
               <button
                 onClick={save}
-                className="rounded-lg bg-kamoo-blue-900 px-3.5 py-1.5 text-[12.5px] font-bold text-white transition hover:bg-kamoo-blue-800"
+                className="rounded-lg bg-kamoo-blue-900 px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
               >
                 Enregistrer
               </button>
@@ -576,13 +574,13 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-line bg-white">
-      <div className="flex items-center gap-2 border-b border-line px-5 py-3.5 text-[15px] font-extrabold text-ink-900">
-        {icon && <span className="text-ink-400">{icon}</span>}
+    <section className="rounded-2xl border border-line bg-white p-5">
+      <div className="mb-3.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+        {icon}
         {title}
-        {count != null && <span className="text-ink-400">· {count}</span>}
+        {count != null && <span>· {count}</span>}
       </div>
-      <div className="p-5">{children}</div>
+      {children}
     </section>
   );
 }
@@ -590,7 +588,7 @@ function Card({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] font-bold uppercase tracking-wider text-ink-400">{label}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">{label}</div>
       <div className="mt-0.5 text-[13.5px] font-semibold text-ink-800">{children}</div>
     </div>
   );
@@ -605,7 +603,7 @@ function Avatar({ name, bg }: { name: string; bg?: string }) {
   return (
     <div
       className={cn(
-        "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[13px] font-extrabold",
+        "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[13px] font-semibold",
         bg ? "text-white" : "bg-paper-2 text-ink-700",
       )}
       style={bg ? { background: bg } : undefined}
