@@ -1,22 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { use } from "react";
-import { useClientsState } from "@/lib/hooks/use-clients-state";
+import { use, useState } from "react";
 import {
   ArrowLeft,
   Calendar,
-  Hash,
+  ChevronRight,
   MapPin,
   MessageCircle,
   Package,
+  Pencil,
   Phone,
-  TrendingUp,
-  Wallet,
+  Star,
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
-import { getClient } from "@/lib/data/mock-clients";
-import { MOCK_CLOSING_ASSIGNMENTS } from "@/lib/data/mock-closing";
+import { useClientsState } from "@/lib/hooks/use-clients-state";
+import { useClosingState } from "@/lib/hooks/use-closing-state";
 import {
   CHANNEL_LABELS,
   daysSinceLastOrder,
@@ -25,21 +24,19 @@ import {
   getInitials,
   getWhatsappLink,
   SEGMENT_LABELS,
-  SEGMENT_TONE,
   type Client,
 } from "@/lib/types/client";
 import {
   orderTotalQty,
   orderTotalXof,
+  displayOrderNo,
   type ClosingAssignment,
   type ClosingStatus,
 } from "@/lib/types/closing";
 import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type PageProps = {
-  params: Promise<{ id: string }>;
-};
+type PageProps = { params: Promise<{ id: string }> };
 
 const COUNTRY_NAME: Record<Client["country"], string> = {
   SN: "Sénégal",
@@ -47,71 +44,66 @@ const COUNTRY_NAME: Record<Client["country"], string> = {
   CM: "Cameroun",
 };
 
-/**
- * Statut simplifié pour la fiche client (vue vendeur).
- * Toutes les étapes intermédiaires (rappele, injoignable, livraison en cours)
- * roulent en "En attente" — pas pertinent dans l'historique d'un client.
- */
-type SimpleStatus = "en_attente" | "livre" | "echoue";
-
+/* Statut simplifié pour l'historique : En attente / Livré / Annulé */
+type SimpleStatus = "en_attente" | "livre" | "annule";
 function simplifyStatus(s: ClosingStatus): SimpleStatus {
   if (s === "livre") return "livre";
-  if (s === "annule") return "echoue";
+  if (s === "annule") return "annule";
   return "en_attente";
 }
-
-const SIMPLE_STATUS_LABELS: Record<SimpleStatus, string> = {
-  en_attente: "En attente",
-  livre: "Livré",
-  echoue: "Échoué",
+const SIMPLE_STATUS: Record<SimpleStatus, { label: string; bg: string; fg: string }> = {
+  en_attente: { label: "En attente", bg: "bg-amber-50", fg: "text-amber-700" },
+  livre: { label: "Livré", bg: "bg-emerald-50", fg: "text-emerald-700" },
+  annule: { label: "Annulé", bg: "bg-paper-2", fg: "text-ink-500" },
 };
 
-const SIMPLE_STATUS_TONE: Record<SimpleStatus, { bg: string; fg: string }> = {
-  en_attente: { bg: "bg-amber-50", fg: "text-amber-700" },
-  livre: { bg: "bg-emerald-50", fg: "text-emerald-700" },
-  echoue: { bg: "bg-red-50", fg: "text-red-700" },
+/* Segment → teinte sobre */
+const SEGMENT_TONE: Record<string, string> = {
+  prospect: "bg-emerald-50 text-emerald-700",
+  nouveau: "bg-kamoo-blue-50 text-kamoo-blue-700",
+  fidele: "bg-kamoo-orange-50 text-kamoo-orange-700",
 };
 
-function formatLongDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+function fmtLong(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 }
-
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "2-digit",
-  });
+function fmtShort(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+function recency(days: number): string {
+  if (days === 0) return "aujourd'hui";
+  if (days < 7) return `il y a ${days} j`;
+  if (days < 60) return `il y a ${Math.floor(days / 7)} sem`;
+  return `il y a ${Math.floor(days / 30)} mois`;
 }
 
 export default function ClientDetailPage({ params }: PageProps) {
   const { id } = use(params);
-  const { getById } = useClientsState();
+  const { getById, update } = useClientsState();
+  const allOrders = useClosingState().all;
   const client = getById(id);
+
   if (!client) {
     return (
       <div className="grid min-h-[60vh] place-items-center bg-paper px-6 text-center">
         <div>
-          <p className="text-[15px] font-semibold text-ink-900">Client introuvable</p>
-          <Link href="/clients" className="mt-4 inline-flex rounded-lg bg-kamoo-blue-900 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800">Retour aux clients</Link>
+          <p className="text-[15px] font-medium text-ink-900">Client introuvable</p>
+          <Link
+            href="/clients"
+            className="mt-4 inline-flex rounded-lg bg-kamoo-blue-900 px-4 py-2 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
+          >
+            Retour aux clients
+          </Link>
         </div>
       </div>
     );
   }
 
-  const orders = MOCK_CLOSING_ASSIGNMENTS.filter(
-    (o) => o.client.id === client.id,
-  ).sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  const orders = allOrders
+    .filter((o) => o.client.id === client.id)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const segment = getClientSegment(client);
-  const tone = SEGMENT_TONE[segment];
   const daysSince = daysSinceLastOrder(client);
   const delivRate = deliveryRate(client);
 
@@ -121,246 +113,223 @@ export default function ClientDetailPage({ params }: PageProps) {
     `Bonjour ${client.name.split(" ")[0]}, c'est Kamoo. `,
   );
 
+  /* Produits favoris — dérivés des vraies commandes du client */
+  const favCount = new Map<string, { name: string; qty: number }>();
+  for (const o of orders) {
+    for (const it of o.items) {
+      const k = it.productId ?? it.productName;
+      const cur = favCount.get(k) ?? { name: it.productName, qty: 0 };
+      cur.qty += it.quantity;
+      favCount.set(k, cur);
+    }
+  }
+  const favoris = [...favCount.values()].sort((a, b) => b.qty - a.qty).slice(0, 3);
+
+  /* Signal de relance / risque (insight) */
+  const insight =
+    delivRate > 0 && delivRate < 50
+      ? { label: "Fiabilité à surveiller", tone: "amber" as const }
+      : daysSince > 45
+        ? { label: `À relancer · ${recency(daysSince)}`, tone: "amber" as const }
+        : segment === "fidele"
+          ? { label: "Cliente fidèle", tone: "emerald" as const }
+          : null;
+
+  const m = (n: number) => formatXOF(n);
+
   return (
-    <div className="flex flex-col">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 border-b border-line bg-white px-10 py-5">
-        <Link
-          href="/clients"
-          className="grid h-9 w-9 place-items-center rounded-lg bg-paper-2 text-ink-500 hover:text-ink-700"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            Clients · Fiche client
-          </div>
-          <div className="mt-1 flex items-center gap-3">
-            <div
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[13px] font-bold text-white shadow-sm"
+    <div className="min-h-full bg-paper">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
+        <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
+          {/* HEADER */}
+          <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-6 py-4">
+            <Link
+              href="/clients"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-paper-2 text-ink-500 transition hover:text-ink-700"
+              aria-label="Retour"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <span
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[13px] font-medium text-white"
               style={{ background: client.avatarBg }}
             >
               {getInitials(client.name)}
-            </div>
-            <h1 className="font-display text-xl font-extrabold text-ink-900">
-              {client.name}
-            </h1>
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset",
-                tone.bg,
-                tone.fg,
-                tone.ring,
-              )}
-            >
-              {SEGMENT_LABELS[segment]}
             </span>
-          </div>
-        </div>
-
-        <a
-          href={`tel:${client.phone.replace(/\s/g, "")}`}
-          className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 hover:bg-paper-2"
-        >
-          <Phone className="h-3.5 w-3.5" />
-          Appeler
-        </a>
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-[13px] font-bold text-white transition hover:bg-emerald-700"
-        >
-          <MessageCircle className="h-3.5 w-3.5" />
-          WhatsApp
-        </a>
-      </div>
-
-      {/* BODY 2 colonnes */}
-      <div className="grid grid-cols-[1.5fr_1fr] gap-5 px-10 py-6">
-        {/* ═══ COLONNE GAUCHE ═══ */}
-        <div className="flex flex-col gap-4">
-          {/* STATS */}
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              Performance client
-            </div>
-            <div className="grid grid-cols-4 gap-3">
-              <KpiCell
-                icon={<Package className="h-3.5 w-3.5" />}
-                label="Commandes"
-                value={String(client.totalOrders)}
-                sub={`${client.totalDeliveredOrders} livrées`}
-                tone="blue"
-              />
-              <KpiCell
-                icon={<Wallet className="h-3.5 w-3.5" />}
-                label="Valeur client"
-                value={`${formatXOF(client.totalSpentXof, false)} F`}
-                sub={
-                  client.totalDeliveredOrders > 0
-                    ? `${formatXOF(client.avgBasketXof, false)} F / panier`
-                    : undefined
-                }
-                tone="green"
-                highlight={client.totalSpentXof > 0}
-              />
-              <KpiCell
-                icon={<TrendingUp className="h-3.5 w-3.5" />}
-                label="Taux livraison"
-                value={`${delivRate}%`}
-                sub={
-                  client.totalCancelledOrders > 0
-                    ? `${client.totalCancelledOrders} annulée${client.totalCancelledOrders > 1 ? "s" : ""}`
-                    : undefined
-                }
-                tone={
-                  delivRate >= 80
-                    ? "green"
-                    : delivRate >= 50
-                      ? "orange"
-                      : "red"
-                }
-              />
-              <KpiCell
-                icon={<Calendar className="h-3.5 w-3.5" />}
-                label="Dernière cmd"
-                value={
-                  daysSince === 0
-                    ? "Auj."
-                    : daysSince < 7
-                      ? `${daysSince}j`
-                      : daysSince < 60
-                        ? `${Math.floor(daysSince / 7)}sem`
-                        : `${Math.floor(daysSince / 30)}m`
-                }
-                sub={formatShortDate(client.lastOrderDate)}
-                tone={daysSince > 60 ? "orange" : "blue"}
-              />
-            </div>
-          </div>
-
-          {/* HISTORIQUE COMMANDES — détaillé */}
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                Historique commandes · {orders.length}
-              </h2>
-            </div>
-
-            {orders.length === 0 ? (
-              <EmptyOrders />
-            ) : (
-              <div className="flex flex-col gap-2.5">
-                {orders.map((o) => (
-                  <OrderCard key={o.id} order={o} clientId={client.id} />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-[18px] font-medium tracking-tight text-ink-900">{client.name}</h1>
+                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", SEGMENT_TONE[segment])}>
+                  {SEGMENT_LABELS[segment]}
+                </span>
+                {(client.tags ?? []).slice(0, 2).map((t) => (
+                  <span key={t} className="rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-medium text-ink-600">
+                    {t}
+                  </span>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* NOTES VENDEUR */}
-          {client.notes && (
-            <div className="rounded-2xl border border-line bg-white p-5">
-              <div className="mb-2 flex items-center gap-2">
-                <Hash className="h-3.5 w-3.5 text-ink-500" />
-                <h2 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                  Vos notes
-                </h2>
+              <div className="mt-0.5 text-[12px] text-ink-400">
+                Client depuis {fmtLong(client.firstOrderDate)}
               </div>
-              <p className="text-[13.5px] leading-relaxed text-ink-700">
-                {client.notes}
-              </p>
             </div>
-          )}
-        </div>
 
-        {/* ═══ COLONNE DROITE ═══ */}
-        <div className="flex flex-col gap-4">
-          {/* IDENTITÉ */}
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              Coordonnées
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <a
+                href={`tel:${client.phone.replace(/\s/g, "")}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2"
+              >
+                <Phone className="h-3.5 w-3.5" /> Appeler
+              </a>
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> Message WhatsApp
+              </a>
             </div>
-            <div className="flex flex-col gap-3">
-              <Row
-                label="Téléphone"
-                icon={<Phone className="h-3.5 w-3.5" />}
-                value={
-                  <span className="flex items-center gap-1.5">
-                    <span className="font-mono-kamoo font-bold">
-                      {client.phone}
-                    </span>
-                    <CopyButton value={client.phone} />
-                  </span>
-                }
-              />
-              {client.whatsapp && client.whatsapp !== client.phone && (
-                <Row
-                  label="WhatsApp"
-                  icon={<MessageCircle className="h-3.5 w-3.5" />}
-                  value={
-                    <span className="font-mono-kamoo font-bold">
-                      {client.whatsapp}
-                    </span>
-                  }
-                />
-              )}
-              <Row
-                label="Adresse"
-                icon={<MapPin className="h-3.5 w-3.5" />}
-                value={
-                  <div className="text-right">
-                    <div className="font-bold text-ink-900">{client.city}</div>
-                    {client.zone && (
-                      <div className="text-[11px] text-ink-500">
-                        {client.zone}
-                      </div>
-                    )}
-                    <div className="text-[10.5px] text-ink-500">
-                      {COUNTRY_NAME[client.country]}
-                    </div>
+          </header>
+
+          <div className="p-6">
+            {/* HÉROS — valeur client + signaux clés */}
+            <div className="rounded-xl border border-line p-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
+                    Valeur client (encaissée)
                   </div>
-                }
-              />
-            </div>
-          </div>
-
-          {/* SOURCE & FIDÉLITÉ */}
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              Acquisition & fidélité
-            </div>
-            <div className="flex flex-col gap-3 text-[13px]">
-              <Row
-                label="Canal d'acquisition"
-                value={
-                  <span className="inline-flex items-center rounded-full bg-paper-2 px-2 py-0.5 text-[12px] font-semibold text-ink-700">
-                    {CHANNEL_LABELS[client.acquisitionChannel]}
-                  </span>
-                }
-              />
-              <Row
-                label="1re commande"
-                value={
-                  <span className="font-bold text-ink-900">
-                    {formatLongDate(client.firstOrderDate)}
-                  </span>
-                }
-              />
-              <Row
-                label="Dernière commande"
-                value={
+                  <div className="mt-1 font-display text-[26px] font-medium leading-none tracking-tight text-ink-900 tabular-nums">
+                    {m(client.totalSpentXof)}
+                  </div>
+                  {client.totalDeliveredOrders > 0 && (
+                    <div className="mt-1.5 text-[12px] text-ink-500">
+                      Panier moyen{" "}
+                      <span className="font-medium text-ink-700">{m(client.avgBasketXof)}</span>
+                    </div>
+                  )}
+                </div>
+                {insight && (
                   <span
                     className={cn(
-                      "font-bold",
-                      daysSince > 60 ? "text-amber-700" : "text-ink-900",
+                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium",
+                      insight.tone === "emerald"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700",
                     )}
                   >
-                    {formatLongDate(client.lastOrderDate)}
+                    {insight.tone === "emerald" ? <Star className="h-3.5 w-3.5" /> : <Calendar className="h-3.5 w-3.5" />}
+                    {insight.label}
                   </span>
-                }
-              />
+                )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-y-3 border-t border-line pt-3 sm:grid-cols-4">
+                <Stat label="Commandes" value={String(client.totalOrders)} />
+                <Stat label="Livrées" value={String(client.totalDeliveredOrders)} divider />
+                <Stat
+                  label="Taux de livraison"
+                  value={`${delivRate}%`}
+                  tone={delivRate >= 80 ? "emerald" : delivRate >= 50 ? "amber" : "ink"}
+                  divider
+                />
+                <Stat
+                  label="Annulées"
+                  value={String(client.totalCancelledOrders)}
+                  divider
+                />
+              </div>
+            </div>
+
+            {/* CONTENU — 2 colonnes */}
+            <div className="mt-5 grid grid-cols-[1.55fr_1fr] items-start gap-5">
+              {/* GAUCHE */}
+              <div className="flex flex-col gap-5">
+                <Card title="Historique des commandes" count={orders.length}>
+                  {orders.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-line bg-paper-2/30 px-3 py-8 text-center">
+                      <Package className="mx-auto h-6 w-6 text-ink-400" />
+                      <p className="mt-2 text-[12.5px] font-medium text-ink-700">Aucune commande</p>
+                      <p className="mt-0.5 text-[11.5px] text-ink-400">
+                        Les commandes de ce client apparaîtront ici.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {orders.map((o) => (
+                        <OrderRow key={o.id} order={o} clientId={client.id} fmt={m} />
+                      ))}
+                    </div>
+                  )}
+                </Card>
+
+                {favoris.length > 0 && (
+                  <Card title="Produits favoris">
+                    <div className="flex flex-col gap-2">
+                      {favoris.map((f) => (
+                        <div key={f.name} className="flex items-center gap-3 rounded-lg bg-paper-2/40 p-2.5">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-ink-400 ring-1 ring-line">
+                            <Package className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-900">
+                            {f.name}
+                          </span>
+                          <span className="text-[12px] text-ink-500">
+                            {f.qty} commandé{f.qty > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </div>
+
+              {/* DROITE */}
+              <div className="flex flex-col gap-5">
+                <Card title="Coordonnées">
+                  <div className="flex flex-col gap-3">
+                    <Row label="Téléphone" icon={<Phone className="h-3.5 w-3.5" />}>
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-mono-kamoo">{client.phone}</span>
+                        <CopyButton value={client.phone} />
+                      </span>
+                    </Row>
+                    {client.whatsapp && client.whatsapp !== client.phone && (
+                      <Row label="WhatsApp" icon={<MessageCircle className="h-3.5 w-3.5" />}>
+                        <span className="font-mono-kamoo">{client.whatsapp}</span>
+                      </Row>
+                    )}
+                    <Row label="Adresse" icon={<MapPin className="h-3.5 w-3.5" />}>
+                      <div className="text-right">
+                        <div className="text-ink-900">{client.city}</div>
+                        {client.zone && <div className="text-[11.5px] text-ink-500">{client.zone}</div>}
+                        <div className="text-[11px] text-ink-400">{COUNTRY_NAME[client.country]}</div>
+                      </div>
+                    </Row>
+                  </div>
+                </Card>
+
+                <Card title="Acquisition & fidélité">
+                  <div className="flex flex-col gap-3">
+                    <Row label="Canal">
+                      <span className="rounded-full bg-paper-2 px-2 py-0.5 text-[12px] font-medium text-ink-700">
+                        {CHANNEL_LABELS[client.acquisitionChannel]}
+                      </span>
+                    </Row>
+                    <Row label="1ʳᵉ commande">
+                      <span className="text-ink-900">{fmtLong(client.firstOrderDate)}</span>
+                    </Row>
+                    <Row label="Dernière commande">
+                      <span className="text-ink-900">
+                        {fmtLong(client.lastOrderDate)}{" "}
+                        <span className="text-ink-400">· {recency(daysSince)}</span>
+                      </span>
+                    </Row>
+                  </div>
+                </Card>
+
+                <NoteCard client={client} onSave={(notes) => update(client.id, { notes })} />
+              </div>
             </div>
           </div>
         </div>
@@ -369,190 +338,185 @@ export default function ClientDetailPage({ params }: PageProps) {
   );
 }
 
-/* ─── Sub-components ─── */
+/* ─── Sous-composants ─── */
 
-function KpiCell({
-  icon,
+function Stat({
   label,
   value,
-  sub,
-  tone,
-  highlight,
+  tone = "ink",
+  divider,
 }: {
-  icon: React.ReactNode;
   label: string;
   value: string;
-  sub?: string;
-  tone: "blue" | "green" | "orange" | "red";
-  highlight?: boolean;
+  tone?: "ink" | "emerald" | "amber";
+  divider?: boolean;
 }) {
-  const toneClass = {
-    blue: { bg: "bg-kamoo-blue-50", fg: "text-kamoo-blue-700" },
-    green: { bg: "bg-emerald-50", fg: "text-emerald-700" },
-    orange: { bg: "bg-kamoo-orange-50", fg: "text-kamoo-orange-700" },
-    red: { bg: "bg-red-50", fg: "text-red-700" },
-  }[tone];
-
+  const color =
+    tone === "emerald" ? "text-emerald-700" : tone === "amber" ? "text-amber-700" : "text-ink-900";
   return (
-    <div
-      className={cn(
-        "rounded-xl border bg-white p-3.5",
-        highlight ? "border-emerald-200 ring-1 ring-emerald-100" : "border-line",
-      )}
-    >
-      <div
-        className={cn(
-          "mb-2 grid h-7 w-7 place-items-center rounded-lg",
-          toneClass.bg,
-          toneClass.fg,
-        )}
-      >
-        {icon}
-      </div>
-      <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "font-display mt-1 text-lg font-extrabold leading-none",
-          tone === "green" && highlight ? "text-emerald-700" : "text-ink-900",
-        )}
-      >
-        {value}
-      </div>
-      {sub && (
-        <div className="mt-1 text-[10.5px] font-semibold text-ink-500">
-          {sub}
-        </div>
-      )}
+    <div className={cn("px-3 first:pl-0", divider && "sm:border-l sm:border-line")}>
+      <div className="text-[12px] text-ink-500">{label}</div>
+      <div className={cn("mt-0.5 text-[17px] font-medium tabular-nums", color)}>{value}</div>
     </div>
   );
 }
 
-/**
- * Carte d'historique d'une commande — vue client.
- * Statut simplifié à 3 états : En attente / Livré / Échoué.
- * Liste tous les produits avec leur quantité.
- */
-function OrderCard({
+function OrderRow({
   order,
   clientId,
+  fmt,
 }: {
   order: ClosingAssignment;
   clientId: string;
+  fmt: (n: number) => string;
 }) {
   const total = orderTotalXof(order);
   const qty = orderTotalQty(order);
   const status = simplifyStatus(order.status);
-  const statusTone = SIMPLE_STATUS_TONE[status];
+  const tone = SIMPLE_STATUS[status];
+  const summary = order.items
+    .map((it) => `${it.productName} ×${it.quantity}`)
+    .join(", ");
 
   return (
     <Link
       href={`/closing/${order.id}?from=client&clientId=${clientId}`}
-      className="group flex items-start gap-3 rounded-xl border border-line bg-paper-2/30 p-3.5 transition hover:border-kamoo-blue-600 hover:bg-white"
+      className="group flex items-center gap-3 rounded-lg border border-line bg-paper-2/40 p-3 transition hover:border-kamoo-blue-200 hover:bg-white"
     >
-      {/* Stack d'icônes produits — max 3 visibles */}
-      <div className="flex shrink-0 -space-x-2">
-        {order.items.slice(0, 3).map((it, i) => (
-          <div
-            key={i}
-            className="grid h-10 w-10 place-items-center rounded-lg border-2 border-white text-lg"
-            style={{ background: it.productBg }}
-          >
-            {it.productEmoji}
-          </div>
-        ))}
-        {order.items.length > 3 && (
-          <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-white bg-ink-100 text-[10px] font-bold text-ink-700">
-            +{order.items.length - 3}
-          </div>
-        )}
-      </div>
-
-      {/* Corps */}
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-ink-400 ring-1 ring-line">
+        <Package className="h-4 w-4" />
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-mono-kamoo text-[12px] font-bold text-ink-900 group-hover:text-kamoo-blue-700">
-            {order.id}
+          <span className="font-mono-kamoo text-[12.5px] font-medium text-ink-900 group-hover:text-kamoo-blue-700">
+            {displayOrderNo(order)}
           </span>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold",
-              statusTone.bg,
-              statusTone.fg,
-            )}
-          >
-            {SIMPLE_STATUS_LABELS[status]}
+          <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-medium", tone.bg, tone.fg)}>
+            {tone.label}
           </span>
         </div>
-
-        {/* Liste détaillée produits */}
-        <ul className="mt-1.5 flex flex-col gap-0.5 text-[12.5px] text-ink-700">
-          {order.items.map((it, i) => (
-            <li key={i} className="flex items-baseline gap-1.5">
-              <span className="text-ink-300">·</span>
-              <span className="truncate">{it.productName}</span>
-              <span className="font-bold text-ink-900">× {it.quantity}</span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-1.5 text-[10.5px] text-ink-500">
-          {formatLongDate(order.createdAt)} · {qty} article
-          {qty > 1 ? "s" : ""}
+        <div className="mt-0.5 truncate text-[11.5px] text-ink-500">
+          {summary} · {fmtShort(order.createdAt)} · {qty} article{qty > 1 ? "s" : ""}
         </div>
       </div>
-
-      {/* Total */}
-      <div className="shrink-0 text-right">
-        <div
-          className={cn(
-            "font-display text-[15px] font-extrabold",
-            status === "livre"
-              ? "text-emerald-700"
-              : status === "echoue"
-                ? "text-ink-400 line-through"
-                : "text-ink-900",
-          )}
-        >
-          {formatXOF(total, false)}
-          <span className="ml-0.5 text-[10px] font-bold">F</span>
-        </div>
+      <div
+        className={cn(
+          "shrink-0 text-right font-display text-[14px] font-medium tabular-nums",
+          status === "annule" ? "text-ink-400 line-through" : "text-ink-900",
+        )}
+      >
+        {fmt(total)}
       </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-kamoo-blue-700" />
     </Link>
+  );
+}
+
+function Card({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-line bg-white p-5">
+      <div className="mb-3.5 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
+        {title}
+        {count != null && <span> · {count}</span>}
+      </div>
+      {children}
+    </section>
   );
 }
 
 function Row({
   label,
   icon,
-  value,
+  children,
 }: {
   label: string;
   icon?: React.ReactNode;
-  value: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3">
-      <span className="flex items-center gap-1.5 text-[12px] text-ink-500">
+    <div className="flex items-start justify-between gap-3 text-[13px]">
+      <span className="flex items-center gap-1.5 text-ink-500">
         {icon}
         {label}
       </span>
-      <div className="min-w-0 text-right text-[13px]">{value}</div>
+      <div className="min-w-0 text-right text-ink-900">{children}</div>
     </div>
   );
 }
 
-function EmptyOrders() {
+function NoteCard({
+  client,
+  onSave,
+}: {
+  client: Client;
+  onSave: (notes: string | undefined) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(client.notes ?? "");
+
+  const save = () => {
+    onSave(draft.trim() || undefined);
+    setEditing(false);
+  };
+
   return (
-    <div className="rounded-xl border border-dashed border-line bg-paper-2/30 px-3 py-6 text-center">
-      <Package className="mx-auto h-6 w-6 text-ink-400" />
-      <p className="mt-2 text-[12px] font-semibold text-ink-700">
-        Aucune commande enregistrée
-      </p>
-      <p className="mt-1 text-[11px] text-ink-500">
-        Les commandes liées à ce client apparaîtront ici
-      </p>
-    </div>
+    <section className="rounded-xl border border-line bg-white p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">Note</div>
+        {!editing && (
+          <button
+            onClick={() => {
+              setDraft(client.notes ?? "");
+              setEditing(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-ink-700 transition hover:bg-ink-100 hover:text-ink-900"
+          >
+            <Pencil className="h-3 w-3" /> {client.notes ? "Modifier" : "Ajouter"}
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <div className="flex flex-col gap-2.5">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={3}
+            autoFocus
+            placeholder="Ex : préfère être livrée le week-end · bonne payeuse…"
+            className="w-full resize-none rounded-lg border border-line bg-white px-3.5 py-2.5 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setEditing(false)}
+              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-700 transition hover:bg-paper-2"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={save}
+              className="rounded-lg bg-kamoo-blue-900 px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:bg-kamoo-blue-800"
+            >
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      ) : client.notes ? (
+        <p className="rounded-lg bg-amber-50/60 px-3.5 py-3 text-[13px] leading-relaxed text-ink-800">
+          {client.notes}
+        </p>
+      ) : (
+        <p className="text-[12.5px] italic text-ink-400">
+          Aucune note. Ajoutez un rappel sur ce client (préférences, fiabilité…).
+        </p>
+      )}
+    </section>
   );
 }

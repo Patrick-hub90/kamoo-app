@@ -13,8 +13,19 @@ import type { Client } from "@/lib/types/client";
  */
 export function useClientsState() {
   const [extra, setExtra] = useSessionStorageState<Client[]>("clients.extra", []);
+  /* Modifs appliquées PAR-DESSUS les fixtures et les extras (ex : notes
+   * vendeur éditées depuis la fiche). Persistées en sessionStorage. */
+  const [overrides, setOverrides] = useSessionStorageState<
+    Record<string, Partial<Client>>
+  >("clients.overrides", {});
 
-  const all = useMemo(() => [...extra, ...MOCK_CLIENTS], [extra]);
+  const all = useMemo(
+    () =>
+      [...extra, ...MOCK_CLIENTS].map((c) =>
+        overrides[c.id] ? { ...c, ...overrides[c.id] } : c,
+      ),
+    [extra, overrides],
+  );
 
   const addClient = useCallback(
     (c: Client) => setExtra((prev) => [c, ...prev]),
@@ -26,5 +37,11 @@ export function useClientsState() {
     [all],
   );
 
-  return { all, addClient, getById };
+  const update = useCallback(
+    (id: string, patch: Partial<Client>) =>
+      setOverrides((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } })),
+    [setOverrides],
+  );
+
+  return { all, addClient, getById, update };
 }
