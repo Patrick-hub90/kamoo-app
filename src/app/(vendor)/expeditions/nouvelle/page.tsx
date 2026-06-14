@@ -226,32 +226,31 @@ export default function NewExpeditionPage() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-paper">
-      {/* HEADER */}
-      <header className="shrink-0 border-b border-line bg-white">
-        <div className="mx-auto w-full max-w-6xl px-6 pb-4 pt-5">
-          <Link
-            href="/expeditions"
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 transition hover:text-ink-700"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Mes expéditions
-          </Link>
-          <h1 className="mt-1.5 text-[20px] font-bold tracking-tight text-ink-900">
-            Nouvelle expédition{" "}
-            <span className="font-semibold text-ink-400">· Chine → {country.name}</span>
-          </h1>
-          <div className="mt-4">
-            <StepIndicator step={step} />
+    <div className="min-h-full bg-paper">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
+        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm">
+          {/* HEADER (dans la carte) */}
+          <div className="border-b border-line px-6 pb-4 pt-5">
+            <Link
+              href="/expeditions"
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 transition hover:text-ink-700"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Mes expéditions
+            </Link>
+            <h1 className="mt-1.5 text-[20px] font-bold tracking-tight text-ink-900">
+              Nouvelle expédition{" "}
+              <span className="font-semibold text-ink-400">· Chine → {country.name}</span>
+            </h1>
+            <div className="mt-4">
+              <StepIndicator step={step} />
+            </div>
           </div>
-        </div>
-      </header>
 
-      {/* BODY — deux panneaux : étape focalisée + récapitulatif vivant */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] items-start gap-6 px-6 py-7">
-          {/* GAUCHE — étape active */}
-          <div className="min-w-0">
+          {/* DEUX PANNEAUX dans la carte */}
+          <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+            {/* GAUCHE — étape active */}
+            <div className="min-w-0 border-r border-line p-6">
             {step === 1 && (
               <Step1Colis
                 colis={colis}
@@ -284,25 +283,28 @@ export default function NewExpeditionPage() {
                 onResponsibilityChange={setResponsibilityAccepted}
               />
             )}
-          </div>
+            </div>
 
-          {/* DROITE — récapitulatif vivant (sticky) + CTA */}
-          <aside className="sticky top-6">
-            <SummaryRail
-              step={step}
-              colisCount={colis.length}
-              totalWeight={totalWeight}
-              transitaire={transitaire}
-              mode={mode}
-              country={country}
-              canNext={canNext}
-              canSubmit={canSubmit}
-              submitting={submitting}
-              onPrev={() => setStep((s) => Math.max(1, s - 1))}
-              onNext={() => canNext && setStep((s) => Math.min(3, s + 1))}
-              onSubmit={handleSubmit}
-            />
-          </aside>
+            {/* DROITE — récapitulatif vivant (panneau teinté) */}
+            <div className="bg-paper-2/40 p-6">
+              <div className="sticky top-6">
+                <SummaryRail
+                  step={step}
+                  colisCount={colis.length}
+                  totalWeight={totalWeight}
+                  transitaire={transitaire}
+                  mode={mode}
+                  country={country}
+                  canNext={canNext}
+                  canSubmit={canSubmit}
+                  submitting={submitting}
+                  onPrev={() => setStep((s) => Math.max(1, s - 1))}
+                  onNext={() => canNext && setStep((s) => Math.min(3, s + 1))}
+                  onSubmit={handleSubmit}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -343,19 +345,17 @@ function SummaryRail({
   const proceedDisabled = step < 3 ? !canNext : !canSubmit;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm">
-      <div className="border-b border-line px-5 py-3.5">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
-          Récapitulatif
-        </div>
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+        Récapitulatif
       </div>
 
-      <div className="p-5">
+      <div>
         {/* Trajet */}
-        <div className="flex items-center gap-3 rounded-xl border border-line bg-paper-2/40 p-3">
+        <div className="mt-3 flex items-center gap-3 rounded-xl border border-line bg-white p-3">
           <div className="min-w-0 flex-1 text-center">
             <div className="text-[10.5px] text-ink-500">Origine</div>
-            <div className="truncate text-[13px] font-bold text-ink-900">🇨🇳 Guangzhou</div>
+            <div className="truncate text-[13px] font-bold text-ink-900">Guangzhou</div>
           </div>
           <div className="flex flex-col items-center text-kamoo-orange-500">
             {step >= 2 ? <ModeIcon className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
@@ -366,7 +366,7 @@ function SummaryRail({
           <div className="min-w-0 flex-1 text-center">
             <div className="text-[10.5px] text-ink-500">Destination</div>
             <div className="truncate text-[13px] font-bold text-ink-900">
-              {country.flag} {country.warehouseCity}
+              {country.warehouseCity}
             </div>
           </div>
         </div>
@@ -649,16 +649,8 @@ function ColisCard({
       {/* Éditeur */}
       {expanded && (
         <div className="border-t border-line px-4 pb-4 pt-4">
-          <div className="flex flex-col gap-4">
-            <Field label="Produit" required>
-              <ProductSelector
-                value={colis.name}
-                productId={colis.productId}
-                onSelectExisting={(p) => onChange({ ...colis, productId: p.id, name: p.name })}
-                onChangeNew={(name) => onChange({ ...colis, productId: undefined, name })}
-              />
-            </Field>
-
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-6">
+            {/* Photos */}
             <Field label="Photos" hint="produit + carton · requis">
               <div className="flex flex-wrap gap-2">
                 {colis.photos.map((photo, i) => (
@@ -674,29 +666,37 @@ function ColisCard({
               </div>
             </Field>
 
-            <div className="grid grid-cols-[1fr_1fr_2fr] items-end gap-3">
-              <Field label="Poids (kg)" hint="optionnel">
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="0.0"
-                  value={colis.weight}
-                  onChange={(e) => onChange({ ...colis, weight: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+            {/* Détails */}
+            <div className="flex flex-col gap-3">
+              <Field label="Produit" required>
+                <ProductSelector
+                  value={colis.name}
+                  productId={colis.productId}
+                  onSelectExisting={(p) => onChange({ ...colis, productId: p.id, name: p.name })}
+                  onChangeNew={(name) => onChange({ ...colis, productId: undefined, name })}
                 />
               </Field>
-              <Field label="Cartons" hint="optionnel">
-                <input
-                  type="number"
-                  placeholder="1"
-                  value={colis.cartons}
-                  onChange={(e) => onChange({ ...colis, cartons: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
-                />
-              </Field>
-              <p className="pb-2.5 text-[11px] leading-snug text-ink-400">
-                Poids exact mesuré à l&apos;entrepôt Guangzhou.
-              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Poids (kg)" hint="optionnel">
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    value={colis.weight}
+                    onChange={(e) => onChange({ ...colis, weight: e.target.value })}
+                    className="h-10 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+                  />
+                </Field>
+                <Field label="Cartons" hint="optionnel">
+                  <input
+                    type="number"
+                    placeholder="1"
+                    value={colis.cartons}
+                    onChange={(e) => onChange({ ...colis, cartons: e.target.value })}
+                    className="h-10 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+                  />
+                </Field>
+              </div>
             </div>
           </div>
         </div>
@@ -858,7 +858,7 @@ function Step2Transport({
         <div className="min-w-0 flex-1">
           <div className="text-[14px] font-bold text-ink-900">{transitaire.name}</div>
           <div className="text-[12px] text-ink-500">
-            🇨🇳 {transitaire.city} · ★ {transitaire.rating}
+            {transitaire.city}, Chine · ★ {transitaire.rating}
           </div>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
