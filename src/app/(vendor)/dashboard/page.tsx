@@ -9,11 +9,10 @@ import {
   KpiRow,
   CaChart,
   ProductPerformance,
-  PartnerPerformance,
+  FunnelCard,
   type Bucket,
-  type LivreurPerf,
   type ProductPerfRow,
-  type CloseusePerf,
+  type FunnelData,
 } from "@/components/apercu/dashboard-sections";
 import {
   DateRangeFilter,
@@ -31,9 +30,7 @@ import {
   MOCK_TODAY,
 } from "@/lib/data/mock-finances";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
-import { MOCK_ACTIVE_CLOSEUSE } from "@/lib/data/mock-closing";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
-import { usePartners } from "@/lib/hooks/use-partners";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
@@ -61,9 +58,6 @@ export default function DashboardPage() {
   const currency = currencyFor(currentMarket.id);
   /* Commandes LIVE : la machine d'etats closing (synchronisee app closeuse) */
   const liveOrders = useClosingState().all;
-  /* Partenaires connectes (pour la performance closeuse) */
-  const { partners } = usePartners();
-  const hasCloseuse = partners.closeuse?.status === "active";
   const searchParams = useSearchParams();
   void searchParams; // réservé (deep-link période à venir)
   const router = useRouter();
@@ -195,17 +189,8 @@ export default function DashboardPage() {
     tauxLiv: p.tauxLivPct,
   }));
 
-  /* Performance partenaires : livreurs (depuis les commandes) + closeuse */
-  const livreurPerf: LivreurPerf[] = computed.livreurPerf;
-  const closeusePerf: CloseusePerf | null = hasCloseuse
-    ? {
-        name: MOCK_ACTIVE_CLOSEUSE.name,
-        avatarBg: MOCK_ACTIVE_CLOSEUSE.avatarBg,
-        rating: MOCK_ACTIVE_CLOSEUSE.rating,
-        confirmRate: computed.closing.confirmRate,
-        handled: computed.closing.totalCalled,
-      }
-    : null;
+  /* Entonnoir COD de la période (reçues → appelés → confirmés → livrés) */
+  const funnel: FunnelData = computed.funnel;
 
   const greeting = getGreeting();
   const todaySubtitle = formatTodayLabel(MOCK_TODAY);
@@ -251,10 +236,10 @@ export default function DashboardPage() {
           periodLabel={dateFilterSubtitle(normalizedFilter)}
         />
 
-        {/* Produits les plus rentables + performance des partenaires */}
+        {/* Produits les plus rentables + entonnoir COD de la période */}
         <div className="grid grid-cols-[1.7fr_1fr] gap-4">
           <ProductPerformance rows={productPerfRows} />
-          <PartnerPerformance closeuse={closeusePerf} livreurs={livreurPerf} />
+          <FunnelCard data={funnel} />
         </div>
       </div>
     </div>
@@ -314,12 +299,10 @@ type DashboardData = {
   recentOps: OperationRow[];
   closing: {
     totalCalled: number;
-    /** Taux de confirmation (confirmées / appelées) % */
-    confirmRate: number;
     buckets: Bucket[];
     leads: ClosingLead[];
   };
-  livreurPerf: LivreurPerf[];
+  funnel: FunnelData;
   liveDeliveries: DeliveryFeedItem[];
   liveDeliveriesActiveCount: number;
   liveDeliveriesChipLabel: string;
@@ -510,7 +493,20 @@ function computeDashboardData(args: {
   ).length;
   const annules = assignments.filter((a) => a.status === "annule").length;
   const calledCount = assignments.filter((a) => a.status !== "nouvelle").length;
-  const confirmRate = calledCount > 0 ? Math.round((confirmes / calledCount) * 100) : 0;
+
+  /* Entonnoir COD — sur les commandes REÇUES pendant la période (createdAt) */
+  const periodOrders = assignments.filter((a) => inRange(a.createdAt));
+  const funnel: FunnelData = {
+    recues: periodOrders.length,
+    appeles: periodOrders.filter((a) => a.status !== "nouvelle").length,
+    confirmes: periodOrders.filter(
+      (a) => a.status === "livraison_en_cours" || a.status === "livre",
+    ).length,
+    livres: periodOrders.filter(
+      (a) => a.status === "livre" || a.delivery?.progress === "effectue",
+    ).length,
+  };
+
   const leadsPreview: ClosingLead[] = toCallList.slice(0, 4).map((a) => {
     const firstItem = a.items[0];
     const productLabel = firstItem ? `${firstItem.quantity}× ${firstItem.productName}` : "—";
@@ -596,36 +592,6 @@ function computeDashboardData(args: {
     { count: annules, label: "Annulés", color: "#9CA3AF" },
   ];
 
-  /* Performance livreurs — agrégée depuis les commandes qui leur sont
-   * assignées (taux de livraison = effectuées / assignées). */
-  const byLivreur = new Map<
-    string,
-    { name: string; avatarBg: string; rating: number; assigned: number; delivered: number }
-  >();
-  for (const a of assignments) {
-    if (!a.delivery) continue;
-    const key = a.delivery.id || a.delivery.name;
-    const cur =
-      byLivreur.get(key) ??
-      {
-        name: a.delivery.name,
-        avatarBg: a.delivery.avatarBg,
-        rating: a.delivery.rating,
-        assigned: 0,
-        delivered: 0,
-      };
-    cur.assigned += 1;
-    if (a.delivery.progress === "effectue") cur.delivered += 1;
-    byLivreur.set(key, cur);
-  }
-  const livreurPerf: LivreurPerf[] = Array.from(byLivreur.values())
-    .map((l) => ({
-      ...l,
-      rate: l.assigned > 0 ? Math.round((l.delivered / l.assigned) * 100) : 0,
-    }))
-    .sort((a, b) => b.delivered - a.delivered || b.rate - a.rate)
-    .slice(0, 5);
-
   return {
     kpis: {
       caEncaisse: caPeriod,
@@ -642,11 +608,10 @@ function computeDashboardData(args: {
     recentOps,
     closing: {
       totalCalled: calledCount,
-      confirmRate,
       buckets,
       leads: leadsPreview,
     },
-    livreurPerf,
+    funnel,
     liveDeliveries: livePool,
     liveDeliveriesActiveCount,
     liveDeliveriesChipLabel,

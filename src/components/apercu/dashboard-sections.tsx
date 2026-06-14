@@ -18,7 +18,9 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   AlertTriangle,
+  ChevronDown,
   Clock,
+  Filter,
   Package,
   PackageCheck,
   PhoneCall,
@@ -565,6 +567,83 @@ function PartnerPerfRow({
         <div className="mt-0.5 text-[10px] text-[#B4BAC4]">{metric}</div>
       </div>
     </li>
+  );
+}
+
+/* ════════════════ ENTONNOIR COD ════════════════ */
+export type FunnelData = {
+  recues: number;
+  appeles: number;
+  confirmes: number;
+  livres: number;
+};
+
+export function FunnelCard({
+  data,
+  title = "Entonnoir COD",
+}: {
+  data: FunnelData;
+  title?: string;
+}) {
+  const stages = [
+    { key: "recues", label: "Reçues", count: data.recues, color: "bg-kamoo-blue-200" },
+    { key: "appeles", label: "Appelés", count: data.appeles, color: "bg-kamoo-blue-600" },
+    { key: "confirmes", label: "Confirmés", count: data.confirmes, color: "bg-kamoo-blue-800" },
+    { key: "livres", label: "Livrés", count: data.livres, color: "bg-emerald-500" },
+  ];
+  const base = Math.max(1, data.recues);
+
+  return (
+    <Panel title={title} right={<VoirTout />}>
+      {data.recues === 0 ? (
+        <PanelEmpty
+          icon={Filter}
+          title="Aucune commande sur la période"
+          sub="Dès que des commandes arrivent, tu verras combien sont appelées, confirmées, puis livrées."
+        />
+      ) : (
+        <div className="flex flex-col gap-3.5 px-5 py-4">
+          {stages.map((s, i) => {
+            const prev = i > 0 ? stages[i - 1].count : null;
+            const conv =
+              i === 0 ? null : prev && prev > 0 ? Math.round((s.count / prev) * 100) : 0;
+            const widthPct = s.count > 0 ? Math.max(4, (s.count / base) * 100) : 0;
+            return (
+              <div key={s.key}>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="text-[12px] font-medium text-ink-700">{s.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-bold tabular-nums text-ink-900">
+                      {s.count}
+                    </span>
+                    {conv !== null && (
+                      <span
+                        title="Taux de passage depuis l'étape précédente"
+                        className={[
+                          "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10.5px] font-semibold tabular-nums",
+                          conv >= 60
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700",
+                        ].join(" ")}
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                        {conv}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-paper-2">
+                  <div
+                    className={`h-full rounded-full ${s.color} transition-[width] duration-500`}
+                    style={{ width: `${widthPct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Panel>
   );
 }
 
