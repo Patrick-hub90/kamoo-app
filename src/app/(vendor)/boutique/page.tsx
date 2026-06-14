@@ -46,6 +46,7 @@ import { useProductsState } from "@/lib/hooks/use-products-state";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
 import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
+import { ShopifyImportModal } from "@/components/kamoo/shopify-import-modal";
 import {
   getStockLevel,
   type Produit,
@@ -142,6 +143,7 @@ export default function BoutiquePage() {
   const { products: all, bulkSetActive, bulkSetArchived, removeProducts } = useProductsState();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   /* Publication Shopify (façon DSers) — sur la boutique du marché courant. */
   const { currentMarket } = useCurrentMarket();
@@ -278,6 +280,16 @@ export default function BoutiquePage() {
       {/* Header commun : période + CTA + cloche (même ordre partout) */}
       <PageHeader kicker="Mon activité" title="Catalogue">
         <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+        {shopifyConnected && (
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-700 transition hover:bg-paper-2"
+          >
+            <ShoppingBag className="h-4 w-4 text-emerald-600" />
+            Importer depuis Shopify
+          </button>
+        )}
         <Link
           href="/boutique/nouveau"
           className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
@@ -572,6 +584,15 @@ export default function BoutiquePage() {
           </div>
         )}
       </div>
+
+      {importOpen && (
+        <ShopifyImportModal
+          marketId={currentMarket.id}
+          shopDomain={shopifyConn?.domain ?? ""}
+          onClose={() => setImportOpen(false)}
+          onImported={() => setImportOpen(false)}
+        />
+      )}
 
       {publishOpen && (
         <PublishModal

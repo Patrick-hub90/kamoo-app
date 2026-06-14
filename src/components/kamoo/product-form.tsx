@@ -15,7 +15,13 @@ import {
   X,
 } from "lucide-react";
 import { toStoredDataUrl } from "@/components/kamoo/product-image-manager";
+import { ShopifyLinkField } from "@/components/kamoo/shopify-link-field";
 import { useProductsState } from "@/lib/hooks/use-products-state";
+import { useShopify } from "@/lib/hooks/use-shopify";
+import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
+import { useShopifyImport } from "@/lib/hooks/use-shopify-import";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import type { ShopifyProductLite } from "@/lib/shopify/products";
 import { cn } from "@/lib/utils";
 
 export type ProductFormInitial = {
@@ -58,6 +64,40 @@ export function ProductForm({
 }: Props) {
   const router = useRouter();
   const { addProduct, updateProduct } = useProductsState();
+
+  /* Connexion Shopify : avertissement « non connecté » + lien vers un produit
+   * Shopify existant (sur la boutique du marché courant). */
+  const { currentMarket } = useCurrentMarket();
+  const { getConnection } = useShopify();
+  const shopifyConn = getConnection(currentMarket.id);
+  const shopifyConnected = shopifyConn?.isConnected === true;
+  const { getShopifyId, link, unlink } = useShopifyPublish();
+  const { fetchProducts } = useShopifyImport();
+  const initialLinkedId =
+    mode === "edit" && initial.id ? getShopifyId(initial.id) : undefined;
+  const [linkedShopify, setLinkedShopify] = useState<ShopifyProductLite | null>(null);
+
+  // Pré-remplissage en édition : résout le titre du produit Shopify déjà lié.
+  useEffect(() => {
+    if (!initialLinkedId || !shopifyConnected) return;
+    let alive = true;
+    setLinkedShopify({
+      shopifyProductId: initialLinkedId,
+      title: "Produit Shopify lié",
+      description: "",
+      priceXof: 0,
+      variantsCount: 0,
+    });
+    fetchProducts(currentMarket.id).then((r) => {
+      if (!alive) return;
+      const match = r.products.find((p) => p.shopifyProductId === initialLinkedId);
+      if (match) setLinkedShopify(match);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLinkedId, shopifyConnected]);
 
   const [name, setName] = useState(initial.name);
   const [description, setDescription] = useState(initial.description);
@@ -149,6 +189,11 @@ export function ProductForm({
     stockNum >= 0 &&
     thresholdNum >= 0;
 
+  /* Le lien Shopify a-t-il changé ? (active aussi le bouton Enregistrer) */
+  const linkChanged =
+    (linkedShopify?.shopifyProductId ?? null) !== (initialLinkedId ?? null);
+  const dirty = isDirty || linkChanged;
+
   const margePct =
     costNum !== null && priceNum > 0
       ? Math.round(((priceNum - costNum) / priceNum) * 100)
@@ -189,6 +234,8 @@ export function ProductForm({
         revenueTotalXof: 0,
         createdAt: new Date().toISOString(),
       });
+      // Rattachement à un produit Shopify existant (si choisi).
+      if (linkedShopify) link(id, linkedShopify.shopifyProductId, "linked");
     } else if (initial.id) {
       await persistPhotos(initial.id);
       updateProduct(initial.id, {
@@ -201,6 +248,11 @@ export function ProductForm({
         lowStockThreshold: thresholdNum,
         isActive,
       });
+      // Mise à jour du lien Shopify uniquement s'il a changé.
+      if (linkChanged) {
+        if (linkedShopify) link(initial.id, linkedShopify.shopifyProductId, "linked");
+        else unlink(initial.id);
+      }
     }
     setSaved(true);
     setTimeout(() => {
@@ -248,13 +300,13 @@ export function ProductForm({
         <button
           type="button"
           onClick={handleSave}
-          disabled={!isValid || !isDirty || saved}
+          disabled={!isValid || !dirty || saved}
           className={cn(
             "inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-bold text-white transition",
             saved
               ? "bg-emerald-600"
               : "bg-kamoo-orange-500 hover:bg-kamoo-orange-600",
-            (!isValid || !isDirty) && !saved && "cursor-not-allowed opacity-40",
+            (!isValid || !dirty) && !saved && "cursor-not-allowed opacity-40",
           )}
         >
           {saved ? (
@@ -529,6 +581,18 @@ export function ProductForm({
             </button>
           </Section>
 
+          {shopifyConnected && (
+            <Section title="Connexion boutique">
+              <ShopifyLinkField
+                connected={shopifyConnected}
+                marketId={currentMarket.id}
+                shopDomain={shopifyConn?.domain ?? ""}
+                value={linkedShopify}
+                onChange={setLinkedShopify}
+              />
+            </Section>
+          )}
+
           <Section title="Aperçu rapide">
             <div className="flex flex-col gap-2 text-[13px]">
               <Row
@@ -556,7 +620,7 @@ export function ProductForm({
             </div>
           </Section>
 
-          {isDirty && !saved && (
+          {dirty && !saved && (
             <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
               <span>

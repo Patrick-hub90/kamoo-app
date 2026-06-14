@@ -8,8 +8,10 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check, Plus, Search, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Check, Plus, Search, Sparkles, X } from "lucide-react";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
+import { useShopify } from "@/lib/hooks/use-shopify";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import type { Produit } from "@/lib/types/produit";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +55,12 @@ export function ProductSelector({
   const [draft, setDraft] = useState(value);
   const [pos, setPos] = useState<Position | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  /* Avertit que les produits créés ici ne seront pas liés à Shopify (seul le
+   * catalogue permet le rattachement). */
+  const { currentMarket } = useCurrentMarket();
+  const { getConnection } = useShopify();
+  const shopifyConnected = getConnection(currentMarket.id)?.isConnected === true;
 
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -307,6 +315,7 @@ export function ProductSelector({
                     (Entrée)
                   </span>
                 </button>
+                {shopifyConnected && <ShopifyWarning />}
               </div>
             ) : (
               /* Liste catalogue — « Créer un nouveau produit » TOUJOURS en premier */
@@ -330,6 +339,11 @@ export function ProductSelector({
                     </span>
                   )}
                 </button>
+                {shopifyConnected && draft.trim() && (
+                  <div className="px-1">
+                    <ShopifyWarning />
+                  </div>
+                )}
                 <div className="my-1 h-px bg-line" />
                 {filtered.map((p) => {
                   const isSelected = productId === p.id;
@@ -378,5 +392,18 @@ export function ProductSelector({
           document.body,
         )}
     </>
+  );
+}
+
+/* Note : un produit créé ici (hors catalogue) n'est pas relié à Shopify. */
+function ShopifyWarning() {
+  return (
+    <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-amber-700">
+      <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
+      <span>
+        Ce produit ne sera pas connecté à votre boutique Shopify. Pour le relier,
+        créez-le depuis le catalogue.
+      </span>
+    </p>
   );
 }
