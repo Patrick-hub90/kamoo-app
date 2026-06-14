@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Box,
-  Camera,
   Check,
   ChevronDown,
   Clock,
@@ -650,18 +649,18 @@ function ColisCard({
       {/* Éditeur */}
       {expanded && (
         <div className="border-t border-line px-4 pb-4 pt-4">
-          <div className="grid grid-cols-[1.1fr_1fr] gap-6">
-            {/* Photos */}
-            <div>
-              <div className="mb-2 flex items-center gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-700">
-                  Photos · jusqu&apos;à 5
-                </span>
-                <span className="rounded bg-kamoo-orange-50 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-kamoo-orange-700">
-                  REQUIS
-                </span>
-              </div>
-              <div className="grid grid-cols-5 gap-1.5">
+          <div className="flex flex-col gap-4">
+            <Field label="Produit" required>
+              <ProductSelector
+                value={colis.name}
+                productId={colis.productId}
+                onSelectExisting={(p) => onChange({ ...colis, productId: p.id, name: p.name })}
+                onChangeNew={(name) => onChange({ ...colis, productId: undefined, name })}
+              />
+            </Field>
+
+            <Field label="Photos" hint="produit + carton · requis">
+              <div className="flex flex-wrap gap-2">
                 {colis.photos.map((photo, i) => (
                   <PhotoSlot
                     key={i}
@@ -673,48 +672,30 @@ function ColisCard({
                   />
                 ))}
               </div>
-              <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-kamoo-blue-50 p-2.5">
-                <Camera className="mt-0.5 h-3.5 w-3.5 shrink-0 text-kamoo-blue-700" />
-                <p className="text-[11.5px] leading-relaxed text-kamoo-blue-700">
-                  Ajoutez la <b>photo commerciale</b> du produit + la <b>photo du carton</b> pour
-                  faciliter la réception.
-                </p>
-              </div>
-            </div>
+            </Field>
 
-            {/* Champs */}
-            <div className="flex flex-col gap-3.5">
-              <Field label="Produit" required>
-                <ProductSelector
-                  value={colis.name}
-                  productId={colis.productId}
-                  onSelectExisting={(p) => onChange({ ...colis, productId: p.id, name: p.name })}
-                  onChangeNew={(name) => onChange({ ...colis, productId: undefined, name })}
+            <div className="grid grid-cols-[1fr_1fr_2fr] items-end gap-3">
+              <Field label="Poids (kg)" hint="optionnel">
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="0.0"
+                  value={colis.weight}
+                  onChange={(e) => onChange({ ...colis, weight: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
                 />
               </Field>
-              <div className="grid grid-cols-2 gap-2.5">
-                <Field label="Poids estimé (kg)">
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="0.0"
-                    value={colis.weight}
-                    onChange={(e) => onChange({ ...colis, weight: e.target.value })}
-                    className="w-full rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
-                  />
-                </Field>
-                <Field label="Nombre de cartons">
-                  <input
-                    type="number"
-                    placeholder="1"
-                    value={colis.cartons}
-                    onChange={(e) => onChange({ ...colis, cartons: e.target.value })}
-                    className="w-full rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
-                  />
-                </Field>
-              </div>
-              <p className="text-[11px] text-ink-500">
-                Le poids exact sera mesuré à l&apos;entrepôt Guangzhou.
+              <Field label="Cartons" hint="optionnel">
+                <input
+                  type="number"
+                  placeholder="1"
+                  value={colis.cartons}
+                  onChange={(e) => onChange({ ...colis, cartons: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
+                />
+              </Field>
+              <p className="pb-2.5 text-[11px] leading-snug text-ink-400">
+                Poids exact mesuré à l&apos;entrepôt Guangzhou.
               </p>
             </div>
           </div>
@@ -727,26 +708,21 @@ function ColisCard({
 function Field({
   label,
   required,
+  hint,
   children,
 }: {
   label: string;
   required?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
+  const suffix = hint ?? (required ? "requis" : undefined);
   return (
     <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-700">
-        {label}
-        {required ? (
-          <span className="rounded bg-kamoo-orange-50 px-1.5 py-0.5 text-[9px] font-bold text-kamoo-orange-700">
-            REQUIS
-          </span>
-        ) : (
-          <span className="rounded bg-paper-2 px-1.5 py-0.5 text-[9px] font-semibold text-ink-500">
-            OPTIONNEL
-          </span>
-        )}
-      </label>
+      <div className="mb-1.5 flex items-baseline gap-1.5">
+        <span className="text-[11.5px] font-semibold text-ink-800">{label}</span>
+        {suffix && <span className="text-[10.5px] text-ink-400">· {suffix}</span>}
+      </div>
       {children}
     </div>
   );
@@ -775,7 +751,7 @@ function PhotoSlot({
 
   if (photo) {
     return (
-      <div className="relative aspect-square overflow-hidden rounded-xl bg-paper-2">
+      <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-paper-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photo.url} alt={photo.fileName ?? "Photo"} className="h-full w-full object-cover" />
         <button
@@ -793,11 +769,11 @@ function PhotoSlot({
     <>
       <label
         htmlFor={inputId}
-        className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-line bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
+        className="grid h-16 w-16 cursor-pointer place-items-center rounded-xl border-2 border-dashed border-line bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
       >
-        <div className="flex flex-col items-center gap-1">
-          <Plus className="h-4 w-4" />
-          <span className="text-[10px] font-semibold">{label}</span>
+        <div className="flex flex-col items-center gap-0.5">
+          <Plus className="h-3.5 w-3.5" />
+          <span className="text-[9px] font-semibold">{label}</span>
         </div>
       </label>
       <input id={inputId} type="file" accept="image/*" className="hidden" onChange={handleChange} />
