@@ -4,10 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  Box,
   Check,
   ChevronDown,
   Clock,
@@ -27,7 +25,6 @@ import { useExpeditionsState } from "@/lib/hooks/use-expeditions-state";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { usePartners } from "@/lib/hooks/use-partners";
 import { COUNTRIES } from "@/lib/data/countries";
-import { TRANSPORT_MODES_DATA } from "@/lib/data/transport-modes";
 import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { cn } from "@/lib/utils";
@@ -975,15 +972,15 @@ function Step3Confirm({
   const tMode = transitaire.modes.find((m) => m.mode === mode)!;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-[17px] font-bold text-ink-900">Vérifiez &amp; validez</h2>
         <p className="mt-0.5 text-[12.5px] text-ink-500">
-          Relisez les colis acceptés par {transitaire.name}, puis copiez votre shipping mark.
+          Relisez votre expédition, copiez le shipping mark, puis validez.
         </p>
       </div>
 
-      {/* Shipping mark — le livrable clé */}
+      {/* Shipping mark — le livrable clé (seul élément distinct) */}
       <ShippingMarkCard
         shippingMark={shippingMark}
         country={country}
@@ -991,108 +988,105 @@ function Step3Confirm({
         colisCount={colis.length}
       />
 
-      {/* Devis à venir — compact */}
-      <div className="rounded-2xl border border-line bg-white p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-            <Clock className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[13.5px] font-bold text-ink-900">Devis exact après réception</div>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-600">
-              Une fois vos colis arrivés à <b>Guangzhou</b>, ils seront pesés et photographiés —
-              vous recevrez alors le poids réel, le volume (si besoin) et le coût total.
-            </p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {[
-                { label: "Poids réel", icon: Box, placeholder: "— kg" },
-                { label: "Volume", icon: Plane, placeholder: "— CBM" },
-                { label: "Cartons reçus", icon: Ship, placeholder: `— / ${colis.length}` },
-              ].map((item) => {
-                const I = item.icon;
-                return (
-                  <div key={item.label} className="rounded-lg border border-line bg-paper-2/40 p-2.5">
-                    <div className="flex items-center gap-1 text-ink-500">
-                      <I className="h-3 w-3" />
-                      <span className="text-[9.5px] font-bold uppercase tracking-wider">{item.label}</span>
-                    </div>
-                    <div className="mt-1 text-[15px] font-extrabold text-ink-400">{item.placeholder}</div>
+      {/* Ce que vous expédiez */}
+      <div>
+        <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+          Ce que vous expédiez
+        </div>
+        <div className="mt-2 overflow-hidden rounded-xl border border-line">
+          {colis.map((c, i) => {
+            const cover = c.photos.find(Boolean);
+            const photoCount = c.photos.filter(Boolean).length;
+            return (
+              <div
+                key={c.id}
+                className={cn("flex items-center gap-3 px-3 py-2.5", i > 0 && "border-t border-line")}
+              >
+                <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-paper-2 text-ink-400">
+                  {cover ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={cover.url} alt={c.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Package className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-semibold text-ink-900">
+                    {c.name || `Colis #${i + 1}`}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div className="truncate text-[11.5px] text-ink-500">
+                    {photoCount} photo{photoCount > 1 ? "s" : ""}
+                    {c.weight ? ` · ~${c.weight} kg` : " · poids à mesurer"}
+                    {c.cartons && ` · ${c.cartons} carton${parseInt(c.cartons) > 1 ? "s" : ""}`}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Relecture catégories — politique du transitaire pour le mode choisi */}
-      <div className="rounded-2xl border border-line bg-white p-5">
+      {/* Conditions du transitaire */}
+      <div>
         <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-          À relire — {TRANSPORT_MODE_LABELS[mode]} chez {transitaire.name}
+          Conditions · {TRANSPORT_MODE_LABELS[mode]} chez {transitaire.name}
         </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
-            <div className="text-[10.5px] font-bold uppercase tracking-wide text-emerald-700">
-              ✓ Colis autorisés
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-line p-3">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700">
+              <Check className="h-3.5 w-3.5" /> Autorisés
             </div>
             <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
               {(tMode.accepted ?? ["Marchandises générales"]).map((a) => (
-                <li key={a}>· {a}</li>
+                <li key={a} className="flex gap-1.5">
+                  <span className="text-emerald-500">·</span>
+                  {a}
+                </li>
               ))}
             </ul>
           </div>
-          <div className="rounded-xl border border-red-200 bg-red-50/50 p-3">
-            <div className="text-[10.5px] font-bold uppercase tracking-wide text-red-600">
-              ✕ Colis refusés
+          <div className="rounded-xl border border-line p-3">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-red-600">
+              <X className="h-3.5 w-3.5" /> Refusés
             </div>
             <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
               {(tMode.forbidden ?? []).length > 0 ? (
-                (tMode.forbidden ?? []).map((fz) => <li key={fz}>· {fz}</li>)
+                (tMode.forbidden ?? []).map((fz) => (
+                  <li key={fz} className="flex gap-1.5">
+                    <span className="text-red-400">·</span>
+                    {fz}
+                  </li>
+                ))
               ) : (
                 <li className="italic text-ink-400">Aucune restriction déclarée</li>
               )}
             </ul>
           </div>
         </div>
-        <p className="mt-3 text-[11.5px] leading-relaxed text-ink-400">
+        <p className="mt-2 text-[11.5px] text-ink-400">
           Un doute ? Discutez-en avec {transitaire.name} via le chat avant de valider.
         </p>
       </div>
 
-      {/* Garde-fou */}
-      <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-        <div className="flex items-start gap-3">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700">
-            <AlertTriangle className="h-4 w-4" />
-          </div>
-          <div className="flex-1 text-[12.5px] leading-relaxed text-amber-900">
-            <div className="font-bold">Si le contenu ne correspond pas ?</div>
-            <p className="mt-1 text-amber-800">
-              Si {transitaire.name} reçoit un colis d&apos;une catégorie refusée pour le mode choisi,
-              il refusera l&apos;expédition : vous devrez fournir une adresse alternative en Chine et
-              payer le réacheminement. L&apos;adresse de l&apos;entrepôt et votre shipping mark ne
-              sont débloqués <b>qu&apos;après validation</b>.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Responsabilité */}
-      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300">
+      {/* Responsabilité — avertissement + confirmation fusionnés */}
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
         <input
           type="checkbox"
           checked={responsibilityAccepted}
           onChange={(e) => onResponsibilityChange(e.target.checked)}
           className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-kamoo-orange-500"
         />
-        <span className="text-[13px] leading-relaxed text-ink-900">
-          <b>J&apos;ai relu les colis autorisés / refusés</b> de {transitaire.name} et je confirme que
-          mes colis les respectent. En cas de divergence à la réception, j&apos;accepte de payer les
-          frais de réacheminement.
-        </span>
+        <div className="text-[12.5px] leading-relaxed">
+          <span className="font-bold text-ink-900">
+            Je confirme que mes colis respectent les conditions de {transitaire.name}.
+          </span>
+          <p className="mt-1 text-amber-800">
+            En cas de catégorie refusée constatée à la réception, j&apos;accepte de payer le
+            réacheminement. L&apos;adresse de l&apos;entrepôt et le shipping mark sont débloqués
+            après validation.
+          </p>
+        </div>
       </label>
-
-      <NextStepsTimeline countryName={country.name} mode={mode} />
     </div>
   );
 }
@@ -1172,53 +1166,6 @@ function ShippingMarkCard({
       <p className="mt-3 text-center text-[11px] leading-relaxed opacity-70">
         Communiquez ce code à votre fournisseur. Il l&apos;inscrira sur chaque colis avant l&apos;envoi.
       </p>
-    </div>
-  );
-}
-
-function NextStepsTimeline({ countryName, mode }: { countryName: string; mode: TransportMode }) {
-  const modeData = TRANSPORT_MODES_DATA.find((m) => m.id === mode)!;
-
-  const steps = [
-    { label: "Réception entrepôt Guangzhou", sub: "Vérification + photos", active: true },
-    {
-      label:
-        mode === "sea" ? "Départ maritime" : mode === "air_express" ? "Départ express" : "Départ aérien",
-      sub: modeData.delay,
-      active: false,
-    },
-    { label: `Dédouanement ${countryName}`, sub: "Géré par Kamoo", active: false },
-    { label: "Livraison à domicile", sub: "Notification SMS", active: false },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-line bg-white p-5">
-      <div className="mb-4 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-        Prochaines étapes
-      </div>
-      <div className="flex flex-col gap-3.5">
-        {steps.map((s, i) => (
-          <div key={i} className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <div
-                className={cn(
-                  "grid h-[22px] w-[22px] place-items-center rounded-full",
-                  s.active ? "bg-kamoo-orange-500" : "bg-paper-2 ring-1 ring-inset ring-line",
-                )}
-              >
-                {s.active && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-              </div>
-              {i < steps.length - 1 && <div className="mt-1 h-5 w-[2px] bg-line" />}
-            </div>
-            <div className="pt-0.5">
-              <div className={cn("text-[13px] font-bold", s.active ? "text-ink-900" : "text-ink-700")}>
-                {s.label}
-              </div>
-              <div className="mt-0.5 text-[11px] text-ink-500">{s.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
