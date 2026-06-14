@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Plus, Settings2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { MOCK_MARKETS } from "@/lib/data/mock-markets";
 import {
   MARKET_STATUS_LABELS,
   MARKET_STATUS_TONE,
   type Market,
 } from "@/lib/types/market";
-import { formatXOF } from "@/lib/format";
+import { SUPPORTED_CURRENCIES } from "@/lib/format";
+import { useShopify } from "@/lib/hooks/use-shopify";
 import { cn } from "@/lib/utils";
 
 /**
@@ -56,6 +57,11 @@ export default function MarchesPage() {
 
 function MarketRow({ market }: { market: Market }) {
   const tone = MARKET_STATUS_TONE[market.status];
+  const { currencyFor, detectedCurrencyFor, isManualCurrency, setCurrencyOverride } = useShopify();
+  const currency = currencyFor(market.id);
+  const detected = detectedCurrencyFor(market.id);
+  const manual = isManualCurrency(market.id);
+
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-paper-2/40 p-3.5 sm:flex-nowrap sm:gap-4">
       {/* Avatar pays — code 2 lettres */}
@@ -80,26 +86,39 @@ function MarketRow({ market }: { market: Market }) {
           </span>
         </div>
         <div className="mt-0.5 text-[11.5px] text-ink-500">
-          <span className="font-semibold text-ink-700">
-            {market.stats.activeOrdersCount}
-          </span>{" "}
-          commandes actives{" · "}
-          <span className="font-semibold text-ink-700">
-            MRR {formatXOF(market.stats.mrrXof, false)} F CFA
-          </span>
+          Devise d&apos;affichage{" "}
+          <span className="font-semibold text-ink-700">{currency}</span>
+          {detected && (
+            <span className="text-ink-400">
+              {manual
+                ? ` · auto-détecté Shopify : ${detected}`
+                : " · auto-détecté depuis Shopify"}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* La page de configuration par marché n'existe pas encore (404) :
-          bouton désactivé avec mention, plutôt qu'un lien cassé. */}
-      <button
-        disabled
-        title="Bientôt disponible"
-        className="ml-auto inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg border border-line bg-paper-2/60 px-3 py-1.5 text-[12px] font-bold text-ink-400 sm:ml-0"
-      >
-        <Settings2 className="h-3 w-3" />
-        Configurer · Bientôt
-      </button>
+      {/* Choix MANUEL de la devise — prime sur l'auto-détection Shopify */}
+      <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:ml-0">
+        <select
+          value={manual ? currency : "__auto"}
+          onChange={(e) => {
+            const v = e.target.value;
+            setCurrencyOverride(market.id, v === "__auto" ? null : v);
+          }}
+          className="h-9 rounded-lg border border-line bg-white px-2.5 text-[12px] font-semibold text-ink-800 outline-none focus:border-kamoo-blue-600"
+          title="Devise d'affichage de ce marché"
+        >
+          <option value="__auto">
+            Auto{detected ? ` (${detected})` : " (XOF)"}
+          </option>
+          {SUPPORTED_CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

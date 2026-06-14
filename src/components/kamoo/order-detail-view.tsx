@@ -26,6 +26,8 @@ import { AssignLivreurModal } from "@/components/kamoo/assign-livreur-modal";
 import { OpenDisputeModal } from "@/components/kamoo/open-dispute-modal";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { useChat } from "@/components/kamoo/chat";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { useShopify } from "@/lib/hooks/use-shopify";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import {
   buildClosingHistory,
@@ -35,12 +37,13 @@ import { getProduit } from "@/lib/data/mock-produits";
 import {
   CANCELLATION_REASON_LABELS,
   CLOSING_STATUS_LABELS,
+  displayOrderNo,
   orderTotalXof,
   type ClosingAssignment,
   type ClosingEventType,
   type ClosingStatus,
 } from "@/lib/types/closing";
-import { formatXOF } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const EVENT_ICON: Record<
@@ -157,9 +160,9 @@ function OrderHeader({
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="font-mono-kamoo text-[24px] font-extrabold tracking-tight text-ink-900">
-              {a.id}
+              {displayOrderNo(a)}
             </h1>
-            <CopyButton value={a.id} />
+            <CopyButton value={displayOrderNo(a)} />
             <StatusPill {...paymentPill(a)} />
             <StatusPill {...statusPill(a.status)} />
           </div>
@@ -310,6 +313,9 @@ type Props = {
 
 export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Props) {
   const { openChat } = useChat();
+  const { currentMarket } = useCurrentMarket();
+  const { currencyFor } = useShopify();
+  const currency = currencyFor(currentMarket.id);
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
   const history = buildClosingHistory(a, closeuse.name);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -480,7 +486,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
                       ×{item.quantity}
                     </span>
                     <div className="w-24 text-right font-display text-[15px] font-extrabold text-ink-900">
-                      {formatXOF(lineTotal, false)} F
+                      {formatMoney(lineTotal, currency)}
                     </div>
                     {item.productId && (
                       <ChevronRight className="h-4 w-4 shrink-0 text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-kamoo-blue-700" />
@@ -516,7 +522,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
               <div className="flex flex-col gap-2 text-[13.5px]">
                 <FinRow
                   label="Sous-total articles"
-                  value={`${formatXOF(total, false)} F`}
+                  value={formatMoney(total, currency)}
                 />
                 <FinRow label="Frais de livraison" value="0 F" muted />
               </div>
@@ -527,7 +533,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
                   Total à encaisser
                 </span>
                 <span className="font-display text-[20px] font-extrabold leading-none text-ink-900">
-                  {formatXOF(total, false)}
+                  {formatMoney(total, currency)}
                   <span className="ml-1 text-[13px] font-bold text-ink-400">
                     F
                   </span>
@@ -539,7 +545,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
                 {cogsKnown && (
                   <FinRow
                     label="Coût marchandise (COGS)"
-                    value={`− ${formatXOF(cogs, false)} F`}
+                    value={`− ${formatMoney(cogs, currency)}`}
                     muted
                   />
                 )}
@@ -547,7 +553,7 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
                   <span className="font-bold text-ink-900">Marge nette</span>
                   <span className="font-display font-extrabold text-emerald-700">
                     {cogsKnown
-                      ? `${formatXOF(margin, false)} F · ${marginPct}%`
+                      ? `${formatMoney(margin, currency)} · ${marginPct}%`
                       : "Non calculée"}
                   </span>
                 </div>

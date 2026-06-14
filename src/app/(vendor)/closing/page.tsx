@@ -296,9 +296,9 @@ export default function ClosingPage() {
                               {CLOSING_STATUS_LABELS[a.status]}
                             </span>
                           </td>
-                          {/* Total — dans la devise réelle de la commande */}
+                          {/* Total — dans la devise d'affichage du marché */}
                           <td className="whitespace-nowrap px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">
-                            {formatMoney(orderTotalXof(a), a.currencyCode)}
+                            {formatMoney(orderTotalXof(a), currency)}
                           </td>
                           {/* Articles */}
                           <td className="px-3 py-2.5 text-right text-[12px] tabular-nums text-ink-600">

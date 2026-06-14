@@ -41,6 +41,7 @@ import { useProductsState } from "@/lib/hooks/use-products-state";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { useShopify } from "@/lib/hooks/use-shopify";
 import { formatMoney, formatXOF } from "@/lib/format";
 import { displayOrderNo, orderTotalXof, type ClosingAssignment } from "@/lib/types/closing";
 import { getStockLevel } from "@/lib/types/produit";
@@ -62,6 +63,8 @@ import {
  */
 export default function DashboardPage() {
   const { currentMarket } = useCurrentMarket();
+  const { currencyFor } = useShopify();
+  const currency = currencyFor(currentMarket.id);
   const { products: liveProducts } = useProductsState();
   /* Commandes LIVE : la machine d'etats closing (synchronisee app closeuse) */
   const liveOrders = useClosingState().all;
@@ -161,8 +164,8 @@ export default function DashboardPage() {
 
   /* ─── Compute principal ─── */
   const computed = useMemo(
-    () => computeDashboardData({ normalizedFilter, assignments: liveOrders }),
-    [normalizedFilter, liveOrders],
+    () => computeDashboardData({ normalizedFilter, assignments: liveOrders, currency }),
+    [normalizedFilter, liveOrders, currency],
   );
   void currentMarket.country.code;
 
@@ -347,8 +350,10 @@ function computeDashboardData(args: {
   normalizedFilter: DateFilterValue;
   /** Commandes LIVE (machine d etats closing) — pas les fixtures brutes */
   assignments: ClosingAssignment[];
+  /** Devise d affichage du marche */
+  currency: string;
 }): DashboardData {
-  const { normalizedFilter, assignments } = args;
+  const { normalizedFilter, assignments, currency } = args;
 
   const range = dateFilterRange(normalizedFilter, MOCK_TODAY);
   const inRange = (iso: string | undefined): boolean => {
@@ -518,7 +523,7 @@ function computeDashboardData(args: {
     const firstItem = a.items[0];
     const productLabel = firstItem ? `${firstItem.quantity}× ${firstItem.productName}` : "—";
     const extraItemsCount = Math.max(0, a.items.length - 1);
-    const amountLabel = formatMoney(orderTotalXof(a), a.currencyCode);
+    const amountLabel = formatMoney(orderTotalXof(a), currency);
     return {
       orderId: displayOrderNo(a),
       amountLabel,
@@ -554,7 +559,7 @@ function computeDashboardData(args: {
       const extraItemsCount = Math.max(0, a.items.length - 1);
       return {
         orderId: displayOrderNo(a),
-        amountLabel: formatMoney(orderTotalXof(a), a.currencyCode),
+        amountLabel: formatMoney(orderTotalXof(a), currency),
         productLabel,
         extraItemsCount,
         lastActivityLabel: formatLastActivity(a.lastActivityAt),

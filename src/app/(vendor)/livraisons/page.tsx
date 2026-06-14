@@ -20,12 +20,15 @@ import {
 import { PageHeader } from "@/components/kamoo/page-header";
 import { computeDeliveryStats } from "@/lib/data/mock-closing";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
+import { useCurrentMarket } from "@/lib/hooks/use-current-market";
+import { useShopify } from "@/lib/hooks/use-shopify";
 import {
+  displayOrderNo,
   orderTotalXof,
   type ClosingAssignment,
   type DeliveryProgress,
 } from "@/lib/types/closing";
-import { formatXOF } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /* L'état "en_attente" = livraison prise en charge & en route → libellé "En cours". */
@@ -59,6 +62,9 @@ export default function LivraisonsPage() {
   /* Branchée sur la machine d'états closing : les livreurs assignés et les
    * livraisons marquées depuis Closing apparaissent ici immédiatement. */
   const closing = useClosingState();
+  const { currentMarket } = useCurrentMarket();
+  const { currencyFor } = useShopify();
+  const currency = currencyFor(currentMarket.id);
   const all = useMemo(
     () =>
       closing.all.filter(
@@ -93,6 +99,7 @@ export default function LivraisonsPage() {
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
+          !displayOrderNo(a).toLowerCase().includes(q) &&
           !a.id.toLowerCase().includes(q) &&
           !a.items.some((i) => i.productName.toLowerCase().includes(q)) &&
           !a.client.name.toLowerCase().includes(q) &&
@@ -166,7 +173,7 @@ export default function LivraisonsPage() {
           <Kpi icon={Truck} tone="blue" label="En cours" value={String(stats.counts.en_attente)} sub="livreur en route" />
           <Kpi icon={AlertTriangle} tone="red" label="Alertes" value={String(stats.counts.alerte)} sub="à traiter" />
           <Kpi icon={CheckCircle2} tone="green" label="Effectuées" value={String(stats.counts.effectue)} sub="livrées & encaissées" />
-          <Kpi icon={Wallet} tone="amber" label="CA encaissé" value={`${formatXOF(stats.revenueCollected, false)} F`} sub="sur livraisons effectuées" />
+          <Kpi icon={Wallet} tone="amber" label="CA encaissé" value={formatMoney(stats.revenueCollected, currency)} sub="sur livraisons effectuées" />
         </div>
 
         {/* TOOLBAR — façon Closing (menu déroulant Statut, pas d'onglets) */}
@@ -229,7 +236,7 @@ export default function LivraisonsPage() {
                     <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-ink-400">Aucune livraison ne correspond.</td>
                   </tr>
                 ) : (
-                  shown.map((a) => <Row key={a.id} a={a} onClick={() => router.push(`/livraisons/${a.id}`)} />)
+                  shown.map((a) => <Row key={a.id} a={a} currency={currency} onClick={() => router.push(`/livraisons/${a.id}`)} />)
                 )}
               </tbody>
             </table>
@@ -271,7 +278,7 @@ export default function LivraisonsPage() {
 }
 
 /* ─── Ligne de livraison ───────────────────────────────── */
-function Row({ a, onClick }: { a: ClosingAssignment; onClick: () => void }) {
+function Row({ a, onClick, currency }: { a: ClosingAssignment; onClick: () => void; currency: string }) {
   const progress = a.delivery!.progress;
   const st = STATUS[progress];
   const d = a.delivery!;
@@ -282,7 +289,7 @@ function Row({ a, onClick }: { a: ClosingAssignment; onClick: () => void }) {
       onClick={onClick}
       className={cn("cursor-pointer transition", isAlerte ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-paper-2/40")}
     >
-      <td className="px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{a.id}</td>
+      <td className="px-4 py-2.5 text-[12px] font-semibold tabular-nums text-ink-900">{displayOrderNo(a)}</td>
       <td className="px-3 py-2.5">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: a.items[0].productBg }}>{a.items[0].productEmoji}</span>
@@ -297,7 +304,7 @@ function Row({ a, onClick }: { a: ClosingAssignment; onClick: () => void }) {
         <div className="truncate text-[11px] tabular-nums text-ink-500">{a.client.phone}</div>
       </td>
       <td className="px-3 py-2.5 text-[12px] text-ink-700">{a.client.zone}</td>
-      <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(orderTotalXof(a), false)} <span className="text-[10px] text-ink-400">F</span></td>
+      <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatMoney(orderTotalXof(a), currency)}</td>
       <td className="px-3 py-2.5">
         <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", st.pill)}>
           {isAlerte && <AlertTriangle className="h-3 w-3" />}

@@ -8,6 +8,18 @@
  */
 const NBSP = " ";
 
+/** Devises proposées au vendeur dans les paramètres (région + courantes). */
+export const SUPPORTED_CURRENCIES: { code: string; label: string }[] = [
+  { code: "XOF", label: "Franc CFA (XOF) — F CFA" },
+  { code: "XAF", label: "Franc CFA (XAF) — FCFA" },
+  { code: "NGN", label: "Naira nigérian (NGN) — ₦" },
+  { code: "GHS", label: "Cedi ghanéen (GHS) — ₵" },
+  { code: "MAD", label: "Dirham marocain (MAD) — DH" },
+  { code: "USD", label: "Dollar US (USD) — $" },
+  { code: "EUR", label: "Euro (EUR) — €" },
+  { code: "GBP", label: "Livre sterling (GBP) — £" },
+];
+
 /** Devises sans décimales (le montant est affiché en entier). */
 const ZERO_DECIMAL = new Set(["XOF", "XAF", "JPY", "KRW", "GNF", "RWF"]);
 

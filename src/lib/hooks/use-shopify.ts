@@ -31,6 +31,14 @@ type ShopifyState = {
 
 const store = createSyncedStore<ShopifyState>("shopify", { connections: {} });
 
+/**
+ * Préférences de devise par marché — choix MANUEL du vendeur (Paramètres),
+ * qui prime sur la devise auto-détectée depuis Shopify.
+ *   { [marketId]: "USD" | "XOF" | … }
+ */
+type CurrencyPrefs = { overrides: Record<string, string> };
+const currencyStore = createSyncedStore<CurrencyPrefs>("currencyPrefs", { overrides: {} });
+
 /** Lecture hors-React (ex. push fulfillment depuis la machine d'états closing). */
 export function getShopifyConnectionsSnapshot(): Record<string, ShopifyConnection> {
   return store.get().connections;
@@ -38,6 +46,7 @@ export function getShopifyConnectionsSnapshot(): Record<string, ShopifyConnectio
 
 export function useShopify() {
   const state = store.use();
+  const currencyPrefs = currencyStore.use();
 
   /* Mode réel ? (clés API présentes côté serveur) — lu une fois. */
   const [liveMode, setLiveMode] = useState<boolean | null>(null);
@@ -141,11 +150,39 @@ export function useShopify() {
     [],
   );
 
-  /** Devise active du marché : celle de la boutique connectée, sinon XOF. */
+  /**
+   * Devise active du marché. Priorité : choix MANUEL du vendeur (Paramètres)
+   * > devise auto-détectée depuis Shopify > XOF par défaut.
+   */
   const currencyFor = useCallback(
-    (marketId: string): string => state.connections[marketId]?.currencyCode ?? "XOF",
+    (marketId: string): string =>
+      currencyPrefs.overrides[marketId] ??
+      state.connections[marketId]?.currencyCode ??
+      "XOF",
+    [currencyPrefs.overrides, state.connections],
+  );
+
+  /** Devise auto-détectée depuis Shopify (pour afficher « auto : USD »). */
+  const detectedCurrencyFor = useCallback(
+    (marketId: string): string | null => state.connections[marketId]?.currencyCode ?? null,
     [state.connections],
   );
+
+  /** Y a-t-il un choix manuel pour ce marché ? */
+  const isManualCurrency = useCallback(
+    (marketId: string): boolean => marketId in currencyPrefs.overrides,
+    [currencyPrefs.overrides],
+  );
+
+  /** Définit (ou efface si null) la devise manuelle d'un marché. */
+  const setCurrencyOverride = useCallback((marketId: string, code: string | null) => {
+    currencyStore.set((s) => {
+      const overrides = { ...s.overrides };
+      if (code === null) delete overrides[marketId];
+      else overrides[marketId] = code;
+      return { overrides };
+    });
+  }, []);
 
   return {
     connections: state.connections,
@@ -157,5 +194,8 @@ export function useShopify() {
     disconnect,
     recordSync,
     currencyFor,
+    detectedCurrencyFor,
+    isManualCurrency,
+    setCurrencyOverride,
   };
 }
