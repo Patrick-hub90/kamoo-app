@@ -425,5 +425,4 @@ export function getTransitaireBySlug(slug: string) {
   return MOCK_TRANSITAIRES.find((t) => t.slug === slug);
 }
 
-export const MOCK_TRANSITAIRES: Transitaire[] = [];
-void __seed_TRANSITAIRES;
+export const MOCK_TRANSITAIRES: Transitaire[] = __seed_TRANSITAIRES;

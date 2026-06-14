@@ -509,5 +509,4 @@ export function getLivreur(slug: string): Livreur | undefined {
   return MOCK_LIVREURS.find((l) => l.slug === slug);
 }
 
-export const MOCK_LIVREURS: Livreur[] = [];
-void __seed_LIVREURS;
+export const MOCK_LIVREURS: Livreur[] = __seed_LIVREURS;

@@ -458,5 +458,4 @@ export function isActiveCloseusePartner(c: Closeuse): boolean {
   return c.name === MOCK_ACTIVE_CLOSEUSE.name;
 }
 
-export const MOCK_CLOSEUSES: Closeuse[] = [];
-void __seed_CLOSEUSES;
+export const MOCK_CLOSEUSES: Closeuse[] = __seed_CLOSEUSES;
