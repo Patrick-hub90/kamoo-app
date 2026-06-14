@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Bike,
   CheckCircle2,
+  ChevronRight,
   Clock,
   Flag,
   MapPin,
@@ -171,7 +172,7 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                 onClick={contactCloseuse}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2"
               >
-                <MessageSquare className="h-3.5 w-3.5" /> Closeuse
+                <MessageSquare className="h-3.5 w-3.5" /> Contacter la closeuse
               </button>
             </div>
           </header>
@@ -258,19 +259,42 @@ export function DeliveryDetailView({ a, backHref, closing }: Props) {
                     {a.items.map((item, idx) => {
                       const p = getProduit(item.productId ?? "");
                       const lineTotal = item.quantity * item.unitPriceXof;
-                      return (
-                        <div key={idx} className="flex items-center gap-3 rounded-lg bg-paper-2/40 p-3">
+                      const inner = (
+                        <>
                           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-ink-400 ring-1 ring-line">
                             <Package className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-[13.5px] font-medium text-ink-900">{item.productName}</div>
+                            <div
+                              className={cn(
+                                "truncate text-[13.5px] font-medium text-ink-900",
+                                item.productId && "group-hover:text-kamoo-blue-700",
+                              )}
+                            >
+                              {item.productName}
+                            </div>
                             <div className="font-mono-kamoo text-[11px] text-ink-400">{p?.sku ?? "—"}</div>
                           </div>
                           <span className="font-mono-kamoo text-[12.5px] text-ink-400">×{item.quantity}</span>
                           <div className="w-24 text-right font-display text-[14px] font-medium text-ink-900">
                             {formatMoney(lineTotal, currency)}
                           </div>
+                          {item.productId && (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-kamoo-blue-700" />
+                          )}
+                        </>
+                      );
+                      return item.productId ? (
+                        <Link
+                          key={idx}
+                          href={`/boutique/${item.productId}`}
+                          className="group flex items-center gap-3 rounded-lg border border-line bg-paper-2/40 p-3 transition hover:border-kamoo-blue-200 hover:bg-white"
+                        >
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div key={idx} className="flex items-center gap-3 rounded-lg bg-paper-2/40 p-3">
+                          {inner}
                         </div>
                       );
                     })}
@@ -511,7 +535,7 @@ function NoteCard({
               setDraft(a.comment ?? "");
               setEditing(true);
             }}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-medium text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-ink-700 transition hover:bg-ink-100 hover:text-ink-900"
           >
             <Pencil className="h-3 w-3" /> {a.comment ? "Modifier" : "Ajouter"}
           </button>
