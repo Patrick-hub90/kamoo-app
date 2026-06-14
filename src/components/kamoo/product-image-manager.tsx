@@ -244,7 +244,7 @@ export function ProductSaveButton() {
 
   if (saving) {
     return (
-      <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-kamoo-blue-900 px-4 text-[13px] font-bold text-white opacity-90">
+      <span className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white opacity-90">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         Enregistrement…
       </span>
@@ -256,7 +256,7 @@ export function ProductSaveButton() {
       <button
         type="button"
         onClick={save}
-        className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-kamoo-blue-900 px-4 text-[13px] font-bold text-white shadow-sm transition hover:-translate-y-px hover:bg-kamoo-blue-800"
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
       >
         <Save className="h-3.5 w-3.5" />
         Enregistrer
@@ -266,7 +266,7 @@ export function ProductSaveButton() {
 
   if (justSaved) {
     return (
-      <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-emerald-50 px-3.5 text-[13px] font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+      <span className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-50 px-3.5 text-[13px] font-medium text-emerald-700">
         <Check className="h-3.5 w-3.5" />
         Enregistré
       </span>
@@ -301,7 +301,7 @@ export function ProductImageManager({
       {/* Aperçu principal */}
       <div
         className={cn(
-          "group relative aspect-square w-full overflow-hidden rounded-2xl border shadow-sm transition",
+          "group relative aspect-square w-full overflow-hidden rounded-xl border transition",
           dragOver
             ? "border-kamoo-blue-600 ring-2 ring-kamoo-blue-100"
             : "border-line",
@@ -337,7 +337,7 @@ export function ProductImageManager({
           type="button"
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-ink-900/70 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm transition",
+            "absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-ink-900/70 py-1.5 text-[11px] font-medium text-white backdrop-blur-sm transition",
             hasImages ? "opacity-0 group-hover:opacity-100" : "opacity-100",
           )}
         >
@@ -394,7 +394,7 @@ export function ProductImageManager({
       </div>
 
       {dirty && (
-        <p className="mt-2 text-[10px] font-semibold leading-tight text-kamoo-orange-600">
+        <p className="mt-2 text-[10px] font-medium leading-tight text-amber-600">
           Modifications non enregistrées
         </p>
       )}

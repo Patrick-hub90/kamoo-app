@@ -5,19 +5,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
-  ArrowRight,
   ArrowUpDown,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  LayoutGrid,
-  Leaf,
   Archive,
   PackageX,
   Trash2,
   Plus,
-  Rows3,
   Search,
   ShoppingBag,
 } from "lucide-react";
@@ -30,11 +26,7 @@ import {
   MOCK_FINANCE_MOVEMENTS,
   MOCK_TODAY,
 } from "@/lib/data/mock-finances";
-import { campaignsForProduct } from "@/lib/data/mock-ad-campaigns";
-import {
-  computeBoutiqueStats,
-  getApprovisionnements,
-} from "@/lib/data/mock-produits";
+import { computeBoutiqueStats } from "@/lib/data/mock-produits";
 import {
   computeProductStatsForPeriod,
   computeProductStatsLifetime,
@@ -47,11 +39,7 @@ import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
 import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
 import { ShopifyImportModal } from "@/components/kamoo/shopify-import-modal";
-import {
-  getStockLevel,
-  type Produit,
-  type StockLevel,
-} from "@/lib/types/produit";
+import { getStockLevel, type Produit } from "@/lib/types/produit";
 import { dateFilterFromSearchParams } from "@/lib/utils/date-filter-url";
 import { formatXOF } from "@/lib/format";
 import { PageHeader } from "@/components/kamoo/page-header";
@@ -96,18 +84,6 @@ function matchesView(p: Produit, view: StatusView): boolean {
   if (view === "low_stock") return level === "bas";
   if (view === "out_of_stock") return level === "rupture";
   return true;
-}
-
-/** Pastille stock — pastel, couleur = sens. */
-function stockBadgeClasses(level: StockLevel): string {
-  switch (level) {
-    case "ok":
-      return "bg-emerald-50 text-emerald-700";
-    case "bas":
-      return "bg-amber-50 text-amber-700";
-    case "rupture":
-      return "bg-red-50 text-red-600";
-  }
 }
 
 function filterMovementsByPeriod(
@@ -286,13 +262,13 @@ export default function BoutiquePage() {
             onClick={() => setImportOpen(true)}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-700 transition hover:bg-paper-2"
           >
-            <ShoppingBag className="h-4 w-4 text-emerald-600" />
+            <ShoppingBag className="h-4 w-4 text-ink-400" />
             Importer depuis Shopify
           </button>
         )}
         <Link
           href="/boutique/nouveau"
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
         >
           <Plus className="h-4 w-4" />
           Ajouter un produit
@@ -343,8 +319,8 @@ export default function BoutiquePage() {
             >
               <span className="text-ink-500">Statut</span>
               <span className="text-ink-300">·</span>
-              <span className="font-semibold">{VIEW_TABS.find((t) => t.id === view)?.label ?? "Tout"}</span>
-              <span className="rounded bg-paper-2 px-1 text-[11px] font-semibold tabular-nums text-ink-500">
+              <span className="font-medium">{VIEW_TABS.find((t) => t.id === view)?.label ?? "Tout"}</span>
+              <span className="rounded bg-paper-2 px-1 text-[11px] font-medium tabular-nums text-ink-500">
                 {viewCounts[view]}
               </span>
               <ChevronDown className="h-3.5 w-3.5 text-ink-400" />
@@ -363,7 +339,7 @@ export default function BoutiquePage() {
                       }}
                       className={cn(
                         "flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-[12.5px] transition hover:bg-paper-2",
-                        view === t.id ? "font-semibold text-ink-900" : "font-medium text-ink-700",
+                        view === t.id ? "font-medium text-ink-900" : "font-medium text-ink-700",
                       )}
                     >
                       <span>{t.label}</span>
@@ -388,7 +364,7 @@ export default function BoutiquePage() {
               <ArrowUpDown className="h-3.5 w-3.5 text-ink-400" />
               Trier
               <span className="text-ink-300">·</span>
-              <span className="font-semibold">{currentSortLabel}</span>
+              <span className="font-medium">{currentSortLabel}</span>
             </button>
             {sortOpen && (
               <>
@@ -404,7 +380,7 @@ export default function BoutiquePage() {
                       }}
                       className={cn(
                         "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-[12.5px] transition hover:bg-paper-2",
-                        opt.id === sortBy ? "font-semibold text-ink-900" : "font-medium text-ink-700",
+                        opt.id === sortBy ? "font-medium text-ink-900" : "font-medium text-ink-700",
                       )}
                     >
                       {opt.label}
@@ -422,10 +398,10 @@ export default function BoutiquePage() {
         {/* CONTENU */}
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-line bg-white px-6 py-16 text-center shadow-kamoo-sm">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-paper-2">
+            <div className="grid h-14 w-14 place-items-center rounded-xl bg-paper-2">
               <ShoppingBag className="h-6 w-6 text-ink-400" />
             </div>
-            <p className="mt-4 text-[15px] font-semibold text-ink-900">
+            <p className="mt-4 text-[14px] font-medium text-ink-900">
               {periodSales ? "Aucun produit vendu sur cette période" : "Aucun produit à afficher"}
             </p>
             <p className="mt-1 max-w-sm text-[13px] text-ink-500">
@@ -439,14 +415,14 @@ export default function BoutiquePage() {
                   setSortBy("best_seller");
                   setDateFilter({ preset: "all" });
                 }}
-                className="mt-4 inline-flex h-9 items-center rounded-lg border border-line bg-white px-4 text-[12.5px] font-semibold text-ink-700 transition hover:bg-paper-2"
+                className="mt-4 inline-flex h-9 items-center rounded-lg border border-line bg-white px-4 text-[12.5px] font-medium text-ink-700 transition hover:bg-paper-2"
               >
                 Réinitialiser les filtres
               </button>
             ) : (
               <Link
                 href="/boutique/nouveau"
-                className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+                className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[12.5px] font-medium text-white transition hover:bg-kamoo-blue-800"
               >
                 <Plus className="h-4 w-4" />
                 Ajouter votre premier produit
@@ -458,7 +434,7 @@ export default function BoutiquePage() {
             {/* Barre d'actions groupées (sélection multiple) */}
             {selectedIds.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 border-b border-kamoo-blue-100 bg-kamoo-blue-50/60 px-4 py-2.5">
-                <span className="text-[12.5px] font-bold text-kamoo-blue-900">
+                <span className="text-[12.5px] font-medium text-kamoo-blue-900">
                   {selectedIds.length} sélectionné{selectedIds.length > 1 ? "s" : ""}
                 </span>
                 <span className="mx-1 h-4 w-px bg-kamoo-blue-200" />
@@ -523,7 +499,7 @@ export default function BoutiquePage() {
                 />
                 <button
                   onClick={() => setSelectedIds([])}
-                  className="ml-auto text-[12px] font-semibold text-ink-400 hover:text-ink-700"
+                  className="ml-auto text-[12px] font-medium text-ink-400 hover:text-ink-700"
                 >
                   Annuler la sélection
                 </button>
@@ -571,7 +547,7 @@ export default function BoutiquePage() {
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
-            <span className="ml-1 text-[11.5px] font-semibold tabular-nums text-ink-700">
+            <span className="ml-1 text-[11.5px] font-medium tabular-nums text-ink-700">
               1–{Math.min(filtered.length, 50)}
               {filtered.length > 50 && <span className="text-ink-400"> sur {filtered.length}</span>}
             </span>
@@ -638,10 +614,10 @@ function PublishModal({
   const toPublish = products.filter((p) => !alreadyPublished(p.id));
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md overflow-hidden rounded-xl border border-line bg-white shadow-[var(--shadow-kamoo-lg)]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-          <h3 className="inline-flex items-center gap-2 text-[15px] font-bold text-ink-900">
-            <ShoppingBag className="h-4 w-4 text-emerald-600" />
+          <h3 className="inline-flex items-center gap-2 text-[15px] font-medium text-ink-900">
+            <ShoppingBag className="h-4 w-4 text-ink-400" />
             Publier sur Shopify
           </h3>
           <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-paper-2 hover:text-ink-900" aria-label="Fermer">
@@ -652,7 +628,7 @@ function PublishModal({
           <p className="text-[12.5px] leading-relaxed text-ink-500">
             {toPublish.length > 0 ? (
               <>
-                Ces produits seront <b className="text-ink-700">publiés sur ta boutique</b>{" "}
+                Ces produits seront <span className="font-medium text-ink-700">publiés sur ta boutique</span>{" "}
                 <span className="font-mono-kamoo text-ink-700">{shopDomain}</span> (statut « actif »).
                 Rien n&apos;est publié sans cette confirmation.
               </>
@@ -665,15 +641,15 @@ function PublishModal({
               {toPublish.map((p) => (
                 <li key={p.id} className="flex items-center gap-2.5 rounded-lg border border-line bg-paper-2/40 px-3 py-2">
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[14px]" style={{ background: p.bg }}>{p.emoji}</span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-ink-900">{p.name}</span>
-                  <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-ink-700">{formatXOF(p.priceXof)} F</span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink-900">{p.name}</span>
+                  <span className="shrink-0 text-[11.5px] font-medium tabular-nums text-ink-700">{formatXOF(p.priceXof, false)} F</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <div className="flex gap-2 border-t border-line px-5 py-3.5">
-          <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-line bg-white py-2.5 text-[13px] font-medium text-ink-700 transition hover:bg-paper-2">
             Annuler
           </button>
           <button
@@ -682,7 +658,7 @@ function PublishModal({
               setBusy(true);
               await onConfirm();
             }}
-            className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-[13px] font-bold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+            className="flex-1 rounded-lg bg-kamoo-blue-900 py-2.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800 disabled:opacity-40"
           >
             {busy ? "Publication…" : `Publier ${toPublish.length} produit${toPublish.length > 1 ? "s" : ""}`}
           </button>
@@ -698,237 +674,10 @@ function Stat({ label, value, suffix }: { label: string; value: string; suffix?:
     <div className="flex flex-col gap-1 rounded-xl border border-line bg-white px-4 py-2.5 shadow-kamoo-sm">
       <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-500">{label}</div>
       <div className="flex items-baseline gap-1">
-        <span className="text-[20px] font-bold leading-none tracking-tight tabular-nums text-ink-900">{value}</span>
+        <span className="text-[20px] font-medium leading-none tracking-tight tabular-nums text-ink-900">{value}</span>
         {suffix && <span className="text-[12px] font-medium text-ink-400">{suffix}</span>}
       </div>
     </div>
-  );
-}
-
-function ToggleBtn({
-  active,
-  onClick,
-  label,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "grid h-8 w-8 place-items-center rounded-md transition",
-        active ? "bg-kamoo-blue-900 text-white" : "text-ink-400 hover:bg-paper-2 hover:text-ink-700",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ─── Grille de cartes ──────────────────────────────────────────── */
-function ProduitsGrid({
-  produits,
-  getStats,
-  getCover,
-}: {
-  produits: Produit[];
-  getStats: (p: Produit) => ProductStats;
-  getCover: (p: Produit) => string | null;
-}) {
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {produits.map((p) => (
-        <ProduitCard key={p.id} p={p} stats={getStats(p)} cover={getCover(p)} />
-      ))}
-    </div>
-  );
-}
-
-function CardRow({
-  label,
-  value,
-  tone = "default",
-  title,
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "green" | "red" | "muted";
-  title?: string;
-}) {
-  const color =
-    tone === "green"
-      ? "text-emerald-600"
-      : tone === "red"
-        ? "text-red-600"
-        : tone === "muted"
-          ? "text-ink-400"
-          : "text-ink-900";
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span
-        title={title}
-        className={cn("shrink-0 text-[11px] font-medium text-ink-500", title && "cursor-help")}
-      >
-        {label}
-      </span>
-      <span className={cn("truncate text-[12.5px] font-semibold tabular-nums", color)}>{value}</span>
-    </div>
-  );
-}
-
-function ProduitCard({ p, stats, cover }: { p: Produit; stats: ProductStats; cover: string | null }) {
-  const router = useRouter();
-  const level = getStockLevel(p);
-  const beneficeNet = stats.netProfitXof;
-  const hasEconomics = stats.revenueXof > 0 || stats.adSpendXof > 0;
-  const campaigns = campaignsForProduct(p.id);
-  const activeCampaign = campaigns.find((c) => c.status === "active") ?? campaigns[0];
-  const hasAds = stats.adSpendXof > 0;
-  const received = getApprovisionnements(p.id).reduce((s, a) => s + a.quantity, 0);
-  const stockTotal = received > 0 ? received : p.stock;
-  const stockPct = stockTotal > 0 ? Math.min(100, Math.round((p.stock / stockTotal) * 100)) : 0;
-
-  return (
-    <button
-      type="button"
-      onClick={() => router.push(`/boutique/${p.id}`)}
-      className="group flex flex-col overflow-hidden rounded-xl border border-line bg-white text-left shadow-kamoo-sm transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(16,24,40,0.10)]"
-    >
-      {/* Visuel — photo de couverture ou emoji */}
-      <div className="relative aspect-[16/10] overflow-hidden" style={{ background: p.bg }}>
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt={p.name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-5xl">{p.emoji}</div>
-        )}
-        <span
-          className={cn(
-            "absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold",
-            stockBadgeClasses(level),
-          )}
-        >
-          {level === "rupture" ? (
-            <PackageX className="h-3 w-3" />
-          ) : level === "bas" ? (
-            <AlertTriangle className="h-3 w-3" />
-          ) : (
-            <CheckCircle2 className="h-3 w-3" />
-          )}
-          {level === "rupture" ? "Rupture" : level === "bas" ? "Stock bas" : "En stock"}
-        </span>
-        <span
-          className={cn(
-            "absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-            p.isActive ? "bg-white/90 text-emerald-700" : "bg-white/90 text-ink-500",
-          )}
-        >
-          {p.isActive ? "● En vente" : "○ Inactif"}
-        </span>
-      </div>
-
-      {/* Corps */}
-      <div className="flex flex-1 flex-col p-3.5">
-        <div className="text-[10.5px] tabular-nums text-ink-400">{p.sku}</div>
-        <div className="mt-0.5 line-clamp-1 text-[14px] font-semibold text-ink-900">{p.name}</div>
-
-        <div className="mt-3 flex flex-col gap-1.5 rounded-lg bg-paper-2/60 px-3 py-2.5">
-          <CardRow label="Prix vente" value={`${formatXOF(p.priceXof, false)} F`} />
-          <CardRow
-            label="Bénéfice net"
-            value={
-              hasEconomics
-                ? `${beneficeNet < 0 ? "−" : ""}${formatXOF(Math.abs(beneficeNet), false)} F`
-                : "—"
-            }
-            tone={!hasEconomics ? "muted" : beneficeNet >= 0 ? "green" : "red"}
-            title={hasEconomics ? "Bénéfice net = CA réel − coût marchandise − dépense pub" : undefined}
-          />
-          <CardRow
-            label="CA"
-            value={stats.revenueXof > 0 ? `${formatXOF(stats.revenueXof, false)} F` : "—"}
-            tone={stats.revenueXof > 0 ? "default" : "muted"}
-          />
-        </div>
-
-        {/* Stock restant + barre */}
-        <div className="mt-3">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-medium text-ink-500">Stock restant</span>
-            <span className="font-semibold tabular-nums text-ink-900">
-              {p.stock}
-              <span className="font-normal text-ink-400"> / {stockTotal}</span>
-            </span>
-          </div>
-          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-paper-2">
-            <div
-              className={cn(
-                "h-full rounded-full",
-                level === "rupture" ? "bg-red-500" : level === "bas" ? "bg-amber-500" : "bg-emerald-500",
-              )}
-              style={{ width: `${stockPct}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Campagne / Organique */}
-        <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-line px-2.5 py-2">
-          {hasAds ? (
-            <>
-              <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#1877F2] text-[15px] font-black leading-none text-white">
-                f
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11.5px] font-semibold text-ink-900">Meta</span>
-                  {activeCampaign?.status === "active" && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-px text-[8.5px] font-bold uppercase tracking-wide text-emerald-700">
-                      <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                      En cours
-                    </span>
-                  )}
-                </div>
-                <div className="mt-px flex items-center gap-1 text-[10.5px] text-ink-500">
-                  <span className="truncate">{activeCampaign?.name ?? "Campagne publicitaire"}</span>
-                  {campaigns.length > 1 && (
-                    <span className="shrink-0 rounded bg-paper-2 px-1 text-[9px] font-bold text-ink-700">
-                      +{campaigns.length - 1}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="shrink-0 text-right">
-                <div className="text-[12px] font-semibold tabular-nums text-red-600">
-                  −{formatXOF(stats.adSpendXof, false)} F
-                </div>
-                <div className="text-[10px] font-medium text-ink-500">dépensé</div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
-                <Leaf className="h-3.5 w-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[11.5px] font-semibold text-ink-900">100% organique</div>
-                <div className="mt-px text-[10.5px] text-ink-500">Aucune campagne publicitaire</div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="mt-3 flex items-center justify-end border-t border-line pt-2.5">
-          <ArrowRight className="h-4 w-4 text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-kamoo-blue-700" />
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -1031,48 +780,43 @@ function ProduitsTable({
               </Td>
               <Td>
                 <div>
-                  <div className="text-[12.5px] font-semibold text-ink-900">{p.name}</div>
-                  <div className="mt-0.5 text-[11px] tabular-nums text-ink-400">{p.sku}</div>
+                  <div className="text-[12.5px] font-medium text-ink-900">{p.name}</div>
+                  <div className="mt-0.5 font-mono-kamoo text-[11px] tabular-nums text-ink-400">{p.sku}</div>
                 </div>
               </Td>
               <Td align="center">
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                    "inline-flex items-center gap-1 whitespace-nowrap tabular-nums",
                     level === "rupture"
-                      ? "bg-red-50 text-red-600"
+                      ? "text-red-600"
                       : level === "bas"
-                        ? "bg-amber-50 text-amber-700"
-                        : "bg-paper-2 text-ink-700",
+                        ? "text-amber-700"
+                        : "text-ink-700",
                   )}
                 >
-                  {level === "rupture" ? (
-                    <PackageX className="h-3 w-3" />
-                  ) : level === "bas" ? (
-                    <AlertTriangle className="h-3 w-3" />
-                  ) : (
-                    <CheckCircle2 className="h-3 w-3 text-ink-400" />
-                  )}
+                  {level === "rupture" && <PackageX className="h-3 w-3" />}
+                  {level === "bas" && <AlertTriangle className="h-3 w-3" />}
                   {p.stock} u
                 </span>
               </Td>
               <Td align="right">
-                <span className={cn("font-semibold tabular-nums", s.soldQty > 0 ? "text-ink-900" : "text-ink-400")}>
+                <span className={cn("font-medium tabular-nums", s.soldQty > 0 ? "text-ink-900" : "text-ink-400")}>
                   {s.soldQty > 0 ? `× ${s.soldQty.toLocaleString("fr-FR")}` : "—"}
                 </span>
               </Td>
               <Td align="right">
-                <span className={cn("font-semibold tabular-nums", s.revenueXof > 0 ? "text-emerald-600" : "text-ink-400")}>
+                <span className={cn("font-medium tabular-nums", s.revenueXof > 0 ? "text-ink-900" : "text-ink-400")}>
                   {s.revenueXof > 0 ? formatXOF(s.revenueXof) : "—"}
                 </span>
               </Td>
               <Td align="right">
-                <span className={cn("font-semibold tabular-nums", s.cogsXof > 0 ? "text-ink-900" : "text-ink-400")}>
+                <span className={cn("font-medium tabular-nums", s.cogsXof > 0 ? "text-ink-900" : "text-ink-400")}>
                   {s.cogsXof > 0 ? formatXOF(s.cogsXof) : "—"}
                 </span>
               </Td>
               <Td align="right">
-                <span className={cn("font-semibold tabular-nums", s.adSpendXof > 0 ? "text-ink-900" : "text-ink-400")}>
+                <span className={cn("font-medium tabular-nums", s.adSpendXof > 0 ? "text-ink-900" : "text-ink-400")}>
                   {s.adSpendXof > 0 ? formatXOF(s.adSpendXof) : "—"}
                 </span>
               </Td>
@@ -1080,7 +824,7 @@ function ProduitsTable({
                 {s.revenueXof > 0 ? (
                   <span
                     className={cn(
-                      "font-bold tabular-nums",
+                      "font-medium tabular-nums",
                       s.netProfitXof < 0 ? "text-red-600" : "text-emerald-600",
                     )}
                   >
@@ -1095,8 +839,8 @@ function ProduitsTable({
                 {s.revenueXof > 0 ? (
                   <span
                     className={cn(
-                      "inline-block rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
-                      s.marginPct >= 50 ? "bg-emerald-50 text-emerald-700" : "bg-paper-2 text-ink-700",
+                      "tabular-nums",
+                      s.marginPct >= 50 ? "text-emerald-700" : "text-ink-900",
                     )}
                   >
                     {s.marginPct}%
@@ -1108,20 +852,23 @@ function ProduitsTable({
               <Td align="center">
                 <div className="flex flex-col items-center gap-1">
                   {p.archived ? (
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-medium text-ink-500">
                       <Archive className="h-3 w-3" />
                       Archivé
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">
-                      <span className={cn("h-1.5 w-1.5 rounded-full", p.isActive ? "bg-emerald-500" : "bg-ink-300")} />
-                      <span className={p.isActive ? "text-ink-900" : "text-ink-400"}>
-                        {p.isActive ? "En vente" : "Inactif"}
-                      </span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium",
+                        p.isActive ? "bg-emerald-50 text-emerald-700" : "bg-paper-2 text-ink-500",
+                      )}
+                    >
+                      <span className={cn("h-1.5 w-1.5 rounded-full", p.isActive ? "bg-emerald-500" : "bg-ink-400")} />
+                      {p.isActive ? "En vente" : "Inactif"}
                     </span>
                   )}
                   {publishStatus(p.id) === "publie" && (
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-700" title="Publié sur Shopify">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-paper-2 px-1.5 py-0.5 text-[10px] font-medium text-ink-500" title="Lié à Shopify">
                       <ShoppingBag className="h-2.5 w-2.5" /> Shopify
                     </span>
                   )}
@@ -1139,7 +886,7 @@ function Th({ children, align = "left" }: { children: React.ReactNode; align?: "
   return (
     <th
       className={cn(
-        "px-3 py-3 text-[10.5px] font-semibold uppercase tracking-[0.05em] text-ink-400",
+        "px-3 py-3 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400",
         align === "right" && "text-right",
         align === "center" && "text-center",
       )}
@@ -1178,7 +925,7 @@ function BulkBtn({
     <button
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition",
+        "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition",
         danger
           ? "border-red-200 bg-white text-red-600 hover:bg-red-50"
           : "border-line bg-white text-ink-700 hover:bg-paper-2",

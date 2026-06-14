@@ -12,6 +12,12 @@ type Props = {
   initialActive: boolean;
   /** Nom court — pour l'aria-label */
   productName: string;
+  /**
+   * Rendu : "full" = badge + bouton (défaut), "badge" = pastille seule
+   * (en-tête), "button" = bouton seul (rail). Les deux variantes lisent le
+   * même état live → restent synchronisées.
+   */
+  variant?: "full" | "badge" | "button";
 };
 
 /**
@@ -27,6 +33,7 @@ export function ProductActiveToggle({
   productId,
   initialActive,
   productName,
+  variant = "full",
 }: Props) {
   const { getProduct, toggleActive } = useProductsState();
   const liveProduct = getProduct(productId);
@@ -44,40 +51,45 @@ export function ProductActiveToggle({
     }, 200);
   };
 
-  return (
-    <div className="flex items-center gap-2">
+  const badge = (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium transition",
+        active ? "bg-emerald-50 text-emerald-700" : "bg-paper-2 text-ink-500",
+      )}
+    >
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition",
-          active
-            ? "bg-emerald-600 text-white"
-            : "bg-paper-2 text-ink-500 ring-1 ring-inset ring-line",
+          "h-1.5 w-1.5 rounded-full",
+          active ? "bg-emerald-500" : "bg-ink-400",
         )}
-      >
-        {active ? "● En vente" : "○ Inactif"}
-      </span>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={pending}
-        aria-label={
-          active ? `Désactiver ${productName}` : `Activer ${productName}`
-        }
-        className={cn(
-          "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-[13px] font-semibold transition",
-          active
-            ? "border-line bg-white text-ink-900 hover:border-amber-500 hover:bg-paper-2"
-            : "border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600",
-          pending && "cursor-wait opacity-70",
-        )}
-      >
-        {pending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Power className="h-3.5 w-3.5" />
-        )}
-        {active ? "Désactiver" : "Activer"}
-      </button>
-    </div>
+      />
+      {active ? "En vente" : "Inactif"}
+    </span>
   );
+
+  const button = (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={pending}
+      aria-label={active ? `Désactiver ${productName}` : `Activer ${productName}`}
+      className={cn(
+        "inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2",
+        variant === "button" && "w-full justify-center",
+        pending && "cursor-wait opacity-70",
+      )}
+    >
+      {pending ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Power className="h-3.5 w-3.5" />
+      )}
+      {active ? "Désactiver" : "Activer"}
+    </button>
+  );
+
+  if (variant === "badge") return badge;
+  if (variant === "button") return button;
+  return <div className="flex items-center gap-2">{badge}{button}</div>;
 }
