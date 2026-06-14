@@ -23,8 +23,10 @@ import {
   PackageCheck,
   PhoneCall,
   Receipt,
+  Star,
   TrendingUp,
   Truck,
+  Users,
   Wallet,
 } from "lucide-react";
 import { Panel, VoirTout, StatusPill, CARD, LABEL } from "@/components/apercu/preview-shell";
@@ -344,6 +346,225 @@ function CashRow({
         {formatXOF(value, false)} <span className="text-[10px] font-medium text-[#A7AEBA]">F</span>
       </div>
     </div>
+  );
+}
+
+/* ════════════════ PRODUITS LES PLUS RENTABLES ════════════════ */
+export type ProductPerfRow = {
+  emoji: string;
+  bg: string;
+  name: string;
+  cover?: string | null;
+  ventes: number;
+  ca: number;
+  benefice: number;
+  margePct: number;
+  /** Taux de livraison (livrées / appelées) % */
+  tauxLiv: number;
+};
+
+export function ProductPerformance({
+  rows,
+  title = "Produits les plus rentables",
+}: {
+  rows: ProductPerfRow[];
+  title?: string;
+}) {
+  return (
+    <Panel title={title} right={<VoirTout />}>
+      {rows.length === 0 ? (
+        <PanelEmpty
+          icon={Package}
+          title="Pas encore de produit rentable"
+          sub="Dès que des commandes seront livrées, tes produits les plus rentables — bénéfice, marge et taux de livraison — apparaîtront ici."
+        />
+      ) : (
+        <table className="w-full">
+          <thead>
+            <tr className="text-[10.5px] uppercase tracking-[0.05em] text-[#A7AEBA]">
+              <th className="px-5 py-2 text-left font-semibold">Produit</th>
+              <th className="px-3 py-2 text-right font-semibold">Ventes</th>
+              <th className="px-3 py-2 text-right font-semibold">CA</th>
+              <th className="px-3 py-2 text-right font-semibold">Bénéfice</th>
+              <th className="px-3 py-2 text-right font-semibold">Marge</th>
+              <th className="px-5 py-2 text-right font-semibold">Taux livr.</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F4F5F6]">
+            {rows.map((r) => (
+              <tr key={r.name} className="transition hover:bg-[#FAFBFC]">
+                <td className="px-5 py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    {r.cover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.cover} alt={r.name} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: r.bg }}>
+                        {r.emoji}
+                      </span>
+                    )}
+                    <span className="truncate text-[12.5px] font-medium text-ink-900">{r.name}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{r.ventes}</td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{formatXOF(r.ca, false)}</td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(r.benefice, false)}</td>
+                <td className="px-3 py-2.5 text-right">
+                  <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-700">
+                    {r.margePct}%
+                  </span>
+                </td>
+                <td className="px-5 py-2.5 text-right">
+                  <span
+                    className={[
+                      "text-[12.5px] font-semibold tabular-nums",
+                      r.tauxLiv < 50 ? "text-amber-700" : "text-ink-700",
+                    ].join(" ")}
+                  >
+                    {r.tauxLiv}%
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Panel>
+  );
+}
+
+/* ════════════════ PERFORMANCE DES PARTENAIRES ════════════════ */
+export type CloseusePerf = {
+  name: string;
+  avatarBg: string;
+  rating: number;
+  /** Taux de confirmation (confirmées / appelées) % */
+  confirmRate: number;
+  /** Nombre de commandes traitées (appelées) */
+  handled: number;
+};
+
+export type LivreurPerf = {
+  name: string;
+  avatarBg: string;
+  rating: number;
+  delivered: number;
+  assigned: number;
+  /** Taux de livraison (effectuées / assignées) % */
+  rate: number;
+};
+
+export function PartnerPerformance({
+  closeuse,
+  livreurs,
+  title = "Performance des partenaires",
+}: {
+  closeuse: CloseusePerf | null;
+  livreurs: LivreurPerf[];
+  title?: string;
+}) {
+  const empty = !closeuse && livreurs.length === 0;
+  return (
+    <Panel title={title} right={<VoirTout />}>
+      {empty ? (
+        <PanelEmpty
+          icon={Users}
+          title="Aucun partenaire actif"
+          sub="Recrute une closeuse et des livreurs depuis la Marketplace : tu suivras ici leur taux de confirmation et de livraison."
+        />
+      ) : (
+        <ul className="divide-y divide-[#F4F5F6]">
+          {closeuse && (
+            <PartnerPerfRow
+              avatarBg={closeuse.avatarBg}
+              name={closeuse.name}
+              role="Closeuse"
+              rating={closeuse.rating}
+              pct={closeuse.confirmRate}
+              metric="confirmation"
+              sub={`${closeuse.handled} commande${closeuse.handled > 1 ? "s" : ""} traitée${closeuse.handled > 1 ? "s" : ""}`}
+            />
+          )}
+          {livreurs.map((l) => (
+            <PartnerPerfRow
+              key={l.name}
+              avatarBg={l.avatarBg}
+              name={l.name}
+              role="Livreur"
+              rating={l.rating}
+              pct={l.rate}
+              metric="livraison"
+              sub={`${l.delivered} livrée${l.delivered > 1 ? "s" : ""} / ${l.assigned}`}
+            />
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+function PartnerPerfRow({
+  avatarBg,
+  name,
+  role,
+  rating,
+  pct,
+  metric,
+  sub,
+}: {
+  avatarBg: string;
+  name: string;
+  role: "Closeuse" | "Livreur";
+  rating: number;
+  pct: number;
+  metric: string;
+  sub: string;
+}) {
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const pctCls =
+    pct >= 70
+      ? "bg-emerald-50 text-emerald-700"
+      : pct >= 40
+        ? "bg-amber-50 text-amber-700"
+        : "bg-paper-2 text-ink-600";
+  const roleCls =
+    role === "Closeuse"
+      ? "bg-kamoo-blue-50 text-kamoo-blue-700"
+      : "bg-paper-2 text-ink-600";
+  return (
+    <li className="flex items-center gap-3 px-5 py-3">
+      <span
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
+        style={{ backgroundColor: avatarBg }}
+      >
+        {initials}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-[12.5px] font-semibold text-ink-900">{name}</span>
+          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase ${roleCls}`}>
+            {role}
+          </span>
+        </div>
+        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#8A92A0]">
+          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+          <span className="tabular-nums">{rating.toFixed(1)}</span>
+          <span className="text-[#D0D4DB]">·</span>
+          <span className="truncate">{sub}</span>
+        </div>
+      </div>
+      <div className="shrink-0 text-right">
+        <span className={`inline-block rounded-md px-1.5 py-0.5 text-[12px] font-bold tabular-nums ${pctCls}`}>
+          {pct}%
+        </span>
+        <div className="mt-0.5 text-[10px] text-[#B4BAC4]">{metric}</div>
+      </div>
+    </li>
   );
 }
 
