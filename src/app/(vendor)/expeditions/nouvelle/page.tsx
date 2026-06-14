@@ -17,7 +17,6 @@ import {
   Plane,
   Plus,
   Ship,
-  Sparkles,
   Trash2,
   X,
   Zap,
@@ -29,7 +28,6 @@ import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { usePartners } from "@/lib/hooks/use-partners";
 import { COUNTRIES } from "@/lib/data/countries";
 import { TRANSPORT_MODES_DATA } from "@/lib/data/transport-modes";
-import { PRODUCT_CATEGORIES, getCategoryById } from "@/lib/data/categories";
 import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
 import type { Transitaire } from "@/lib/types/transitaire";
 import { cn } from "@/lib/utils";
@@ -269,45 +267,39 @@ export default function NewExpeditionPage() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* HERO HEADER */}
-      <div className="border-b border-line bg-gradient-to-br from-white to-paper-2 px-10 py-7">
-        <div className="flex items-start justify-between gap-6">
-          <div className="min-w-0 flex-1">
-            <Link
-              href="/expeditions"
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 hover:text-ink-700"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Mes expéditions
-            </Link>
-
-            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-kamoo-orange-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-kamoo-orange-700">
-              <Sparkles className="h-3 w-3" />
-              Brouillon · auto-sauvegardé
+    <div className="flex h-full flex-col bg-paper">
+      {/* HEADER — sobre, cohérent avec l'app (pas de hero dégradé) */}
+      <header className="shrink-0 border-b border-line bg-white">
+        <div className="mx-auto w-full max-w-5xl px-6 pb-4 pt-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <Link
+                href="/expeditions"
+                className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 transition hover:text-ink-700"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Mes expéditions
+              </Link>
+              <h1 className="mt-1.5 text-[20px] font-bold tracking-tight text-ink-900">
+                Nouvelle expédition{" "}
+                <span className="font-semibold text-ink-400">· Chine → {country.name}</span>
+              </h1>
             </div>
+            <div className="shrink-0 pt-1 text-right text-[11.5px] tabular-nums text-ink-400">
+              {colis.length} colis
+              {totalWeight > 0 ? ` · ${totalWeight.toFixed(1)} kg estimés` : ""}
+            </div>
+          </div>
 
-            <h1 className="font-display mt-3 text-3xl font-extrabold leading-tight text-ink-900">
-              Nouvelle expédition{" "}
-              <span className="whitespace-nowrap text-kamoo-orange-500">
-                Chine → {country.name}
-              </span>
-            </h1>
-            <p className="mt-1 text-[13px] text-ink-500">
-              Étape {step} sur 3 · {colis.length} colis ·{" "}
-              {totalWeight.toFixed(1)} kg estimés
-            </p>
+          <div className="mt-4">
+            <StepIndicator step={step} />
           </div>
         </div>
-
-        {/* STEP INDICATOR */}
-        <div className="mt-6">
-          <StepIndicator step={step} />
-        </div>
-      </div>
+      </header>
 
       {/* BODY */}
-      <div className="flex-1 overflow-y-auto px-10 py-7">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-5xl px-6 py-7">
         {step === 1 && (
           <Step1Colis
             colis={colis}
@@ -344,10 +336,12 @@ export default function NewExpeditionPage() {
             onResponsibilityChange={setResponsibilityAccepted}
           />
         )}
+        </div>
       </div>
 
       {/* FOOTER NAV */}
-      <div className="flex items-center gap-3 border-t border-line bg-white px-10 py-4">
+      <div className="shrink-0 border-t border-line bg-white">
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-6 py-4">
         <button
           onClick={() => setStep((s) => Math.max(1, s - 1))}
           disabled={step === 1}
@@ -363,13 +357,13 @@ export default function NewExpeditionPage() {
         </button>
 
         <div className="flex-1 text-center text-[12px] text-ink-500">
-          {step < 3 && canNext && "✓ Tout est rempli, vous pouvez continuer"}
+          {step < 3 && canNext && "Tout est rempli — vous pouvez continuer"}
           {step < 3 && !canNext &&
             "Complétez les champs requis pour continuer"}
           {step === 3 && canSubmit &&
             "Une fois validée, votre colis sera réceptionné en Chine sous 5–10 jours"}
           {step === 3 && !canSubmit &&
-            "Cochez la case de responsabilité pour pouvoir valider"}
+            "Cochez la case de responsabilité pour valider"}
         </div>
 
         {step < 3 ? (
@@ -398,6 +392,7 @@ export default function NewExpeditionPage() {
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         )}
+        </div>
       </div>
     </div>
   );
@@ -417,12 +412,12 @@ function StepIndicator({ step }: { step: number }) {
             <div className="flex items-center gap-2.5">
               <div
                 className={cn(
-                  "grid h-8 w-8 place-items-center rounded-full text-sm font-bold transition",
+                  "grid h-7 w-7 place-items-center rounded-full text-[13px] font-bold transition",
                   done
                     ? "bg-emerald-600 text-white"
                     : active
-                      ? "bg-kamoo-orange-500 text-white"
-                      : "bg-ink-200 text-ink-500",
+                      ? "bg-kamoo-blue-900 text-white"
+                      : "bg-paper-2 text-ink-400 ring-1 ring-inset ring-line",
                 )}
               >
                 {done ? <Check className="h-4 w-4" /> : idx}
@@ -472,7 +467,7 @@ function Step1Colis({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-2xl font-extrabold text-ink-900">
+          <h2 className="text-[17px] font-bold text-ink-900">
             Vos colis
           </h2>
           <p className="mt-1 text-[13px] text-ink-500">
@@ -1114,13 +1109,13 @@ function Step3Confirm({
         </div>
 
         {/* Devis en attente */}
-        <div className="rounded-2xl border border-dashed border-kamoo-orange-400 bg-gradient-to-br from-kamoo-orange-50 to-amber-50 p-5">
+        <div className="rounded-2xl border border-line bg-white p-5">
           <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-kamoo-orange-400 bg-white text-2xl">
-              ⏳
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
+              <Clock className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-kamoo-orange-700">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
                 Devis en attente
               </div>
               <div className="mt-1 text-base font-extrabold text-ink-900">
@@ -1290,15 +1285,8 @@ function ShippingMarkCard({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-kamoo-blue-900 to-kamoo-blue-700 p-6 text-white">
-      <div
-        className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(249,115,22,0.4) 0%, transparent 70%)",
-        }}
-      />
-      <div className="relative">
+    <div className="overflow-hidden rounded-2xl bg-kamoo-blue-900 p-6 text-white">
+      <div>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-70">
