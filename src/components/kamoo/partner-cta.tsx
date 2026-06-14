@@ -97,6 +97,11 @@ export function PartnerCta({
 
   const hasServiceStep = (serviceOfferings?.length ?? 0) > 1;
   const subscribedServices = partnership?.services ?? ["livraison" as LivreurService];
+  /* Cardinalité : UNE seule closeuse. Si une closeuse est déjà active, le
+   * service « Closing » d'un livreur est verrouillé (on ne peut pas avoir
+   * deux pôles de closing en parallèle). */
+  const closeuseActive =
+    role === "livreur" && partners.closeuse?.status === "active";
 
   return (
     <div className="rounded-2xl border border-line bg-white p-5 shadow-kamoo-sm">
@@ -252,6 +257,7 @@ export function PartnerCta({
           priceLabel={priceLabel}
           priceValue={priceValue}
           serviceOfferings={hasServiceStep ? serviceOfferings : undefined}
+          closeuseActive={closeuseActive}
           replacing={other ? other.slug : null}
           onClose={() => setChooseOpen(false)}
           onConfirm={(services) => {
@@ -266,6 +272,7 @@ export function PartnerCta({
           name={name}
           offerings={serviceOfferings}
           initial={subscribedServices}
+          closeuseActive={closeuseActive}
           onClose={() => setManageServices(false)}
           onSave={(services) => {
             partnersApi.setServices(role, slug, services);
@@ -388,6 +395,7 @@ function ChooseModal({
   priceLabel,
   priceValue,
   serviceOfferings,
+  closeuseActive,
   replacing,
   onClose,
   onConfirm,
@@ -399,6 +407,7 @@ function ChooseModal({
   priceLabel?: string;
   priceValue?: string;
   serviceOfferings?: ServiceOffering[];
+  closeuseActive?: boolean;
   replacing: string | null;
   onClose: () => void;
   onConfirm: (services?: LivreurService[]) => void;
@@ -410,6 +419,7 @@ function ChooseModal({
 
   const toggle = (s: LivreurService) => {
     if (s === "livraison") return; // toujours incluse
+    if (s === "closing" && closeuseActive) return; // verrouillé : closeuse déjà active
     setSelected((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
     );
@@ -427,15 +437,18 @@ function ChooseModal({
             {serviceOfferings.map((o) => {
               const Icon = SERVICE_ICON[o.service];
               const isBase = o.service === "livraison";
-              const checked = selected.includes(o.service);
+              const locked = o.service === "closing" && closeuseActive;
+              const checked = selected.includes(o.service) && !locked;
               return (
                 <button
                   key={o.service}
                   onClick={() => toggle(o.service)}
+                  disabled={locked}
                   className={cn(
                     "flex items-start gap-3 rounded-xl border p-3 text-left transition",
                     checked ? "border-kamoo-blue-600 bg-kamoo-blue-50/40" : "border-line bg-white hover:bg-paper-2/50",
                     isBase && "cursor-default",
+                    locked && "cursor-not-allowed opacity-60 hover:bg-white",
                   )}
                 >
                   <span
@@ -452,12 +465,17 @@ function ChooseModal({
                         <Icon className="h-3.5 w-3.5 text-ink-400" />
                         {LIVREUR_SERVICE_SHORT[o.service]}
                         {isBase && <span className="rounded bg-paper-2 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase text-ink-500">Inclus</span>}
+                        {locked && <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase text-amber-700">Indisponible</span>}
                       </span>
                       <span className="shrink-0 text-[12px] font-bold tabular-nums text-ink-900">
                         {o.priceXof != null ? `${fmt(o.priceXof)} F ${o.unit ?? ""}` : "Tarif par zone"}
                       </span>
                     </span>
-                    <span className="mt-1 block text-[11.5px] leading-relaxed text-ink-500">{o.description}</span>
+                    <span className="mt-1 block text-[11.5px] leading-relaxed text-ink-500">
+                      {locked
+                        ? "Vous avez déjà une closeuse active. Mettez fin à ce partenariat pour confier le closing à ce livreur."
+                        : o.description}
+                    </span>
                   </span>
                 </button>
               );
@@ -533,12 +551,14 @@ function ServicesModal({
   name,
   offerings,
   initial,
+  closeuseActive,
   onClose,
   onSave,
 }: {
   name: string;
   offerings: ServiceOffering[];
   initial: LivreurService[];
+  closeuseActive?: boolean;
   onClose: () => void;
   onSave: (services: LivreurService[]) => void;
 }) {
@@ -547,6 +567,7 @@ function ServicesModal({
   );
   const toggle = (s: LivreurService) => {
     if (s === "livraison") return;
+    if (s === "closing" && closeuseActive) return; // verrouillé : closeuse déjà active
     setSelected((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   };
 
@@ -558,16 +579,19 @@ function ServicesModal({
       </p>
       <div className="flex flex-col gap-2 px-5 py-4">
         {offerings.map((o) => {
-          const checked = selected.includes(o.service);
           const isBase = o.service === "livraison";
+          const locked = o.service === "closing" && closeuseActive;
+          const checked = selected.includes(o.service) && !locked;
           return (
             <button
               key={o.service}
               onClick={() => toggle(o.service)}
+              disabled={locked}
               className={cn(
                 "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition",
                 checked ? "border-kamoo-blue-600 bg-kamoo-blue-50/40" : "border-line bg-white hover:bg-paper-2/50",
                 isBase && "cursor-default",
+                locked && "cursor-not-allowed opacity-60 hover:bg-white",
               )}
             >
               <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-md border", checked ? "border-kamoo-blue-600 bg-kamoo-blue-600 text-white" : "border-ink-300 bg-white")}>
@@ -576,6 +600,12 @@ function ServicesModal({
               <span className="flex-1 text-[13px] font-semibold text-ink-900">
                 {LIVREUR_SERVICE_SHORT[o.service]}
                 {isBase && <span className="ml-2 rounded bg-paper-2 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase text-ink-500">Inclus</span>}
+                {locked && <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase text-amber-700">Indisponible</span>}
+                {locked && (
+                  <span className="mt-0.5 block text-[11px] font-normal leading-snug text-ink-500">
+                    Closeuse déjà active — mettez fin à ce partenariat pour l’activer.
+                  </span>
+                )}
               </span>
               <span className="shrink-0 text-[12px] font-bold tabular-nums text-ink-700">
                 {o.priceXof != null ? `${fmt(o.priceXof)} F ${o.unit ?? ""}` : "Par zone"}
