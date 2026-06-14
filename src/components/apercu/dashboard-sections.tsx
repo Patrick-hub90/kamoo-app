@@ -66,14 +66,13 @@ export type KpiData = {
 };
 
 /**
- * Bande KPI — 4 indicateurs de PERFORMANCE (la trésorerie « à encaisser /
- * à régler » vit dans sa propre carte, pas ici : ce sont des soldes, pas des
- * tendances). Panier moyen dérivé pour éviter d'inventer une donnée.
+ * Bande KPI — 5 indicateurs : 3 de PERFORMANCE (CA, marge, livrées, avec
+ * comparaison) + 2 de TRÉSORERIE (à encaisser / à payer, avec le nombre de
+ * contreparties en contexte).
  */
 export function KpiRow({ k }: { k: KpiData }) {
-  const panier = k.nbLivre > 0 ? Math.round(k.caEncaisse / k.nbLivre) : 0;
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
       <Kpi
         label="CA encaissé"
         value={formatXOF(k.caEncaisse, false)}
@@ -93,10 +92,16 @@ export function KpiRow({ k }: { k: KpiData }) {
         delta={k.livreDelta}
       />
       <Kpi
-        label="Panier moyen"
-        value={formatXOF(panier, false)}
+        label="À encaisser"
+        value={formatXOF(k.aEncaisser, false)}
         unit="F"
-        hint="par commande livrée"
+        hint={`${k.aEncaisserN} livreur${k.aEncaisserN > 1 ? "s" : ""}`}
+      />
+      <Kpi
+        label="À payer"
+        value={formatXOF(k.aRegler, false)}
+        unit="F"
+        hint={`${k.aReglerN} partenaire${k.aReglerN > 1 ? "s" : ""}`}
       />
     </div>
   );

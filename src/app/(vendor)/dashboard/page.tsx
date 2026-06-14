@@ -8,18 +8,11 @@ import { PageHeader } from "@/components/kamoo/page-header";
 import {
   KpiRow,
   CaChart,
-  CashflowCard,
   ClosingCard,
-  TopProducts,
   LiveDeliveries,
-  RecentOps,
-  StockAlerts,
-  type AlertRow,
   type Bucket,
   type Lead,
   type DelRow,
-  type OpRow,
-  type ProdRow,
 } from "@/components/apercu/dashboard-sections";
 import {
   DateRangeFilter,
@@ -36,17 +29,13 @@ import {
   MOCK_FINANCE_MOVEMENTS,
   MOCK_TODAY,
 } from "@/lib/data/mock-finances";
-import { MOCK_CLOSING_ASSIGNMENTS } from "@/lib/data/mock-closing";
-import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
-import { useProductsState } from "@/lib/hooks/use-products-state";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
-import { formatMoney, formatXOF } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { displayOrderNo, orderTotalXof, type ClosingAssignment } from "@/lib/types/closing";
-import { getStockLevel } from "@/lib/types/produit";
 import {
   bucketingForDateFilter,
   chartEndDateForFilter,
@@ -67,7 +56,6 @@ export default function DashboardPage() {
   const { currentMarket } = useCurrentMarket();
   const { currencyFor } = useShopify();
   const currency = currencyFor(currentMarket.id);
-  const { products: liveProducts } = useProductsState();
   /* Commandes LIVE : la machine d'etats closing (synchronisee app closeuse) */
   const liveOrders = useClosingState().all;
   const searchParams = useSearchParams();
@@ -171,12 +159,6 @@ export default function DashboardPage() {
   );
   void currentMarket.country.code;
 
-  /* ─── Alertes stock (état live des produits) ─── */
-  const stockAlerts = useMemo(
-    () => computeStockAlerts(liveProducts),
-    [liveProducts],
-  );
-
   /* ─── Mapping vers les sections d'identité ─── */
   const kpiData = {
     caEncaisse: computed.kpis.caEncaisse,
@@ -204,16 +186,6 @@ export default function DashboardPage() {
     time: l.mins,
   }));
 
-  const topRows: ProdRow[] = computed.topProducts.map((p) => ({
-    emoji: p.emoji,
-    bg: p.bg,
-    name: p.name,
-    ventes: p.sales,
-    ca: p.caXof,
-    benefice: p.beneficeXof,
-    margePct: p.beneficePct,
-  }));
-
   const deliveryRows: DelRow[] = computed.liveDeliveries.map((d: DeliveryFeedItem) => ({
     id: d.orderId,
     product: d.productLabel,
@@ -221,14 +193,6 @@ export default function DashboardPage() {
     amount: d.amountLabel,
     time: d.lastActivityLabel,
     status: d.status,
-  }));
-
-  const opRows: OpRow[] = computed.recentOps.map((o: OperationRow) => ({
-    dir: o.kind,
-    label: o.who,
-    sub: o.what,
-    amount: o.amountXof,
-    time: o.time,
   }));
 
   const greeting = getGreeting();
@@ -263,7 +227,7 @@ export default function DashboardPage() {
           </Link>
         )}
 
-        {/* Bande KPI — performance (4 indicateurs, comparaison incluse) */}
+        {/* Bande KPI — 3 performance + 2 trésorerie (à encaisser / à payer) */}
         <KpiRow k={kpiData} />
 
         {/* Graphe héros — pleine largeur (évolution du CA encaissé) */}
@@ -282,23 +246,6 @@ export default function DashboardPage() {
             rows={deliveryRows}
             activeCount={computed.liveDeliveriesActiveCount}
           />
-        </div>
-
-        {/* Ce qui se vend + trésorerie */}
-        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
-          <TopProducts rows={topRows} title="Top produits" />
-          <CashflowCard
-            aEncaisser={kpiData.aEncaisser}
-            aEncaisserN={kpiData.aEncaisserN}
-            aRegler={kpiData.aRegler}
-            aReglerN={kpiData.aReglerN}
-          />
-        </div>
-
-        {/* Journal des opérations + alertes stock */}
-        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
-          <RecentOps rows={opRows} />
-          <StockAlerts rows={stockAlerts} />
         </div>
       </div>
     </div>
@@ -659,30 +606,4 @@ function computeDashboardData(args: {
     liveDeliveriesChipLabel,
     topProducts,
   };
-}
-
-/* ─── Alertes stock (live) ──────────────────────────────────────── */
-function computeStockAlerts(
-  products: ReturnType<typeof useProductsState>["products"],
-): AlertRow[] {
-  const alerts: AlertRow[] = [];
-  for (const p of products) {
-    if (!p.isActive) continue;
-    const level = getStockLevel(p);
-    if (level === "rupture") {
-      alerts.push({ name: p.name, sub: "Stock épuisé · à réapprovisionner", level: "rupture" });
-    } else if (level === "bas") {
-      alerts.push({ name: p.name, sub: `Stock bas · ${p.stock} unités restantes`, level: "bas" });
-    }
-  }
-  // Réception prévue : dérivée de la première expédition réellement en transit
-  const inbound = MOCK_EXPEDITIONS.find((e) => e.status !== "arrived_destination");
-  if (inbound) {
-    alerts.push({
-      name: inbound.productName,
-      sub: `Réception prévue · ${inbound.eta}`,
-      level: "info",
-    });
-  }
-  return alerts.slice(0, 4);
 }
