@@ -1,5 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -20,7 +23,8 @@ import {
   ProductSaveButton,
 } from "@/components/kamoo/product-image-manager";
 import { campaignsForProduct } from "@/lib/data/mock-ad-campaigns";
-import { getApprovisionnements, getProduit } from "@/lib/data/mock-produits";
+import { getApprovisionnements } from "@/lib/data/mock-produits";
+import { useProductsState } from "@/lib/hooks/use-products-state";
 import {
   conversionRate,
   costPerDelivered,
@@ -38,10 +42,6 @@ import {
 } from "@/lib/types/produit";
 import { formatXOF } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-type PageProps = {
-  params: Promise<{ id: string }>;
-};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", {
@@ -65,9 +65,22 @@ const APPRO_TONE: Record<Approvisionnement["status"], { bg: string; fg: string; 
   en_attente_devis: { bg: "bg-amber-50", fg: "text-amber-700", dot: "bg-amber-500" },
 };
 
-export default async function ProduitDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const p = getProduit(id);
+export default function ProduitDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = typeof params?.id === "string" ? params.id : "";
+  const { getProduct } = useProductsState();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const p = getProduct(id);
+
+  // Le store produit (catalogue + créations + imports Shopify) est hydraté
+  // depuis sessionStorage côté client. Avant l'hydratation, on n'affiche PAS
+  // le 404 — sinon tout produit qui n'existe que côté client (importé/créé)
+  // flasherait « introuvable » au montage.
+  if (!mounted) {
+    return <div className="min-h-full bg-paper" />;
+  }
   if (!p) notFound();
 
   const appros = getApprovisionnements(p.id);
