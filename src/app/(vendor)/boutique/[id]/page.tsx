@@ -14,6 +14,7 @@ import {
   Plane,
   Plus,
   Ship,
+  ShoppingBag,
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
 import { ProductActiveToggle } from "@/components/kamoo/product-active-toggle";
@@ -25,6 +26,7 @@ import {
 import { campaignsForProduct } from "@/lib/data/mock-ad-campaigns";
 import { getApprovisionnements } from "@/lib/data/mock-produits";
 import { useProductsState } from "@/lib/hooks/use-products-state";
+import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
 import {
   conversionRate,
   costPerDelivered,
@@ -69,6 +71,7 @@ export default function ProduitDetailPage() {
   const params = useParams<{ id: string }>();
   const id = typeof params?.id === "string" ? params.id : "";
   const { getProduct } = useProductsState();
+  const { isLinked } = useShopifyPublish();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -83,6 +86,7 @@ export default function ProduitDetailPage() {
   }
   if (!p) notFound();
 
+  const shopifyLinked = isLinked(p.id);
   const appros = getApprovisionnements(p.id);
   const campaigns = campaignsForProduct(p.id);
   const totalAdSpend = campaigns.reduce((s, c) => s + c.spentXof, 0);
@@ -155,10 +159,24 @@ export default function ProduitDetailPage() {
                   productName={p.name}
                   variant="badge"
                 />
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium",
+                    shopifyLinked ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700",
+                  )}
+                  title={
+                    shopifyLinked
+                      ? "Ce produit est relié à votre boutique Shopify"
+                      : "Ce produit n'est pas relié à votre boutique Shopify"
+                  }
+                >
+                  <ShoppingBag className="h-3 w-3" />
+                  {shopifyLinked ? "Lié à Shopify" : "Hors Shopify"}
+                </span>
                 <ProductSaveButton />
                 <Link
                   href={`/boutique/${p.id}/edit`}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   Modifier
