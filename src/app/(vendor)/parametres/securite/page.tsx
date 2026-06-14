@@ -50,7 +50,7 @@ export default function SecuritePage() {
     <div className="space-y-5">
       {/* CHANGEMENT MOT DE PASSE */}
       <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-lg font-extrabold text-ink-900">
+        <h2 className="font-display text-base font-extrabold text-ink-900">
           Mot de passe
         </h2>
         <p className="mt-0.5 text-[12.5px] text-ink-500">
@@ -119,7 +119,7 @@ export default function SecuritePage() {
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-lg font-extrabold text-ink-900">
+              <h2 className="font-display text-base font-extrabold text-ink-900">
                 Double authentification
               </h2>
               <Toggle checked={twoFA} onChange={setTwoFA} />
@@ -145,7 +145,7 @@ export default function SecuritePage() {
       <section className="rounded-2xl border border-line bg-white p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-extrabold text-ink-900">
+            <h2 className="font-display text-base font-extrabold text-ink-900">
               Sessions actives
             </h2>
             <p className="mt-0.5 text-[12.5px] text-ink-500">

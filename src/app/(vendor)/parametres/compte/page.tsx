@@ -29,7 +29,7 @@ export default function ComptePage() {
     <div className="space-y-5">
       {/* IDENTITÉ — card avec avatar */}
       <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-lg font-extrabold text-ink-900">
+        <h2 className="font-display text-base font-extrabold text-ink-900">
           Votre identité
         </h2>
         <p className="mt-0.5 text-[12.5px] text-ink-500">
@@ -79,7 +79,7 @@ export default function ComptePage() {
 
       {/* CONTACT */}
       <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-lg font-extrabold text-ink-900">
+        <h2 className="font-display text-base font-extrabold text-ink-900">
           Contact
         </h2>
         <p className="mt-0.5 text-[12.5px] text-ink-500">
@@ -109,7 +109,7 @@ export default function ComptePage() {
 
       {/* INFORMATIONS COMPTE — read-only */}
       <section className="rounded-2xl border border-line bg-white p-6">
-        <h2 className="font-display text-lg font-extrabold text-ink-900">
+        <h2 className="font-display text-base font-extrabold text-ink-900">
           Informations du compte
         </h2>
         <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">

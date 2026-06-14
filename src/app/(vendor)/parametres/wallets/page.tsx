@@ -58,7 +58,7 @@ export default function WalletsPage() {
       <section className="rounded-2xl border border-line bg-white p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-extrabold text-ink-900">
+            <h2 className="font-display text-base font-extrabold text-ink-900">
               Vos wallets
             </h2>
             <p className="mt-0.5 text-[12.5px] text-ink-500">
@@ -206,7 +206,7 @@ function AddWalletDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md rounded-2xl bg-white p-6 shadow-[var(--shadow-kamoo-lg)]"
       >
-        <h3 className="font-display text-lg font-extrabold text-ink-900">
+        <h3 className="font-display text-base font-extrabold text-ink-900">
           Ajouter un wallet
         </h3>
         <p className="mt-0.5 text-[12.5px] text-ink-500">
