@@ -14,6 +14,7 @@ import {
   Clock,
   Copy,
   MapPin,
+  Package,
   Plane,
   Plus,
   Ship,
@@ -35,20 +36,16 @@ import { cn } from "@/lib/utils";
 /* ─── État local du wizard ─────────────────────────────────────────── */
 
 type Photo = {
-  /** Data URL ou URL distante de l'image uploadée */
   url: string;
-  /** Nom du fichier source (pour information) */
   fileName?: string;
 };
 
 type Colis = {
   id: number;
-  /** Nom affiché. Si productId est set, vient du catalogue. Sinon saisi libre. */
   name: string;
-  /** ID du produit dans la Boutique si lié au catalogue, undefined sinon */
   productId?: string;
-  weight: string; // kg, optionnel
-  cartons: string; // nombre, optionnel
+  weight: string;
+  cartons: string;
   photos: (Photo | null)[]; // 5 slots
 };
 
@@ -91,11 +88,6 @@ export default function NewExpeditionPage() {
   const [mode, setMode] = useState<TransportMode>("air_standard");
   const [responsibilityAccepted, setResponsibilityAccepted] = useState(false);
 
-  /* Une expédition Kamoo passe par VOS transitaires : sans AUCUN partenariat
-   * actif, le wizard est bloqué (workflow de connexion ci-dessous). On peut
-   * être connecté à plusieurs transitaires : on SÉLECTIONNE celui de cette
-   * expédition à l'étape Transport — modes, tarifs, délais et catégories
-   * sont synchronisés avec lui. */
   const { partners } = usePartners();
   const activeTransitaires = partners.transitaires
     .filter((p) => p.status === "active")
@@ -110,15 +102,12 @@ export default function NewExpeditionPage() {
 
   const { addExpedition } = useExpeditionsState();
 
-  // Pays de destination = marché courant (un marché = un pays)
   const { currentMarket } = useCurrentMarket();
   const country = currentMarket.country;
 
-  // Modes proposés par LE transitaire connecté
   const isModeAllowed = (m: TransportMode) =>
     transitaire ? transitaire.modes.some((tm) => tm.mode === m) : true;
 
-  // Aligne le mode par défaut sur l'offre du transitaire
   useEffect(() => {
     if (transitaire && !isModeAllowed(mode)) {
       const fallback = transitaire.modes[0]?.mode;
@@ -128,11 +117,7 @@ export default function NewExpeditionPage() {
   }, [transitaire?.slug]);
 
   const totalWeight = useMemo(
-    () =>
-      colis.reduce(
-        (sum, c) => sum + (parseFloat(c.weight) || 0),
-        0,
-      ),
+    () => colis.reduce((sum, c) => sum + (parseFloat(c.weight) || 0), 0),
     [colis],
   );
 
@@ -141,30 +126,20 @@ export default function NewExpeditionPage() {
     [colis],
   );
 
-  // Étape 1 valide si chaque colis a au moins 1 photo + un nom
   const canNext =
     step === 1
-      ? colis.every(
-          (c) => c.name.trim().length > 0 && c.photos.some(Boolean),
-        )
+      ? colis.every((c) => c.name.trim().length > 0 && c.photos.some(Boolean))
       : true;
 
-  // Étape 3 : la soumission requiert l'acceptation de responsabilité
   const canSubmit = step === 3 && responsibilityAccepted && !submitting;
 
-  /**
-   * Soumission du wizard. V1 mock : on flag la création en sessionStorage
-   * pour qu'une bannière de succès s'affiche sur /expeditions, puis on
-   * navigue. V2 : remplacer par un appel server action qui crée la ligne
-   * en base + génère le shipping mark côté serveur.
-   */
+  const shippingMark = `KMO-${country.code}-${String(78421 + colis.length)}`;
+
   const handleSubmit = () => {
     if (!canSubmit || !transitaire) return;
     setSubmitting(true);
     const first = colis[0];
     const tMode = transitaire.modes.find((m) => m.mode === mode);
-    /* L'expédition est réellement créée (sessionStorage) : elle apparaît
-     * immédiatement dans la liste, en « Attente devis ». */
     addExpedition({
       id: `exp_new_${Date.now().toString(36)}`,
       publicCode: shippingMark,
@@ -196,43 +171,28 @@ export default function NewExpeditionPage() {
         JSON.stringify({ colis: colis.length, mode, at: new Date().toISOString() }),
       );
     } catch {
-      // sessionStorage indispo (mode privé) — pas bloquant, on navigue quand même
+      /* sessionStorage indispo — pas bloquant */
     }
     router.push("/expeditions");
   };
 
-  // Mock shipping mark — sera généré côté serveur en vrai
-  const shippingMark = `KMO-${country.code}-${String(78421 + colis.length)}`;
-
-  /* ─── Handlers ──────────────────────────────────────────────── */
-
+  /* ─── Handlers colis ──────────────────────────────────────────── */
   const updateColis = (idx: number, next: Colis) => {
     setColis((prev) => prev.map((c, i) => (i === idx ? next : c)));
   };
-
   const removeColis = (idx: number) => {
     setColis((prev) => prev.filter((_, i) => i !== idx));
     setExpandedColis((e) => Math.max(0, Math.min(e, colis.length - 2)));
   };
-
   const addColis = () => {
     setColis((prev) => [
       ...prev,
-      {
-        id: Date.now(),
-        name: "",
-        weight: "",
-        cartons: "",
-        photos: [null, null, null, null, null],
-      },
+      { id: Date.now(), name: "", weight: "", cartons: "", photos: [null, null, null, null, null] },
     ]);
     setExpandedColis(colis.length);
   };
 
-  /* ─── Render ─────────────────────────────────────────────────── */
-
-  /* GATE : pas de transitaire connecté → on guide vers la marketplace.
-   * Une expédition Kamoo est TOUJOURS portée par votre transitaire. */
+  /* ─── GATE : aucun transitaire connecté ───────────────────────── */
   if (!transitaire) {
     const pending = tPartnership?.status === "pending";
     return (
@@ -241,7 +201,7 @@ export default function NewExpeditionPage() {
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-kamoo-blue-50 text-kamoo-blue-700">
             <Ship className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-[19px] font-extrabold text-ink-900">
+          <h1 className="mt-4 text-[19px] font-bold text-ink-900">
             {pending ? "Votre transitaire n'a pas encore accepté" : "Connectez d'abord un transitaire"}
           </h1>
           <p className="mt-2 text-[13px] leading-relaxed text-ink-500">
@@ -268,132 +228,232 @@ export default function NewExpeditionPage() {
 
   return (
     <div className="flex h-full flex-col bg-paper">
-      {/* HEADER — sobre, cohérent avec l'app (pas de hero dégradé) */}
+      {/* HEADER */}
       <header className="shrink-0 border-b border-line bg-white">
-        <div className="mx-auto w-full max-w-5xl px-6 pb-4 pt-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <Link
-                href="/expeditions"
-                className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 transition hover:text-ink-700"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Mes expéditions
-              </Link>
-              <h1 className="mt-1.5 text-[20px] font-bold tracking-tight text-ink-900">
-                Nouvelle expédition{" "}
-                <span className="font-semibold text-ink-400">· Chine → {country.name}</span>
-              </h1>
-            </div>
-            <div className="shrink-0 pt-1 text-right text-[11.5px] tabular-nums text-ink-400">
-              {colis.length} colis
-              {totalWeight > 0 ? ` · ${totalWeight.toFixed(1)} kg estimés` : ""}
-            </div>
-          </div>
-
+        <div className="mx-auto w-full max-w-6xl px-6 pb-4 pt-5">
+          <Link
+            href="/expeditions"
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 transition hover:text-ink-700"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Mes expéditions
+          </Link>
+          <h1 className="mt-1.5 text-[20px] font-bold tracking-tight text-ink-900">
+            Nouvelle expédition{" "}
+            <span className="font-semibold text-ink-400">· Chine → {country.name}</span>
+          </h1>
           <div className="mt-4">
             <StepIndicator step={step} />
           </div>
         </div>
       </header>
 
-      {/* BODY */}
+      {/* BODY — deux panneaux : étape focalisée + récapitulatif vivant */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-5xl px-6 py-7">
-        {step === 1 && (
-          <Step1Colis
-            colis={colis}
-            expandedIndex={expandedColis}
-            onToggleExpand={(i) =>
-              setExpandedColis((e) => (e === i ? -1 : i))
-            }
-            onChange={updateColis}
-            onRemove={removeColis}
-            onAdd={addColis}
-          />
-        )}
-        {step === 2 && (
-          <Step2Transport
-            transitaire={transitaire}
-            transitaires={activeTransitaires}
-            onTransitaireChange={setSelectedTransitaireSlug}
-            mode={mode}
-            onModeChange={setMode}
-            isModeAllowed={isModeAllowed}
-            countryName={country.name}
-          />
-        )}
-        {step === 3 && (
-          <Step3Confirm
-            colis={colis}
-            mode={mode}
-            transitaire={transitaire}
-            country={country}
-            shippingMark={shippingMark}
-            totalWeight={totalWeight}
-            totalPhotos={totalPhotos}
-            responsibilityAccepted={responsibilityAccepted}
-            onResponsibilityChange={setResponsibilityAccepted}
-          />
-        )}
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] items-start gap-6 px-6 py-7">
+          {/* GAUCHE — étape active */}
+          <div className="min-w-0">
+            {step === 1 && (
+              <Step1Colis
+                colis={colis}
+                expandedIndex={expandedColis}
+                onToggleExpand={(i) => setExpandedColis((e) => (e === i ? -1 : i))}
+                onChange={updateColis}
+                onRemove={removeColis}
+                onAdd={addColis}
+              />
+            )}
+            {step === 2 && (
+              <Step2Transport
+                transitaire={transitaire}
+                transitaires={activeTransitaires}
+                onTransitaireChange={setSelectedTransitaireSlug}
+                mode={mode}
+                onModeChange={setMode}
+                isModeAllowed={isModeAllowed}
+              />
+            )}
+            {step === 3 && (
+              <Step3Confirm
+                colis={colis}
+                mode={mode}
+                transitaire={transitaire}
+                country={country}
+                shippingMark={shippingMark}
+                totalPhotos={totalPhotos}
+                responsibilityAccepted={responsibilityAccepted}
+                onResponsibilityChange={setResponsibilityAccepted}
+              />
+            )}
+          </div>
+
+          {/* DROITE — récapitulatif vivant (sticky) + CTA */}
+          <aside className="sticky top-6">
+            <SummaryRail
+              step={step}
+              colisCount={colis.length}
+              totalWeight={totalWeight}
+              transitaire={transitaire}
+              mode={mode}
+              country={country}
+              canNext={canNext}
+              canSubmit={canSubmit}
+              submitting={submitting}
+              onPrev={() => setStep((s) => Math.max(1, s - 1))}
+              onNext={() => canNext && setStep((s) => Math.min(3, s + 1))}
+              onSubmit={handleSubmit}
+            />
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── RÉCAPITULATIF VIVANT (panneau droit, partagé) ───────────────── */
+
+function SummaryRail({
+  step,
+  colisCount,
+  totalWeight,
+  transitaire,
+  mode,
+  country,
+  canNext,
+  canSubmit,
+  submitting,
+  onPrev,
+  onNext,
+  onSubmit,
+}: {
+  step: number;
+  colisCount: number;
+  totalWeight: number;
+  transitaire: Transitaire;
+  mode: TransportMode;
+  country: (typeof COUNTRIES)[number];
+  canNext: boolean;
+  canSubmit: boolean;
+  submitting: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+  onSubmit: () => void;
+}) {
+  const tMode = transitaire.modes.find((m) => m.mode === mode);
+  const ModeIcon = TRANSPORT_ICON[mode];
+  const proceedDisabled = step < 3 ? !canNext : !canSubmit;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm">
+      <div className="border-b border-line px-5 py-3.5">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-400">
+          Récapitulatif
         </div>
       </div>
 
-      {/* FOOTER NAV */}
-      <div className="shrink-0 border-t border-line bg-white">
-        <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-6 py-4">
+      <div className="p-5">
+        {/* Trajet */}
+        <div className="flex items-center gap-3 rounded-xl border border-line bg-paper-2/40 p-3">
+          <div className="min-w-0 flex-1 text-center">
+            <div className="text-[10.5px] text-ink-500">Origine</div>
+            <div className="truncate text-[13px] font-bold text-ink-900">🇨🇳 Guangzhou</div>
+          </div>
+          <div className="flex flex-col items-center text-kamoo-orange-500">
+            {step >= 2 ? <ModeIcon className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+            {step >= 2 && tMode && (
+              <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide">{tMode.delay}</span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1 text-center">
+            <div className="text-[10.5px] text-ink-500">Destination</div>
+            <div className="truncate text-[13px] font-bold text-ink-900">
+              {country.flag} {country.warehouseCity}
+            </div>
+          </div>
+        </div>
+
+        {/* Lignes récap */}
+        <div className="mt-4 flex flex-col divide-y divide-line">
+          <SummaryRow label="Colis" value={String(colisCount)} />
+          <SummaryRow
+            label="Poids estimé"
+            value={totalWeight > 0 ? `${totalWeight.toFixed(1)} kg` : "—"}
+          />
+          <SummaryRow
+            label="Transitaire"
+            value={step >= 2 ? transitaire.name : null}
+            pending={step < 2 ? "à l'étape 2" : undefined}
+          />
+          <SummaryRow
+            label="Mode"
+            value={step >= 2 && tMode ? TRANSPORT_MODE_LABELS[mode] : null}
+            pending={step < 2 ? "à l'étape 2" : undefined}
+          />
+          {step >= 2 && tMode && (
+            <SummaryRow
+              label="Tarif indicatif"
+              value={`${tMode.fromXof.toLocaleString("fr-FR")}–${tMode.toXof.toLocaleString("fr-FR")} F/${tMode.unit === "kg" ? "kg" : "CBM"}`}
+            />
+          )}
+        </div>
+
+        <div className="mt-4 flex items-start gap-2 border-t border-line pt-3 text-[11.5px] leading-relaxed text-ink-500">
+          <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>Le devis exact arrive après réception &amp; pesée de vos colis en Chine.</span>
+        </div>
+
+        {/* CTA */}
         <button
-          onClick={() => setStep((s) => Math.max(1, s - 1))}
-          disabled={step === 1}
+          type="button"
+          onClick={step < 3 ? onNext : onSubmit}
+          disabled={proceedDisabled}
           className={cn(
-            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
-            step === 1
-              ? "cursor-not-allowed text-ink-400"
-              : "text-ink-900 hover:bg-paper-2",
+            "mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600",
+            proceedDisabled && "cursor-not-allowed opacity-40",
           )}
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Précédent
+          {step < 3 ? "Étape suivante" : submitting ? "Création…" : "Valider l'expédition"}
+          <ArrowRight className="h-4 w-4" />
         </button>
 
-        <div className="flex-1 text-center text-[12px] text-ink-500">
-          {step < 3 && canNext && "Tout est rempli — vous pouvez continuer"}
-          {step < 3 && !canNext &&
-            "Complétez les champs requis pour continuer"}
-          {step === 3 && canSubmit &&
-            "Une fois validée, votre colis sera réceptionné en Chine sous 5–10 jours"}
-          {step === 3 && !canSubmit &&
-            "Cochez la case de responsabilité pour valider"}
-        </div>
-
-        {step < 3 ? (
-          <button
-            onClick={() => canNext && setStep(step + 1)}
-            disabled={!canNext}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-kamoo-orange-600",
-              !canNext && "cursor-not-allowed opacity-40",
-            )}
-          >
-            Étape suivante
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button>
-        ) : (
+        {step > 1 && (
           <button
             type="button"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-6 py-3 text-sm font-extrabold text-white hover:bg-kamoo-orange-600",
-              !canSubmit && "cursor-not-allowed opacity-40",
-            )}
+            onClick={onPrev}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
           >
-            {submitting ? "Création…" : "Valider l'expédition"}
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Précédent
           </button>
         )}
-        </div>
+
+        {step < 3 && !canNext && (
+          <p className="mt-2 text-center text-[11px] text-ink-400">
+            Complétez les champs requis pour continuer.
+          </p>
+        )}
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  pending,
+}: {
+  label: string;
+  value: string | null;
+  pending?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 text-[13px]">
+      <span className="text-ink-500">{label}</span>
+      {value ? (
+        <span className="truncate font-semibold text-ink-900">{value}</span>
+      ) : (
+        <span className="text-[12px] italic text-ink-300">{pending ?? "—"}</span>
+      )}
     </div>
   );
 }
@@ -435,7 +495,7 @@ function StepIndicator({ step }: { step: number }) {
               <div
                 className={cn(
                   "h-0.5 flex-1 rounded transition",
-                  done ? "bg-emerald-600" : "bg-ink-200",
+                  done ? "bg-emerald-600" : "bg-line",
                 )}
               />
             )}
@@ -465,27 +525,24 @@ function Step1Colis({
 }) {
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-[17px] font-bold text-ink-900">
-            Vos colis
-          </h2>
-          <p className="mt-1 text-[13px] text-ink-500">
-            Ajoutez chaque produit avec une photo et son nom. Vous pouvez
-            grouper jusqu&apos;à 20 colis dans une expédition.
+          <h2 className="text-[17px] font-bold text-ink-900">Vos colis</h2>
+          <p className="mt-0.5 text-[12.5px] text-ink-500">
+            Chaque produit avec une photo et son nom. Jusqu&apos;à 20 colis par expédition.
           </p>
         </div>
         <button
           onClick={onAdd}
           disabled={colis.length >= 20}
-          className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2 disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-line bg-white px-3.5 py-2 text-[13px] font-semibold text-ink-900 transition hover:bg-paper-2 disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
-          Ajouter un colis
+          Ajouter
         </button>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         {colis.map((c, i) => (
           <ColisCard
             key={c.id}
@@ -521,6 +578,7 @@ function ColisCard({
   removable: boolean;
 }) {
   const photoCount = colis.photos.filter(Boolean).length;
+  const cover = colis.photos.find(Boolean);
   const isComplete = colis.name && photoCount > 0;
 
   const addPhoto = (slot: number, file: File) => {
@@ -541,58 +599,57 @@ function ColisCard({
   };
 
   return (
-    <div className="rounded-2xl border border-line bg-white">
-      {/* Header de la card */}
-      <div
-        onClick={onToggle}
-        className="flex cursor-pointer items-center gap-3.5 rounded-t-2xl px-5 py-4"
-      >
-        <div className="grid h-9 w-9 place-items-center rounded-lg bg-kamoo-blue-50 text-sm font-extrabold text-kamoo-blue-700">
-          #{index + 1}
+    <div className={cn("rounded-2xl border bg-white transition", expanded ? "border-ink-300" : "border-line")}>
+      {/* Ligne — façon ligne de commande */}
+      <div onClick={onToggle} className="flex cursor-pointer items-center gap-3 px-4 py-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-paper-2 text-ink-400">
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cover.url} alt={cover.fileName ?? colis.name} className="h-full w-full object-cover" />
+          ) : (
+            <Package className="h-5 w-5" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold text-ink-900">
+          <div className="truncate text-[14px] font-bold text-ink-900">
             {colis.name || `Colis #${index + 1}`}
           </div>
-          <div className="mt-0.5 text-[12px] text-ink-500">
+          <div className="mt-0.5 truncate text-[12px]">
             {!isComplete ? (
               <span className="text-kamoo-orange-600">
-                {photoCount === 0
-                  ? "Ajoutez au moins 1 photo"
-                  : "Nommez le produit"}
+                {photoCount === 0 ? "Ajoutez au moins 1 photo" : "Nommez le produit"}
               </span>
             ) : (
-              <>
+              <span className="text-ink-500">
                 {photoCount} photo{photoCount > 1 ? "s" : ""}
                 {colis.weight && ` · ~${colis.weight} kg`}
-              </>
+                {colis.cartons && ` · ${colis.cartons} carton${parseInt(colis.cartons) > 1 ? "s" : ""}`}
+              </span>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {removable && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-              className="grid h-8 w-8 place-items-center rounded-md text-ink-500 hover:bg-red-50 hover:text-red-600"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-ink-500 transition-transform",
-              expanded && "rotate-180",
-            )}
-          />
-        </div>
+        {isComplete && !expanded && (
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+            <Check className="h-3 w-3" />
+          </span>
+        )}
+        {removable && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-ink-400 hover:bg-red-50 hover:text-red-600"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <ChevronDown className={cn("h-4 w-4 shrink-0 text-ink-400 transition-transform", expanded && "rotate-180")} />
       </div>
 
-      {/* Body */}
+      {/* Éditeur */}
       {expanded && (
-        <div className="border-t border-line px-5 pb-5 pt-4">
+        <div className="border-t border-line px-4 pb-4 pt-4">
           <div className="grid grid-cols-[1.1fr_1fr] gap-6">
             {/* Photos */}
             <div>
@@ -619,9 +676,8 @@ function ColisCard({
               <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-kamoo-blue-50 p-2.5">
                 <Camera className="mt-0.5 h-3.5 w-3.5 shrink-0 text-kamoo-blue-700" />
                 <p className="text-[11.5px] leading-relaxed text-kamoo-blue-700">
-                  Ajoutez la <b>photo commerciale</b> du produit + la{" "}
-                  <b>photo du carton</b> de la commande pour faciliter la
-                  réception.
+                  Ajoutez la <b>photo commerciale</b> du produit + la <b>photo du carton</b> pour
+                  faciliter la réception.
                 </p>
               </div>
             </div>
@@ -632,23 +688,10 @@ function ColisCard({
                 <ProductSelector
                   value={colis.name}
                   productId={colis.productId}
-                  onSelectExisting={(p) =>
-                    onChange({
-                      ...colis,
-                      productId: p.id,
-                      name: p.name,
-                    })
-                  }
-                  onChangeNew={(name) =>
-                    onChange({
-                      ...colis,
-                      productId: undefined,
-                      name,
-                    })
-                  }
+                  onSelectExisting={(p) => onChange({ ...colis, productId: p.id, name: p.name })}
+                  onChangeNew={(name) => onChange({ ...colis, productId: undefined, name })}
                 />
               </Field>
-
               <div className="grid grid-cols-2 gap-2.5">
                 <Field label="Poids estimé (kg)">
                   <input
@@ -656,9 +699,7 @@ function ColisCard({
                     step="0.1"
                     placeholder="0.0"
                     value={colis.weight}
-                    onChange={(e) =>
-                      onChange({ ...colis, weight: e.target.value })
-                    }
+                    onChange={(e) => onChange({ ...colis, weight: e.target.value })}
                     className="w-full rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
                   />
                 </Field>
@@ -667,9 +708,7 @@ function ColisCard({
                     type="number"
                     placeholder="1"
                     value={colis.cartons}
-                    onChange={(e) =>
-                      onChange({ ...colis, cartons: e.target.value })
-                    }
+                    onChange={(e) => onChange({ ...colis, cartons: e.target.value })}
                     className="w-full rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm outline-none placeholder:text-ink-400 focus:border-kamoo-blue-600 focus:ring-2 focus:ring-kamoo-blue-600/12"
                   />
                 </Field>
@@ -703,7 +742,7 @@ function Field({
             REQUIS
           </span>
         ) : (
-          <span className="rounded bg-ink-100 px-1.5 py-0.5 text-[9px] font-semibold text-ink-500">
+          <span className="rounded bg-paper-2 px-1.5 py-0.5 text-[9px] font-semibold text-ink-500">
             OPTIONNEL
           </span>
         )}
@@ -731,19 +770,14 @@ function PhotoSlot({
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
     if (file) onSelect(file);
-    // Reset le input pour permettre re-sélection du même fichier
     e.target.value = "";
   };
 
   if (photo) {
     return (
-      <div className="relative aspect-square overflow-hidden rounded-xl bg-ink-100">
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-paper-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photo.url}
-          alt={photo.fileName ?? "Photo"}
-          className="h-full w-full object-cover"
-        />
+        <img src={photo.url} alt={photo.fileName ?? "Photo"} className="h-full w-full object-cover" />
         <button
           onClick={onRemove}
           className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
@@ -759,20 +793,14 @@ function PhotoSlot({
     <>
       <label
         htmlFor={inputId}
-        className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
+        className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-line bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
       >
         <div className="flex flex-col items-center gap-1">
           <Plus className="h-4 w-4" />
           <span className="text-[10px] font-semibold">{label}</span>
         </div>
       </label>
-      <input
-        id={inputId}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleChange}
-      />
+      <input id={inputId} type="file" accept="image/*" className="hidden" onChange={handleChange} />
     </>
   );
 }
@@ -786,7 +814,6 @@ function Step2Transport({
   mode,
   onModeChange,
   isModeAllowed,
-  countryName,
 }: {
   transitaire: Transitaire;
   transitaires: Transitaire[];
@@ -794,133 +821,98 @@ function Step2Transport({
   mode: TransportMode;
   onModeChange: (m: TransportMode) => void;
   isModeAllowed: (m: TransportMode) => boolean;
-  countryName: string;
 }) {
   const recommendedRaw: TransportMode = "air_standard";
-  const recommended = isModeAllowed(recommendedRaw)
-    ? recommendedRaw
-    : transitaire.modes[0]?.mode;
-  const selectedTMode = transitaire.modes.find((m) => m.mode === mode);
+  const recommended = isModeAllowed(recommendedRaw) ? recommendedRaw : transitaire.modes[0]?.mode;
 
   return (
     <div>
-      <h2 className="font-display text-2xl font-extrabold text-ink-900">
-        Transitaire &amp; mode de transport
-      </h2>
-      <p className="mt-1 text-[13px] text-ink-500">
-        Choisissez le transitaire de cette expédition — modes, tarifs et délais sont
-        synchronisés avec son profil.
+      <h2 className="text-[17px] font-bold text-ink-900">Transitaire &amp; mode de transport</h2>
+      <p className="mt-0.5 text-[12.5px] text-ink-500">
+        Choisissez le transitaire — ses modes, tarifs et délais s&apos;appliquent automatiquement.
       </p>
 
       {/* Sélecteur de transitaire (multi-connexions) */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {transitaires.map((t) => {
-          const isSel = t.slug === transitaire.slug;
-          return (
-            <button
-              key={t.slug}
-              onClick={() => onTransitaireChange(t.slug)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-left transition",
-                isSel ? "border-kamoo-blue-700 bg-kamoo-blue-50" : "border-line bg-white hover:border-ink-300",
-              )}
-            >
-              <span
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
-                style={{ background: t.avatarBg }}
+      {transitaires.length > 1 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {transitaires.map((t) => {
+            const isSel = t.slug === transitaire.slug;
+            return (
+              <button
+                key={t.slug}
+                onClick={() => onTransitaireChange(t.slug)}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition",
+                  isSel ? "border-kamoo-blue-700 bg-kamoo-blue-50" : "border-line bg-white hover:border-ink-300",
+                )}
               >
-                {t.avatar}
-              </span>
-              <span className="leading-tight">
-                <span className="block text-[12.5px] font-bold text-ink-900">{t.name}</span>
-                <span className="block text-[10.5px] text-ink-500">
-                  ★ {t.rating} · {t.modes.length} mode{t.modes.length > 1 ? "s" : ""}
+                <span
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
+                  style={{ background: t.avatarBg }}
+                >
+                  {t.avatar}
                 </span>
-              </span>
-              {isSel && <Check className="ml-1 h-4 w-4 shrink-0 text-kamoo-blue-700" />}
-            </button>
-          );
-        })}
-        <Link
-          href="/marketplace/transitaires"
-          className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-line px-3 py-2.5 text-[12px] font-semibold text-ink-500 transition hover:border-kamoo-blue-300 hover:text-kamoo-blue-700"
+                <span className="leading-tight">
+                  <span className="block text-[12.5px] font-bold text-ink-900">{t.name}</span>
+                  <span className="block text-[10.5px] text-ink-500">
+                    ★ {t.rating} · {t.modes.length} mode{t.modes.length > 1 ? "s" : ""}
+                  </span>
+                </span>
+                {isSel && <Check className="ml-1 h-4 w-4 shrink-0 text-kamoo-blue-700" />}
+              </button>
+            );
+          })}
+          <Link
+            href="/marketplace/transitaires"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-line px-3 py-2.5 text-[12px] font-semibold text-ink-500 transition hover:border-kamoo-blue-300 hover:text-kamoo-blue-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Autre
+          </Link>
+        </div>
+      )}
+
+      {/* En-tête transitaire sélectionné */}
+      <div className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-white p-4">
+        <span
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[13px] font-bold text-white"
+          style={{ background: transitaire.avatarBg }}
         >
-          <Plus className="h-3.5 w-3.5" /> Connecter un autre transitaire
-        </Link>
-      </div>
-
-      <div className="mt-6 grid grid-cols-[1fr_1.1fr] gap-6">
-        {/* GAUCHE — Trajet visuel + récap */}
-        <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-line bg-white p-6">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              Trajet
-            </div>
-            <div className="mt-4 flex items-center gap-4">
-              <div className="flex-1">
-                <div className="text-[11px] text-ink-500">Origine</div>
-                <div className="text-lg font-extrabold text-ink-900">
-                  🇨🇳 {transitaire.city}
-                </div>
-                <div className="text-[12px] text-ink-500">
-                  Entrepôt {transitaire.name}
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 text-kamoo-orange-500">
-                <ArrowRight className="h-6 w-6" />
-                <div className="text-[10px] font-bold uppercase tracking-wider">
-                  {selectedTMode?.delay}
-                </div>
-              </div>
-              <div className="flex-1 text-right">
-                <div className="text-[11px] text-ink-500">Destination</div>
-                <div className="text-lg font-extrabold text-ink-900">
-                  🇸🇳 Dakar
-                </div>
-                <div className="text-[12px] text-ink-500">{countryName}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-kamoo-blue-100 bg-kamoo-blue-50/50 p-4">
-            <div className="flex items-start gap-2.5">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-kamoo-blue-700" />
-              <p className="text-[12px] leading-relaxed text-kamoo-blue-700">
-                Le pays de destination correspond au{" "}
-                <b>pays actif sélectionné en haut</b>. Pour changer, modifie-le
-                depuis le sélecteur du header.
-              </p>
-            </div>
+          {transitaire.avatar}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-bold text-ink-900">{transitaire.name}</div>
+          <div className="text-[12px] text-ink-500">
+            🇨🇳 {transitaire.city} · ★ {transitaire.rating}
           </div>
         </div>
-
-        {/* DROITE — modes proposés par le transitaire connecté */}
-        <div className="flex flex-col gap-3">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-700">
-            Les modes proposés par {transitaire.name}
-          </div>
-
-          {transitaire.modes.map((tm) => (
-            <TransitaireModeCard
-              key={tm.mode}
-              tMode={tm}
-              selected={mode === tm.mode}
-              recommended={tm.mode === recommended}
-              onClick={() => onModeChange(tm.mode)}
-            />
-          ))}
-
-          <p className="mt-1 text-[11.5px] leading-relaxed text-ink-400">
-            Les catégories acceptées / refusées par mode seront affichées à la
-            confirmation — vous pourrez les relire avant de valider.
-          </p>
-        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+          <Check className="h-3 w-3" /> Connecté
+        </span>
       </div>
+
+      {/* Modes proposés */}
+      <div className="mt-5 text-[10px] font-bold uppercase tracking-wider text-ink-700">
+        Modes proposés par {transitaire.name}
+      </div>
+      <div className="mt-2.5 flex flex-col gap-2.5">
+        {transitaire.modes.map((tm) => (
+          <TransitaireModeCard
+            key={tm.mode}
+            tMode={tm}
+            selected={mode === tm.mode}
+            recommended={tm.mode === recommended}
+            onClick={() => onModeChange(tm.mode)}
+          />
+        ))}
+      </div>
+      <p className="mt-3 text-[11.5px] leading-relaxed text-ink-400">
+        Les catégories acceptées / refusées par mode seront affichées à la confirmation — vous
+        pourrez les relire avant de valider.
+      </p>
     </div>
   );
 }
 
-/** Carte de mode SYNCHRONISÉE avec l'offre du transitaire connecté. */
 function TransitaireModeCard({
   tMode,
   selected,
@@ -938,39 +930,27 @@ function TransitaireModeCard({
     <button
       onClick={onClick}
       className={cn(
-        "relative flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition",
-        selected
-          ? "border-kamoo-blue-700 bg-kamoo-blue-50"
-          : "border-line bg-white hover:border-ink-300",
+        "relative flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition",
+        selected ? "border-kamoo-blue-700 bg-kamoo-blue-50" : "border-line bg-white hover:border-ink-300",
       )}
     >
       {recommended && !selected && (
-        <div className="absolute -top-2.5 right-3 rounded-md bg-kamoo-orange-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-          ★ Recommandé
+        <div className="absolute -top-2.5 right-3 rounded-md bg-kamoo-blue-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+          Recommandé
         </div>
       )}
-
-      {selected && (
-        <div className="absolute left-3 top-3 grid h-5 w-5 place-items-center rounded-full bg-kamoo-blue-700 text-white">
-          <Check className="h-3 w-3" />
-        </div>
-      )}
-
       <div
         className={cn(
-          "grid h-14 w-14 shrink-0 place-items-center rounded-xl",
+          "grid h-12 w-12 shrink-0 place-items-center rounded-xl",
           TRANSPORT_BG[tMode.mode],
           TRANSPORT_FG[tMode.mode],
         )}
       >
-        <Icon className="h-6 w-6" />
+        <Icon className="h-5 w-5" />
       </div>
-
-      <div className="flex-1">
-        <span className="text-base font-extrabold text-ink-900">
-          {TRANSPORT_MODE_LABELS[tMode.mode]}
-        </span>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-ink-500">
+      <div className="min-w-0 flex-1">
+        <span className="text-[15px] font-bold text-ink-900">{TRANSPORT_MODE_LABELS[tMode.mode]}</span>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-ink-500">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {tMode.delay}
@@ -978,19 +958,19 @@ function TransitaireModeCard({
           {tMode.description && <span>{tMode.description}</span>}
         </div>
       </div>
-
-      {/* Tarif du transitaire */}
-      <div className="text-right">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-          Tarif
-        </div>
-        <div className="font-display text-[15px] font-extrabold leading-tight text-ink-900">
-          {tMode.fromXof.toLocaleString("fr-FR")} – {tMode.toXof.toLocaleString("fr-FR")}
+      <div className="shrink-0 text-right">
+        <div className="text-[14px] font-extrabold leading-tight text-ink-900 tabular-nums">
+          {tMode.fromXof.toLocaleString("fr-FR")}–{tMode.toXof.toLocaleString("fr-FR")}
         </div>
         <div className="text-[10px] font-semibold text-ink-500">
           F CFA / {tMode.unit === "kg" ? "kg" : "CBM"}
         </div>
       </div>
+      {selected && (
+        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-kamoo-blue-700 text-white">
+          <Check className="h-3 w-3" />
+        </span>
+      )}
     </button>
   );
 }
@@ -1003,7 +983,6 @@ function Step3Confirm({
   transitaire,
   country,
   shippingMark,
-  totalWeight,
   totalPhotos,
   responsibilityAccepted,
   onResponsibilityChange,
@@ -1013,248 +992,131 @@ function Step3Confirm({
   transitaire: Transitaire;
   country: (typeof COUNTRIES)[number];
   shippingMark: string;
-  totalWeight: number;
   totalPhotos: number;
   responsibilityAccepted: boolean;
   onResponsibilityChange: (v: boolean) => void;
 }) {
   const tMode = transitaire.modes.find((m) => m.mode === mode)!;
-  const ModeIcon = TRANSPORT_ICON[mode];
 
   return (
-    <div className="grid grid-cols-[1.4fr_1fr] gap-6">
-      {/* GAUCHE — Récap */}
-      <div className="flex flex-col gap-4">
-        {/* Trajet */}
-        <div className="rounded-2xl border border-line bg-white p-5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            Trajet
-          </div>
-          <div className="mt-3 flex items-center gap-4">
-            <div className="flex-1">
-              <div className="text-[11px] text-ink-500">Origine</div>
-              <div className="text-lg font-extrabold text-ink-900">
-                🇨🇳 Guangzhou
-              </div>
-              <div className="text-[12px] text-ink-500">
-                Entrepôt Kamoo · GZ-04
-              </div>
-            </div>
-            <div className={cn("flex flex-col items-center gap-1", TRANSPORT_FG[mode])}>
-              <ModeIcon className="h-5 w-5" />
-              <div className="text-[10px] font-bold">{tMode.delay}</div>
-            </div>
-            <div className="flex-1 text-right">
-              <div className="text-[11px] text-ink-500">Destination</div>
-              <div className="text-lg font-extrabold text-ink-900">
-                {country.flag} {country.name}
-              </div>
-              <div className="text-[12px] text-ink-500">
-                {country.warehouseCity}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Liste colis */}
-        <div className="rounded-2xl border border-line bg-white p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-              {colis.length} colis · {totalWeight.toFixed(1)} kg estimés
-            </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-kamoo-blue-700">
-              <ModeIcon className="h-3 w-3" />
-              {TRANSPORT_MODE_LABELS[mode]} · {tMode.delay}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            {colis.map((c, i) => {
-              const photoCount = c.photos.filter(Boolean).length;
-              const firstPhoto = c.photos.find(Boolean);
-              return (
-                <div
-                  key={c.id}
-                  className="flex items-center gap-3 rounded-xl bg-paper-2 px-3 py-2.5"
-                >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-ink-100 text-xl">
-                    {firstPhoto ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={firstPhoto.url}
-                        alt={firstPhoto.fileName ?? c.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      "📦"
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-bold text-ink-900">
-                      {c.name || `Colis #${i + 1}`}
-                    </div>
-                    <div className="text-[11px] text-ink-500">
-                      {photoCount} photo{photoCount > 1 ? "s" : ""}
-                      {c.cartons &&
-                        ` · ${c.cartons} carton${parseInt(c.cartons) > 1 ? "s" : ""}`}
-                      {c.weight ? ` · ~${c.weight} kg` : " · poids à mesurer"}
-                    </div>
-                  </div>
-                  <span className="rounded-md bg-kamoo-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-kamoo-blue-700">
-                    #{i + 1}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Devis en attente */}
-        <div className="rounded-2xl border border-line bg-white p-5">
-          <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                Devis en attente
-              </div>
-              <div className="mt-1 text-base font-extrabold text-ink-900">
-                En attente de réception en Chine
-              </div>
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-700">
-                Une fois votre colis arrivé chez notre transitaire à{" "}
-                <b>Guangzhou</b>, il sera <b>pesé</b> et{" "}
-                <b>photographié</b>, puis vous recevrez le devis exact
-                (poids, volume si besoin, coût unitaire et total).
-              </p>
-
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {[
-                  { label: "Poids réel", icon: Box, placeholder: "— kg" },
-                  {
-                    label: "Volume (CBM)",
-                    icon: Plane,
-                    placeholder: "— CBM",
-                  },
-                  {
-                    label: "Cartons reçus",
-                    icon: Ship,
-                    placeholder: `— / ${colis.length}`,
-                  },
-                ].map((item) => {
-                  const I = item.icon;
-                  return (
-                    <div
-                      key={item.label}
-                      className="rounded-lg border border-line bg-white p-2.5"
-                    >
-                      <div className="flex items-center gap-1 text-ink-500">
-                        <I className="h-3 w-3" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
-                          {item.label}
-                        </span>
-                      </div>
-                      <div className="font-display mt-1 text-base font-extrabold text-ink-400">
-                        {item.placeholder}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-500">
-                <Clock className="h-3 w-3" />
-                Notification dès la réception · délai habituel 5–10 jours
-                après envoi du fournisseur.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RELECTURE — catégories du transitaire pour le mode choisi.
-            Synchronisé avec son profil : c'est SA politique qui s'applique. */}
-        <div className="rounded-2xl border border-line bg-white p-5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            À relire avant de valider — {TRANSPORT_MODE_LABELS[mode]} chez {transitaire.name}
-          </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
-              <div className="text-[10.5px] font-bold uppercase tracking-wide text-emerald-700">
-                ✓ Colis autorisés
-              </div>
-              <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
-                {(tMode.accepted ?? ["Marchandises générales"]).map((a) => (
-                  <li key={a}>· {a}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-xl border border-red-200 bg-red-50/50 p-3">
-              <div className="text-[10.5px] font-bold uppercase tracking-wide text-red-600">
-                ✕ Colis refusés
-              </div>
-              <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
-                {(tMode.forbidden ?? []).length > 0 ? (
-                  (tMode.forbidden ?? []).map((fz) => <li key={fz}>· {fz}</li>)
-                ) : (
-                  <li className="italic text-ink-400">Aucune restriction déclarée</li>
-                )}
-              </ul>
-            </div>
-          </div>
-          <p className="mt-3 text-[11.5px] leading-relaxed text-ink-400">
-            Un doute sur votre produit ? Discutez-en avec {transitaire.name} via le chat
-            avant de valider — vous pouvez lui envoyer les photos de vos colis.
-          </p>
-        </div>
-
-        {/* GARDE-FOU + protection : l'adresse fournisseur et le shipping mark
-            ne sont transmis au transitaire QU'APRÈS validation. */}
-        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700">
-              <AlertTriangle className="h-4 w-4" />
-            </div>
-            <div className="flex-1 text-[12.5px] leading-relaxed text-amber-900">
-              <div className="font-bold">
-                Que se passe-t-il si le contenu ne correspond pas ?
-              </div>
-              <p className="mt-1 text-amber-800">
-                Si {transitaire.name} reçoit un colis d&apos;une catégorie refusée pour le
-                mode choisi, il refusera l&apos;expédition : vous devrez fournir une adresse
-                alternative en Chine et payer les frais de réacheminement. C&apos;est
-                pourquoi l&apos;adresse de son entrepôt et votre shipping mark ne sont
-                débloqués <b>qu&apos;après validation</b> de cette étape.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300">
-          <input
-            type="checkbox"
-            checked={responsibilityAccepted}
-            onChange={(e) => onResponsibilityChange(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-kamoo-orange-500"
-          />
-          <span className="text-[13px] leading-relaxed text-ink-900">
-            <b>J&apos;ai relu les colis autorisés / refusés</b> de {transitaire.name} et je
-            confirme que mes colis les respectent. En cas de divergence constatée à la
-            réception, j&apos;accepte de payer les frais de réacheminement.
-          </span>
-        </label>
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-[17px] font-bold text-ink-900">Vérifiez &amp; validez</h2>
+        <p className="mt-0.5 text-[12.5px] text-ink-500">
+          Relisez les colis acceptés par {transitaire.name}, puis copiez votre shipping mark.
+        </p>
       </div>
 
-      {/* DROITE — Shipping mark */}
-      <div className="flex flex-col gap-4">
-        <ShippingMarkCard
-          shippingMark={shippingMark}
-          country={country}
-          totalPhotos={totalPhotos}
-          colisCount={colis.length}
+      {/* Shipping mark — le livrable clé */}
+      <ShippingMarkCard
+        shippingMark={shippingMark}
+        country={country}
+        totalPhotos={totalPhotos}
+        colisCount={colis.length}
+      />
+
+      {/* Devis à venir — compact */}
+      <div className="rounded-2xl border border-line bg-white p-5">
+        <div className="flex items-start gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
+            <Clock className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13.5px] font-bold text-ink-900">Devis exact après réception</div>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-600">
+              Une fois vos colis arrivés à <b>Guangzhou</b>, ils seront pesés et photographiés —
+              vous recevrez alors le poids réel, le volume (si besoin) et le coût total.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { label: "Poids réel", icon: Box, placeholder: "— kg" },
+                { label: "Volume", icon: Plane, placeholder: "— CBM" },
+                { label: "Cartons reçus", icon: Ship, placeholder: `— / ${colis.length}` },
+              ].map((item) => {
+                const I = item.icon;
+                return (
+                  <div key={item.label} className="rounded-lg border border-line bg-paper-2/40 p-2.5">
+                    <div className="flex items-center gap-1 text-ink-500">
+                      <I className="h-3 w-3" />
+                      <span className="text-[9.5px] font-bold uppercase tracking-wider">{item.label}</span>
+                    </div>
+                    <div className="mt-1 text-[15px] font-extrabold text-ink-400">{item.placeholder}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Relecture catégories — politique du transitaire pour le mode choisi */}
+      <div className="rounded-2xl border border-line bg-white p-5">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+          À relire — {TRANSPORT_MODE_LABELS[mode]} chez {transitaire.name}
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-wide text-emerald-700">
+              ✓ Colis autorisés
+            </div>
+            <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
+              {(tMode.accepted ?? ["Marchandises générales"]).map((a) => (
+                <li key={a}>· {a}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-red-200 bg-red-50/50 p-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-wide text-red-600">
+              ✕ Colis refusés
+            </div>
+            <ul className="mt-1.5 flex flex-col gap-1 text-[12.5px] text-ink-700">
+              {(tMode.forbidden ?? []).length > 0 ? (
+                (tMode.forbidden ?? []).map((fz) => <li key={fz}>· {fz}</li>)
+              ) : (
+                <li className="italic text-ink-400">Aucune restriction déclarée</li>
+              )}
+            </ul>
+          </div>
+        </div>
+        <p className="mt-3 text-[11.5px] leading-relaxed text-ink-400">
+          Un doute ? Discutez-en avec {transitaire.name} via le chat avant de valider.
+        </p>
+      </div>
+
+      {/* Garde-fou */}
+      <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700">
+            <AlertTriangle className="h-4 w-4" />
+          </div>
+          <div className="flex-1 text-[12.5px] leading-relaxed text-amber-900">
+            <div className="font-bold">Si le contenu ne correspond pas ?</div>
+            <p className="mt-1 text-amber-800">
+              Si {transitaire.name} reçoit un colis d&apos;une catégorie refusée pour le mode choisi,
+              il refusera l&apos;expédition : vous devrez fournir une adresse alternative en Chine et
+              payer le réacheminement. L&apos;adresse de l&apos;entrepôt et votre shipping mark ne
+              sont débloqués <b>qu&apos;après validation</b>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Responsabilité */}
+      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300">
+        <input
+          type="checkbox"
+          checked={responsibilityAccepted}
+          onChange={(e) => onResponsibilityChange(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-kamoo-orange-500"
         />
+        <span className="text-[13px] leading-relaxed text-ink-900">
+          <b>J&apos;ai relu les colis autorisés / refusés</b> de {transitaire.name} et je confirme que
+          mes colis les respectent. En cas de divergence à la réception, j&apos;accepte de payer les
+          frais de réacheminement.
+        </span>
+      </label>
 
-        <NextStepsTimeline countryName={country.name} mode={mode} />
-      </div>
+      <NextStepsTimeline countryName={country.name} mode={mode} />
     </div>
   );
 }
@@ -1286,103 +1148,71 @@ function ShippingMarkCard({
 
   return (
     <div className="overflow-hidden rounded-2xl bg-kamoo-blue-900 p-6 text-white">
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-70">
-              Shipping mark
-            </div>
-            <div className="mt-1 text-[12px] opacity-85">
-              À copier-coller chez votre fournisseur
-            </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-70">
+            Shipping mark
           </div>
-          <MapPin className="h-5 w-5" />
+          <div className="mt-1 text-[12px] opacity-85">À copier-coller chez votre fournisseur</div>
         </div>
-
-        <div className="mt-4 rounded-xl border border-dashed border-white/30 bg-white/8 p-4">
-          <div className="font-mono-kamoo text-center text-2xl font-extrabold tracking-wider text-kamoo-orange-400">
-            {shippingMark}
-          </div>
-          <div className="my-3 h-px bg-white/15" />
-          <div className="font-mono-kamoo text-[11px] leading-relaxed opacity-90">
-            <div>
-              KAMOO LOGISTICS — {country.flag}{" "}
-              {country.name.toUpperCase()}
-            </div>
-            <div>Réf: {shippingMark}</div>
-            <div>Client: AÏCHA DIOP</div>
-            <div>
-              {colisCount} colis · {totalPhotos} photos déclarées
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={handleCopy}
-          className={cn(
-            "mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition",
-            copied
-              ? "bg-emerald-600"
-              : "bg-kamoo-orange-500 hover:bg-kamoo-orange-600",
-          )}
-        >
-          {copied ? (
-            <>
-              <Check className="h-4 w-4" /> Copié !
-            </>
-          ) : (
-            <>
-              <Copy className="h-4 w-4" /> Copier le shipping mark
-            </>
-          )}
-        </button>
-
-        <p className="mt-3 text-center text-[11px] leading-relaxed opacity-70">
-          Communiquez ce code à votre fournisseur en Chine.
-          <br />
-          Il l&apos;inscrira sur chaque colis avant l&apos;envoi à
-          l&apos;entrepôt.
-        </p>
+        <MapPin className="h-5 w-5" />
       </div>
+
+      <div className="mt-4 rounded-xl border border-dashed border-white/30 bg-white/8 p-4">
+        <div className="font-mono-kamoo text-center text-2xl font-extrabold tracking-wider text-kamoo-orange-400">
+          {shippingMark}
+        </div>
+        <div className="my-3 h-px bg-white/15" />
+        <div className="font-mono-kamoo text-[11px] leading-relaxed opacity-90">
+          <div>
+            KAMOO LOGISTICS — {country.flag} {country.name.toUpperCase()}
+          </div>
+          <div>Réf: {shippingMark}</div>
+          <div>Client: AÏCHA DIOP</div>
+          <div>
+            {colisCount} colis · {totalPhotos} photos déclarées
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={handleCopy}
+        className={cn(
+          "mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition",
+          copied ? "bg-emerald-600" : "bg-kamoo-orange-500 hover:bg-kamoo-orange-600",
+        )}
+      >
+        {copied ? (
+          <>
+            <Check className="h-4 w-4" /> Copié !
+          </>
+        ) : (
+          <>
+            <Copy className="h-4 w-4" /> Copier le shipping mark
+          </>
+        )}
+      </button>
+
+      <p className="mt-3 text-center text-[11px] leading-relaxed opacity-70">
+        Communiquez ce code à votre fournisseur. Il l&apos;inscrira sur chaque colis avant l&apos;envoi.
+      </p>
     </div>
   );
 }
 
-function NextStepsTimeline({
-  countryName,
-  mode,
-}: {
-  countryName: string;
-  mode: TransportMode;
-}) {
+function NextStepsTimeline({ countryName, mode }: { countryName: string; mode: TransportMode }) {
   const modeData = TRANSPORT_MODES_DATA.find((m) => m.id === mode)!;
 
   const steps = [
-    {
-      label: "Réception entrepôt Guangzhou",
-      sub: "Vérification + photos",
-      active: true,
-    },
+    { label: "Réception entrepôt Guangzhou", sub: "Vérification + photos", active: true },
     {
       label:
-        mode === "sea"
-          ? "Départ maritime"
-          : mode === "air_express"
-            ? "Départ express"
-            : "Départ aérien",
+        mode === "sea" ? "Départ maritime" : mode === "air_express" ? "Départ express" : "Départ aérien",
       sub: modeData.delay,
       active: false,
     },
-    {
-      label: `Dédouanement ${countryName}`,
-      sub: "Géré par Kamoo",
-      active: false,
-    },
-    {
-      label: "Livraison à domicile",
-      sub: "Notification SMS",
-      active: false,
-    },
+    { label: `Dédouanement ${countryName}`, sub: "Géré par Kamoo", active: false },
+    { label: "Livraison à domicile", sub: "Notification SMS", active: false },
   ];
 
   return (
@@ -1397,24 +1227,15 @@ function NextStepsTimeline({
               <div
                 className={cn(
                   "grid h-[22px] w-[22px] place-items-center rounded-full",
-                  s.active ? "bg-kamoo-orange-500" : "bg-ink-200",
+                  s.active ? "bg-kamoo-orange-500" : "bg-paper-2 ring-1 ring-inset ring-line",
                 )}
               >
-                {s.active && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-white" />
-                )}
+                {s.active && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
               </div>
-              {i < steps.length - 1 && (
-                <div className="mt-1 h-5 w-[2px] bg-ink-200" />
-              )}
+              {i < steps.length - 1 && <div className="mt-1 h-5 w-[2px] bg-line" />}
             </div>
             <div className="pt-0.5">
-              <div
-                className={cn(
-                  "text-[13px] font-bold",
-                  s.active ? "text-ink-900" : "text-ink-700",
-                )}
-              >
+              <div className={cn("text-[13px] font-bold", s.active ? "text-ink-900" : "text-ink-700")}>
                 {s.label}
               </div>
               <div className="mt-0.5 text-[11px] text-ink-500">{s.sub}</div>
