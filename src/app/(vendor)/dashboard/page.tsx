@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ShoppingBag } from "lucide-react";
@@ -39,7 +39,6 @@ import {
 import { MOCK_CLOSING_ASSIGNMENTS } from "@/lib/data/mock-closing";
 import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
-import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { useProductsState } from "@/lib/hooks/use-products-state";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
@@ -83,11 +82,11 @@ export default function DashboardPage() {
     } catch {}
   }, [router]);
 
-  /* ─── Période (synchronisée avec /finances) ─── */
-  const [dateFilter, setDateFilter] = useSessionStorageState<DateFilterValue>(
-    "kamoo.financePeriod",
-    { preset: "30j" },
-  );
+  /* ─── Période — toujours « 30 derniers jours » à l'ouverture, jamais
+   * « aujourd'hui ». Pas de persistance : le dashboard est une page d'accueil,
+   * il doit s'ouvrir sur une période de référence stable plutôt que d'hériter
+   * d'un choix transitoire collé en sessionStorage. ─── */
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>({ preset: "30j" });
   const normalizedFilter = useMemo(
     () => normalizeDateFilter(dateFilter),
     [dateFilter],
@@ -267,39 +266,39 @@ export default function DashboardPage() {
         {/* Bande KPI — performance (4 indicateurs, comparaison incluse) */}
         <KpiRow k={kpiData} />
 
-        {/* Zone principale : graphe héros (évolution CA) + action n°1 (closing) */}
-        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
-          <CaChart
-            series={chartSeries}
-            labels={chartLabels}
-            total={computed.kpis.caEncaisse}
-            title="CA encaissé"
-            periodLabel={dateFilterSubtitle(normalizedFilter)}
-          />
-          <ClosingCard buckets={computed.closing.buckets} leads={closingLeads} />
-        </div>
+        {/* Graphe héros — pleine largeur (évolution du CA encaissé) */}
+        <CaChart
+          series={chartSeries}
+          labels={chartLabels}
+          total={computed.kpis.caEncaisse}
+          title="CA encaissé"
+          periodLabel={dateFilterSubtitle(normalizedFilter)}
+        />
 
-        {/* Opérations : ce qui se vend + ce qui est en livraison */}
+        {/* Action n°1 (closing + états des commandes) + livraisons en cours */}
         <div className="grid grid-cols-[1.7fr_1fr] gap-4">
-          <TopProducts rows={topRows} title="Top produits" />
+          <ClosingCard buckets={computed.closing.buckets} leads={closingLeads} />
           <LiveDeliveries
             rows={deliveryRows}
             activeCount={computed.liveDeliveriesActiveCount}
           />
         </div>
 
-        {/* Journal + (trésorerie & alertes empilées) */}
+        {/* Ce qui se vend + trésorerie */}
+        <div className="grid grid-cols-[1.7fr_1fr] gap-4">
+          <TopProducts rows={topRows} title="Top produits" />
+          <CashflowCard
+            aEncaisser={kpiData.aEncaisser}
+            aEncaisserN={kpiData.aEncaisserN}
+            aRegler={kpiData.aRegler}
+            aReglerN={kpiData.aReglerN}
+          />
+        </div>
+
+        {/* Journal des opérations + alertes stock */}
         <div className="grid grid-cols-[1.7fr_1fr] gap-4">
           <RecentOps rows={opRows} />
-          <div className="flex flex-col gap-4">
-            <CashflowCard
-              aEncaisser={kpiData.aEncaisser}
-              aEncaisserN={kpiData.aEncaisserN}
-              aRegler={kpiData.aRegler}
-              aReglerN={kpiData.aReglerN}
-            />
-            <StockAlerts rows={stockAlerts} />
-          </div>
+          <StockAlerts rows={stockAlerts} />
         </div>
       </div>
     </div>

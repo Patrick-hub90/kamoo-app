@@ -347,18 +347,44 @@ export type Bucket = { label: string; count: number; color: string };
 export type Lead = { id: string; product: string; extra: number; amount: string; status: string; time: string };
 
 export function ClosingCard({ buckets, leads, title = "Closing en direct" }: { buckets: Bucket[]; leads: Lead[]; title?: string }) {
+  const total = buckets.reduce((s, b) => s + b.count, 0);
   return (
     <Panel title={title} right={<VoirTout />}>
-      <div className="grid grid-cols-3 gap-px border-b border-[#F1F2F4] bg-[#F1F2F4]">
-        {buckets.map((b) => (
-          <div key={b.label} className="flex flex-col items-center gap-1 bg-white py-3">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: b.color }} />
-              <span className="text-[18px] font-bold tabular-nums text-ink-900">{b.count}</span>
+      {/* États des commandes — répartition en un coup d'œil */}
+      <div className="border-b border-[#F1F2F4] px-5 py-4">
+        <div className="mb-2.5 flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#8A92A0]">
+            États des commandes
+          </span>
+          <span className="text-[11.5px] tabular-nums text-[#A7AEBA]">
+            {total} commande{total > 1 ? "s" : ""}
+          </span>
+        </div>
+        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-paper-2">
+          {total > 0 &&
+            buckets.map((b) =>
+              b.count > 0 ? (
+                <div
+                  key={b.label}
+                  className="h-full"
+                  style={{ width: `${(b.count / total) * 100}%`, backgroundColor: b.color }}
+                  title={`${b.label} · ${b.count}`}
+                />
+              ) : null,
+            )}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+          {buckets.map((b) => (
+            <div key={b.label} className="flex items-baseline gap-1.5">
+              <span
+                className="h-2 w-2 shrink-0 translate-y-[-1px] rounded-full"
+                style={{ backgroundColor: b.color }}
+              />
+              <span className="text-[15px] font-bold tabular-nums text-ink-900">{b.count}</span>
+              <span className="text-[11.5px] font-medium text-[#8A92A0]">{b.label}</span>
             </div>
-            <span className="text-[11px] font-medium text-[#8A92A0]">{b.label}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       {leads.length === 0 ? (
         <PanelEmpty
