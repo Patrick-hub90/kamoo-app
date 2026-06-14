@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { use } from "react";
-import { OrderDetailView } from "@/components/kamoo/order-detail-view";
+import { DeliveryDetailView } from "@/components/kamoo/delivery-detail-view";
 import { getClient } from "@/lib/data/mock-clients";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 
@@ -46,13 +46,5 @@ export default function LivraisonDetailPage({ params, searchParams }: PageProps)
     );
   }
 
-  return (
-    <OrderDetailView
-      a={a}
-      backHref={back.href}
-      breadcrumbLabel={back.label}
-      fullWidth
-      closing={closing}
-    />
-  );
+  return <DeliveryDetailView a={a} backHref={back.href} closing={closing} />;
 }
