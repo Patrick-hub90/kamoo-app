@@ -71,7 +71,7 @@ export default function ParametresLayout({
           <div className="px-1 text-[18px] font-medium tracking-tight text-ink-900">
             Paramètres
           </div>
-          <div className="mt-3 flex h-9 items-center gap-2 rounded-full bg-paper-2 px-3">
+          <div className="mt-3 flex h-9 items-center gap-2 rounded-lg bg-paper-2 px-3">
             <Search className="h-3.5 w-3.5 shrink-0 text-ink-400" />
             <input
               type="search"
@@ -123,7 +123,7 @@ export default function ParametresLayout({
                   key={tab.href}
                   href={tab.href}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] transition",
+                    "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] transition",
                     active
                       ? "bg-kamoo-blue-900 text-white"
                       : "bg-paper-2 text-ink-600 hover:text-ink-900",

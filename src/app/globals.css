@@ -93,14 +93,15 @@
   --font-mono: var(--font-jetbrains-mono);
   --font-heading: var(--font-poppins);
 
-  /* Radius */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Radius — échelle nette (coins discrets). Les pastilles/avatars utilisent
+     rounded-full (9999px), non dérivé d'ici, donc ils restent ronds. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+  --radius-4xl: 12px;
 
   /* Ombres Kamoo */
   --shadow-kamoo-sm: 0 1px 1px rgba(16, 24, 40, 0.03);
@@ -115,7 +116,7 @@
    THÈME LIGHT (par défaut Kamoo)
    ────────────────────────────────────────────────────────── */
 :root {
-  --radius: 0.75rem;
+  --radius: 4px;
 
   /* Fond canvas gris froid (identité) */
   --background: #F6F8FA;
