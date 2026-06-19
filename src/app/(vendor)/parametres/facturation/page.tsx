@@ -6,6 +6,7 @@ import { formatXOF } from "@/lib/format";
 import {
   SettingsCard,
   SettingsSection,
+  SettingsBody,
 } from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
 
@@ -107,112 +108,114 @@ export default function FacturationPage() {
       {/* ABONNEMENT ACTUEL */}
       <SettingsSection
         title="Abonnement actuel"
-        description="Votre formule Kamoo en cours, son tarif mensuel et la date du prochain prélèvement."
+        caption="Votre formule Kamoo en cours, son tarif mensuel et la date du prochain prélèvement."
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-2">
-              <span className="font-display text-xl font-extrabold text-ink-900 sm:text-2xl">
-                Kamoo {currentPlan.name}
-              </span>
-              {currentPlan.highlight && (
-                <Sparkles className="h-4 w-4 text-kamoo-orange-500" />
-              )}
+        <SettingsBody>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-medium text-ink-900 sm:text-2xl">
+                  Kamoo {currentPlan.name}
+                </span>
+                {currentPlan.highlight && (
+                  <Sparkles className="h-4 w-4 text-kamoo-blue-900" />
+                )}
+              </div>
+              <p className="mt-1 text-[13px] text-ink-500">
+                {currentPlan.tagline}
+              </p>
             </div>
-            <p className="mt-1 text-[13px] text-ink-500">
-              {currentPlan.tagline}
-            </p>
+            <div className="shrink-0 text-left sm:text-right">
+              <div className="text-2xl font-medium text-ink-900 tabular-nums sm:text-3xl">
+                {formatXOF(currentPlan.priceXof, false)}
+              </div>
+              <div className="mt-0.5 text-[11.5px] font-medium text-ink-500">
+                F CFA / mois
+              </div>
+              <div className="mt-2 text-[11.5px] text-ink-500">
+                Prochain prélèvement le{" "}
+                <span className="font-medium text-ink-700">1 juin 2026</span>
+              </div>
+            </div>
           </div>
-          <div className="shrink-0 text-left sm:text-right">
-            <div className="font-display text-2xl font-extrabold text-ink-900 tabular-nums sm:text-3xl">
-              {formatXOF(currentPlan.priceXof, false)}
-            </div>
-            <div className="mt-0.5 text-[11.5px] font-semibold text-ink-500">
-              F CFA / mois
-            </div>
-            <div className="mt-2 text-[11.5px] text-ink-500">
-              Prochain prélèvement le{" "}
-              <span className="font-semibold text-ink-700">1 juin 2026</span>
-            </div>
-          </div>
-        </div>
 
-        <ul className="mt-4 grid grid-cols-1 gap-y-1.5 text-[12.5px] text-ink-700 sm:grid-cols-2">
-          {currentPlan.features.map((f) => (
-            <li key={f} className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-              {f}
-            </li>
-          ))}
-        </ul>
+          <ul className="mt-4 grid grid-cols-1 gap-y-1.5 text-[12.5px] text-ink-700 sm:grid-cols-2">
+            {currentPlan.features.map((f) => (
+              <li key={f} className="flex items-center gap-2">
+                <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </SettingsBody>
       </SettingsSection>
 
       {/* CHANGER DE PLAN */}
       <SettingsSection
         title="Changer de plan"
-        description="Comparez les formules et passez à l'offre adaptée à votre croissance."
-        wide
+        caption="Comparez les formules et passez à l'offre adaptée à votre croissance."
       >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {PLANS.map((p) => (
-            <PlanCard key={p.id} plan={p} isCurrent={p.id === currentPlan.id} />
-          ))}
-        </div>
+        {PLANS.map((p) => (
+          <PlanRow key={p.id} plan={p} isCurrent={p.id === currentPlan.id} />
+        ))}
       </SettingsSection>
 
       {/* HISTORIQUE DES FACTURES */}
       <SettingsSection
-        title="Historique des factures"
-        description="Retrouvez et téléchargez vos factures payées des derniers mois."
-        wide
+        title="Factures et reçus"
+        caption="Retrouvez et téléchargez vos factures payées des derniers mois."
       >
-        <div className="flex flex-col gap-2">
-          {MOCK_INVOICES.map((inv) => (
-            <InvoiceRow key={inv.id} invoice={inv} />
-          ))}
-        </div>
+        {MOCK_INVOICES.map((inv) => (
+          <InvoiceRow key={inv.id} invoice={inv} />
+        ))}
       </SettingsSection>
     </SettingsCard>
   );
 }
 
-function PlanCard({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
+/** Ligne de plan : nom + tarif + features à gauche, action à droite. */
+function PlanRow({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-xl border p-4",
-        isCurrent
-          ? "border-kamoo-orange-300 bg-kamoo-orange-50/30"
-          : "border-line bg-white",
+        "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:px-5",
+        isCurrent && "bg-kamoo-blue-50/40",
       )}
     >
-      <div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[13px] font-bold text-ink-900">{plan.name}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[13.5px] font-medium text-ink-900">
+            {plan.name}
+          </span>
           {plan.highlight && (
-            <Sparkles className="h-3.5 w-3.5 text-kamoo-orange-500" />
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-kamoo-blue-900" />
           )}
-        </div>
-        <div className="mt-1 font-display text-xl font-extrabold text-ink-900 tabular-nums">
-          {formatXOF(plan.priceXof, false)}
-          <span className="ml-1 text-[10.5px] font-semibold text-ink-500">
-            F / mois
+          <span className="text-[13px] font-medium text-ink-700 tabular-nums">
+            {formatXOF(plan.priceXof, false)}
+            <span className="ml-1 text-[10.5px] font-medium text-ink-400">
+              F / mois
+            </span>
           </span>
         </div>
+        <p className="mt-0.5 text-[11.5px] leading-snug text-ink-500">
+          {plan.tagline}
+        </p>
       </div>
-      <p className="text-[11.5px] leading-snug text-ink-500">{plan.tagline}</p>
       <button
         type="button"
         disabled={isCurrent}
         className={cn(
-          "mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-bold transition",
+          "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition",
           isCurrent
             ? "cursor-not-allowed border border-line bg-paper-2 text-ink-500"
             : "border border-line bg-white text-ink-700 hover:border-kamoo-blue-600 hover:text-kamoo-blue-700",
         )}
       >
         {isCurrent ? (
-          "Plan actuel"
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Plan actuel
+          </span>
         ) : (
           <>
             Passer à {plan.name}
@@ -226,12 +229,12 @@ function PlanCard({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
 
 function InvoiceRow({ invoice }: { invoice: Invoice }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-paper-2/40 p-3 sm:flex-nowrap">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-ink-500 ring-1 ring-line">
-        <Receipt className="h-3.5 w-3.5" />
-      </div>
+    <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-paper-2 text-ink-500">
+        <Receipt className="h-4 w-4" />
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="font-mono-kamoo text-[12px] font-bold text-ink-900">
+        <div className="font-mono-kamoo text-[12.5px] font-medium text-ink-900">
           {invoice.id}
         </div>
         <div className="text-[11px] text-ink-500">
@@ -243,18 +246,31 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
         </div>
       </div>
       <div className="text-right">
-        <div className="font-display text-[14px] font-extrabold text-ink-900 tabular-nums">
+        <div className="text-[13.5px] font-medium text-ink-900 tabular-nums">
           {formatXOF(invoice.amountXof, false)}{" "}
-          <span className="text-[10px] font-bold text-ink-500">F CFA</span>
+          <span className="text-[10px] font-medium text-ink-400">F CFA</span>
         </div>
-        <div className="text-[10.5px] font-semibold text-emerald-700">
+        <span
+          className={cn(
+            "mt-0.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px] font-medium",
+            invoice.status === "paid"
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-amber-50 text-amber-700",
+          )}
+        >
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              invoice.status === "paid" ? "bg-emerald-500" : "bg-amber-500",
+            )}
+          />
           {invoice.status === "paid" ? "Payée" : "En attente"}
-        </div>
+        </span>
       </div>
       {invoice.pdfUrl && (
         <button
           type="button"
-          className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1.5 text-[11.5px] font-bold text-ink-700 hover:border-kamoo-blue-600 hover:text-kamoo-blue-700"
+          className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1.5 text-[11.5px] font-medium text-ink-700 transition hover:border-kamoo-blue-600 hover:text-kamoo-blue-700"
           title="Télécharger la facture PDF"
         >
           <Download className="h-3 w-3" />

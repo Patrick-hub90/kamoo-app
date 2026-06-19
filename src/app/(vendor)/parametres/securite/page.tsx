@@ -17,7 +17,10 @@ import {
   type VendorSession,
 } from "@/lib/data/mock-vendor";
 import {
+  FieldLabel,
+  SettingsBody,
   SettingsCard,
+  SettingsRow,
   SettingsSection,
 } from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
@@ -50,131 +53,131 @@ export default function SecuritePage() {
     pwd.next.length >= 8 &&
     pwd.next === pwd.confirm;
 
+  const hasOtherSessions = sessions.filter((s) => !s.isCurrent).length > 0;
+
   return (
     <SettingsCard>
       {/* CHANGEMENT MOT DE PASSE */}
       <SettingsSection
         title="Mot de passe"
-        description="Choisissez un mot de passe d'au moins 8 caractères, unique à Kamoo."
+        caption="Choisissez un mot de passe d'au moins 8 caractères, unique à Kamoo."
       >
-        <div className="space-y-4">
-          <PwdField
-            label="Mot de passe actuel"
-            value={pwd.current}
-            onChange={(v) => setPwd({ ...pwd, current: v })}
-            visible={showPwd}
-          />
-          <PwdField
-            label="Nouveau mot de passe"
-            value={pwd.next}
-            onChange={(v) => setPwd({ ...pwd, next: v })}
-            visible={showPwd}
-            hint="Min. 8 caractères, idéalement avec chiffres et symboles"
-          />
-          <PwdField
-            label="Confirmer le nouveau mot de passe"
-            value={pwd.confirm}
-            onChange={(v) => setPwd({ ...pwd, confirm: v })}
-            visible={showPwd}
-            error={
-              pwd.confirm.length > 0 && pwd.confirm !== pwd.next
-                ? "Les deux mots de passe ne correspondent pas"
-                : undefined
-            }
-          />
-
-          <label className="inline-flex cursor-pointer items-center gap-2 text-[12.5px] text-ink-700">
-            <input
-              type="checkbox"
-              checked={showPwd}
-              onChange={(e) => setShowPwd(e.target.checked)}
-              className="h-4 w-4 cursor-pointer rounded border-line text-kamoo-blue-600"
+        <SettingsBody>
+          <div className="space-y-4">
+            <PwdField
+              label="Mot de passe actuel"
+              value={pwd.current}
+              onChange={(v) => setPwd({ ...pwd, current: v })}
+              visible={showPwd}
             />
-            Afficher les mots de passe
-          </label>
-        </div>
+            <PwdField
+              label="Nouveau mot de passe"
+              value={pwd.next}
+              onChange={(v) => setPwd({ ...pwd, next: v })}
+              visible={showPwd}
+              hint="Min. 8 caractères, idéalement avec chiffres et symboles"
+            />
+            <PwdField
+              label="Confirmer le nouveau mot de passe"
+              value={pwd.confirm}
+              onChange={(v) => setPwd({ ...pwd, confirm: v })}
+              visible={showPwd}
+              error={
+                pwd.confirm.length > 0 && pwd.confirm !== pwd.next
+                  ? "Les deux mots de passe ne correspondent pas"
+                  : undefined
+              }
+            />
 
-        <div className="mt-5 flex items-center justify-end">
-          <button
-            type="button"
-            disabled={!canChangePwd}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-bold transition",
-              canChangePwd
-                ? "bg-kamoo-orange-500 text-white hover:bg-kamoo-orange-600 active:translate-y-px"
-                : "bg-paper-2 text-ink-400",
-            )}
-          >
-            <Save className="h-4 w-4" />
-            Mettre à jour
-          </button>
-        </div>
+            <label className="inline-flex cursor-pointer items-center gap-2 text-[12.5px] text-ink-700">
+              <input
+                type="checkbox"
+                checked={showPwd}
+                onChange={(e) => setShowPwd(e.target.checked)}
+                className="h-4 w-4 cursor-pointer rounded border-line text-kamoo-blue-600"
+              />
+              Afficher les mots de passe
+            </label>
+          </div>
+
+          <div className="mt-5 flex items-center justify-end">
+            <button
+              type="button"
+              disabled={!canChangePwd}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[13px] font-medium transition",
+                canChangePwd
+                  ? "bg-kamoo-blue-900 text-white hover:bg-kamoo-blue-800 active:translate-y-px"
+                  : "bg-paper-2 text-ink-400",
+              )}
+            >
+              <Save className="h-4 w-4" />
+              Mettre à jour
+            </button>
+          </div>
+        </SettingsBody>
       </SettingsSection>
 
       {/* 2FA */}
       <SettingsSection
         title="Double authentification"
-        description="Reçoit un code OTP par SMS à chaque connexion sur un nouvel appareil. Recommandé pour protéger votre activité."
+        caption="Reçoit un code OTP par SMS à chaque connexion sur un nouvel appareil. Recommandé pour protéger votre activité."
       >
-        <div className="flex items-start gap-4 rounded-xl border border-line bg-paper-2/40 p-4">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
-            <Shield className="h-5 w-5" />
+        <SettingsRow
+          align="start"
+          icon={<Shield className="h-4 w-4" />}
+          action={<Toggle checked={twoFA} onChange={setTwoFA} />}
+        >
+          <div className="text-[13.5px] text-ink-900">
+            {twoFA ? "Protection activée" : "Protection désactivée"}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[13.5px] font-bold text-ink-900">
-                {twoFA ? "Protection activée" : "Protection désactivée"}
-              </span>
-              <Toggle checked={twoFA} onChange={setTwoFA} />
-            </div>
-            {twoFA ? (
-              <div className="mt-2 rounded-lg bg-emerald-50/60 p-3 text-[12px] text-emerald-800">
-                ✓ Un code à 6 chiffres vous sera envoyé sur{" "}
-                <code className="font-mono font-semibold">+221 77 412 88 03</code>{" "}
-                à chaque connexion.
-              </div>
-            ) : (
-              <p className="mt-1 text-[12px] text-ink-500">
-                Activez la double authentification pour sécuriser l&apos;accès à
-                votre activité.
-              </p>
-            )}
-          </div>
-        </div>
+          {twoFA ? (
+            <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
+              Un code à 6 chiffres vous sera envoyé sur{" "}
+              <span className="font-mono-kamoo text-ink-700">
+                +221 77 412 88 03
+              </span>{" "}
+              à chaque connexion.
+            </p>
+          ) : (
+            <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
+              Activez la double authentification pour sécuriser l&apos;accès à
+              votre activité.
+            </p>
+          )}
+        </SettingsRow>
       </SettingsSection>
 
       {/* SESSIONS ACTIVES */}
       <SettingsSection
         title="Sessions actives"
-        description="Appareils sur lesquels votre compte est connecté en ce moment."
+        caption="Appareils sur lesquels votre compte est connecté en ce moment."
       >
-        {sessions.filter((s) => !s.isCurrent).length > 0 && (
-          <div className="mb-3 flex justify-end">
+        {sessions.map((session) => (
+          <SessionRow
+            key={session.id}
+            session={session}
+            onRevoke={() => handleRevokeSession(session.id)}
+          />
+        ))}
+
+        {hasOtherSessions && (
+          <div className="flex items-center justify-end px-4 py-3 sm:px-5">
             <button
               type="button"
               onClick={handleRevokeAll}
-              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 transition hover:bg-red-50"
+              className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-medium text-red-700 transition hover:bg-red-50"
             >
               Déconnecter tous les autres
             </button>
           </div>
         )}
-
-        <div className="flex flex-col gap-2">
-          {sessions.map((session) => (
-            <SessionRow
-              key={session.id}
-              session={session}
-              onRevoke={() => handleRevokeSession(session.id)}
-            />
-          ))}
-        </div>
       </SettingsSection>
     </SettingsCard>
   );
 }
 
-/* ─── Sub-components ─── */
+/* ─── Sous-composants ─── */
 
 function PwdField({
   label,
@@ -193,9 +196,7 @@ function PwdField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-ink-500">
-        {label}
-      </span>
+      <FieldLabel>{label}</FieldLabel>
       <div className="relative">
         <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
         <input
@@ -218,7 +219,7 @@ function PwdField({
         </span>
       </div>
       {error ? (
-        <span className="mt-1 block text-[10.5px] font-semibold text-red-700">
+        <span className="mt-1 block text-[10.5px] font-medium text-red-700">
           {error}
         </span>
       ) : hint ? (
@@ -259,29 +260,25 @@ function SessionRow({
   onRevoke: () => void;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-xl border p-3",
-        session.isCurrent
-          ? "border-emerald-200 bg-emerald-50/40"
-          : "border-line",
-      )}
-    >
-      <div
+    <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
+      <span
         className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-lg",
+          "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
           session.isCurrent
-            ? "bg-emerald-100 text-emerald-700"
+            ? "bg-emerald-50 text-emerald-700"
             : "bg-paper-2 text-ink-500",
         )}
       >
         {detectDeviceIcon(session.device)}
-      </div>
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-ink-900">{session.device}</span>
+          <span className="text-[13.5px] font-medium text-ink-900">
+            {session.device}
+          </span>
           {session.isCurrent && (
-            <span className="inline-flex items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11.5px] font-medium text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Cette session
             </span>
           )}
@@ -295,7 +292,7 @@ function SessionRow({
           type="button"
           onClick={onRevoke}
           title="Déconnecter cet appareil"
-          className="grid h-7 w-7 place-items-center rounded-md text-ink-400 hover:bg-red-50 hover:text-red-700"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-400 transition hover:bg-red-50 hover:text-red-700"
         >
           <X className="h-3.5 w-3.5" />
         </button>

@@ -3,23 +3,77 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Primitives de mise en page Paramètres — direction « console à deux colonnes »
- * (façon Stripe / Linear / Vercel) :
+ * Primitives Paramètres — direction « réglages façon messagerie » :
  *
- *   ┌──────────────────────────────────────────────────────────┐
- *   │  Titre section        │  contrôles / champs               │
- *   │  description courte    │  ………………………………                   │
- *   ├──────────────────────────────────────────────────────────┤  ← filet
- *   │  Titre section        │  ………………………………                   │
- *   └──────────────────────────────────────────────────────────┘
+ *   LIBELLÉ DU GROUPE (muet)
+ *   ┌────────────────────────────────────────────┐
+ *   │  ◻  Label                         valeur  › │  ← ligne
+ *   ├────────────────────────────────────────────┤  ← filet
+ *   │  ◻  Label                         valeur  › │
+ *   └────────────────────────────────────────────┘
+ *   petite légende optionnelle sous le panneau
  *
- * On bannit la « card soup » (une carte par section) : UNE seule carte blanche
- * par page, sections séparées par des filets. Le rail de gauche porte le sens
- * (titre + pourquoi), la colonne de droite porte l'action. Empile sur < lg.
+ * On bannit la « card soup » ET la disposition deux-colonnes (rail + contrôles).
+ * Chaque groupe = un libellé muet + UN panneau blanc de lignes séparées par des
+ * filets fins. Les surfaces restent calmes ; l'accent (navy) sert l'action et la
+ * sélection. Empile naturellement sur mobile.
  */
 
-/** Carte-conteneur unique d'une page Paramètres. */
+/** Pile transparente de groupes (les panneaux flottent sur le fond paper). */
 export function SettingsCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={cn("flex flex-col gap-6", className)}>{children}</div>;
+}
+
+/**
+ * Groupe de réglages : libellé muet (+ légende) au-dessus d'un panneau blanc.
+ * Les enfants directs du panneau sont séparés par des filets (lignes / corps).
+ */
+export function SettingsSection({
+  title,
+  description,
+  caption,
+  children,
+  className,
+}: {
+  title?: string;
+  description?: React.ReactNode;
+  /** Petite légende affichée SOUS le panneau (façon Telegram). */
+  caption?: React.ReactNode;
+  children?: React.ReactNode;
+  /** Conservé pour compat — la mise en page est désormais toujours pleine largeur. */
+  wide?: boolean;
+  className?: string;
+}) {
+  return (
+    <section className={className}>
+      {(title || description) && (
+        <div className="mb-2 px-1">
+          {title && (
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
+              {title}
+            </h2>
+          )}
+          {description && (
+            <p className="mt-1 text-[12px] leading-relaxed text-ink-500">{description}</p>
+          )}
+        </div>
+      )}
+      <SettingsPanel>{children}</SettingsPanel>
+      {caption && (
+        <p className="mt-2 px-1 text-[11.5px] leading-relaxed text-ink-400">{caption}</p>
+      )}
+    </section>
+  );
+}
+
+/** Panneau blanc à coins arrondis ; enfants directs séparés par des filets. */
+export function SettingsPanel({
   children,
   className,
 }: {
@@ -29,7 +83,7 @@ export function SettingsCard({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-line bg-white shadow-kamoo-sm",
+        "divide-y divide-line overflow-hidden rounded-xl border border-line bg-white",
         className,
       )}
     >
@@ -39,72 +93,60 @@ export function SettingsCard({
 }
 
 /**
- * Section à deux colonnes. Par défaut : rail descriptif à gauche (15rem),
- * contrôles à droite. `wide` = contenu pleine largeur (grilles, tableaux,
- * listes de lignes larges) : le titre passe au-dessus.
+ * Ligne de réglage : icône (optionnelle) + label muet / valeur + action à droite.
+ * Utiliser `children` pour un contenu personnalisé (input en édition, toggle…).
  */
-export function SettingsSection({
-  title,
-  description,
+export function SettingsRow({
+  icon,
+  label,
+  value,
+  action,
   children,
-  wide = false,
   className,
+  align = "center",
 }: {
-  title: string;
-  description?: React.ReactNode;
+  icon?: React.ReactNode;
+  label?: React.ReactNode;
+  value?: React.ReactNode;
+  action?: React.ReactNode;
   children?: React.ReactNode;
-  /** Contenu large (grille/liste) → titre au-dessus, contenu pleine largeur. */
-  wide?: boolean;
   className?: string;
+  align?: "center" | "start";
 }) {
-  if (wide) {
-    return (
-      <section
-        className={cn(
-          "border-t border-line p-5 first:border-t-0 sm:p-6",
-          className,
-        )}
-      >
-        <SectionHeading title={title} description={description} />
-        <div className="mt-4 min-w-0">{children}</div>
-      </section>
-    );
-  }
-
   return (
-    <section
+    <div
       className={cn(
-        "grid gap-x-10 gap-y-4 border-t border-line p-5 first:border-t-0 sm:p-6 lg:grid-cols-[15rem_minmax(0,1fr)]",
+        "flex gap-3 px-4 py-3 sm:px-5",
+        align === "center" ? "items-center" : "items-start",
         className,
       )}
     >
-      <div className="lg:pr-2">
-        <SectionHeading title={title} description={description} />
+      {icon && (
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-paper-2 text-ink-500">
+          {icon}
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        {label && <div className="text-[11px] text-ink-400">{label}</div>}
+        {value !== undefined && (
+          <div className="mt-0.5 text-[13.5px] text-ink-900">{value}</div>
+        )}
+        {children}
       </div>
-      <div className="min-w-0">{children}</div>
-    </section>
+      {action && <div className="shrink-0">{action}</div>}
+    </div>
   );
 }
 
-function SectionHeading({
-  title,
-  description,
+/** Contenu libre (formulaire, grille) dans un panneau, avec marge interne. */
+export function SettingsBody({
+  children,
+  className,
 }: {
-  title: string;
-  description?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
 }) {
-  return (
-    <>
-      <h2 className="text-[14.5px] font-bold tracking-tight text-ink-900">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-500">
-          {description}
-        </p>
-      )}
-    </>
-  );
+  return <div className={cn("p-4 sm:p-5", className)}>{children}</div>;
 }
 
 /** Libellé de champ standardisé (uppercase, sobre). */
@@ -121,7 +163,7 @@ export function FieldLabel({
     <label
       htmlFor={htmlFor}
       className={cn(
-        "mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-ink-500",
+        "mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-ink-400",
         className,
       )}
     >
@@ -130,7 +172,7 @@ export function FieldLabel({
   );
 }
 
-/** Conteneur de liste de lignes (sessions, wallets, marchés…) — filets fins. */
+/** Conteneur de liste de lignes (compat) — filets fins. */
 export function SettingsList({
   children,
   className,

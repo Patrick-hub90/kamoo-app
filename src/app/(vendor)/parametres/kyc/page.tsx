@@ -69,21 +69,24 @@ const KYC_STEPS: KycStep[] = [
 
 const STATUS_TONE: Record<
   KycStep["status"],
-  { bg: string; fg: string; label: string }
+  { bg: string; fg: string; dot: string; label: string }
 > = {
   verified: {
     bg: "bg-emerald-50",
     fg: "text-emerald-700",
+    dot: "bg-emerald-500",
     label: "Vérifié",
   },
   pending: {
     bg: "bg-amber-50",
     fg: "text-amber-700",
+    dot: "bg-amber-500",
     label: "En cours de revue",
   },
   missing: {
     bg: "bg-paper-2",
     fg: "text-ink-500",
+    dot: "bg-ink-300",
     label: "Non fourni",
   },
 };
@@ -100,16 +103,16 @@ export default function KycPage() {
       {/* Récap niveau de vérification */}
       <SettingsSection
         title="Niveau de vérification"
-        description="Complète chaque étape pour passer en niveau « Pro vérifié » et lever les limites de virement."
+        caption="Complète chaque étape pour passer en niveau « Pro vérifié » et lever les limites de virement."
       >
-        <div className="flex items-start gap-3 rounded-xl border border-line bg-paper-2/40 p-4 sm:gap-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+        <div className="flex items-center gap-4 px-4 py-4 sm:px-5">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[13.5px] font-bold text-ink-900">
+            <div className="text-[13.5px] font-medium text-ink-900">
               Niveau de vérification :{" "}
-              <span className="text-emerald-700">
+              <span className="tabular-nums text-emerald-700">
                 {verifiedCount} / {totalRequired}
               </span>
             </div>
@@ -123,14 +126,11 @@ export default function KycPage() {
       {/* Documents */}
       <SettingsSection
         title="Documents"
-        description="Pièces requises pour vérifier votre compte. Une revue manuelle est effectuée sous 24-48h après chaque soumission."
-        wide
+        caption="Pièces requises pour vérifier votre compte. Une revue manuelle est effectuée sous 24-48h après chaque soumission."
       >
-        <div className="flex flex-col gap-2.5">
-          {KYC_STEPS.map((s) => (
-            <KycRow key={s.id} step={s} />
-          ))}
-        </div>
+        {KYC_STEPS.map((s) => (
+          <KycRow key={s.id} step={s} />
+        ))}
       </SettingsSection>
     </SettingsCard>
   );
@@ -140,23 +140,30 @@ function KycRow({ step }: { step: KycStep }) {
   const tone = STATUS_TONE[step.status];
   const Icon = step.icon;
   return (
-    <div className="flex flex-wrap items-start gap-3 rounded-xl border border-line bg-paper-2/40 p-3.5 sm:flex-nowrap sm:gap-3.5">
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-ink-700 ring-1 ring-line">
+    <div className="flex flex-wrap items-start gap-3 px-4 py-3.5 sm:flex-nowrap sm:gap-3.5 sm:px-5">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-paper-2 text-ink-500">
         <Icon className="h-4 w-4" />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-[13.5px] font-bold text-ink-900">{step.title}</h4>
+          <h4 className="text-[13.5px] font-medium text-ink-900">
+            {step.title}
+          </h4>
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium",
               tone.bg,
               tone.fg,
             )}
           >
-            {step.status === "verified" && <Check className="h-3 w-3" />}
-            {step.status === "pending" && <Clock className="h-3 w-3" />}
+            {step.status === "verified" ? (
+              <Check className="h-3 w-3" />
+            ) : step.status === "pending" ? (
+              <Clock className="h-3 w-3" />
+            ) : (
+              <span className={cn("h-1.5 w-1.5 rounded-full", tone.dot)} />
+            )}
             {tone.label}
           </span>
         </div>
@@ -188,7 +195,7 @@ function KycRow({ step }: { step: KycStep }) {
       {step.status === "missing" && (
         <button
           type="button"
-          className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-3 py-1.5 text-[12px] font-bold text-white hover:bg-kamoo-orange-600 sm:ml-0"
+          className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3 py-1.5 text-[12px] font-medium text-white transition hover:bg-kamoo-blue-800 sm:ml-0"
         >
           <Upload className="h-3 w-3" />
           Téléverser
