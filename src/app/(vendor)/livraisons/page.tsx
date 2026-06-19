@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -11,8 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  History,
-  Plus,
   Search,
   Truck,
   Wallet,
@@ -161,9 +158,6 @@ export default function LivraisonsPage() {
         >
           <Download className="h-4 w-4 text-ink-400" /> Exporter
         </button>
-        {/* Une livraison naît d'une commande confirmée : on assigne le
-            livreur depuis la fiche commande, côté Closing. */}
-        <Link href="/closing" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"><Plus className="h-4 w-4" /> Assigner un livreur</Link>
       </PageHeader>
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
@@ -191,8 +185,10 @@ export default function LivraisonsPage() {
           <Dropdown label="Statut" value={VIEW_TABS.find((t) => t.id === view)?.label ?? "Toutes"} open={viewOpen} setOpen={setViewOpen}>
             {VIEW_TABS.map((t) => (
               <DropdownItem key={t.id} active={view === t.id} onClick={() => { setView(t.id); setViewOpen(false); setPage(1); }}>
-                <span className="flex-1">{t.label}</span>
-                <span className="tabular-nums text-ink-400">{counts[t.id]}</span>
+                <span className="inline-flex items-center gap-2">
+                  <span>{t.label}</span>
+                  <span className="tabular-nums text-ink-400">{counts[t.id]}</span>
+                </span>
               </DropdownItem>
             ))}
           </Dropdown>
@@ -348,7 +344,7 @@ function Dropdown({ label, value, open, setOpen, children }: { label: string; va
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-52 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-kamoo-lg)]">{children}</div>
+          <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-44 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-kamoo-lg)]">{children}</div>
         </>
       )}
     </div>
