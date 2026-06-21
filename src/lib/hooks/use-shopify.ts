@@ -48,20 +48,35 @@ export function useShopify() {
   const state = store.use();
   const currencyPrefs = currencyStore.use();
 
-  /* Mode réel ? (clés API présentes côté serveur) — lu une fois. */
+  /* Mode réel ? (clés API présentes côté serveur) + persistance des tokens
+     (Supabase configuré) — lu une fois. */
   const [liveMode, setLiveMode] = useState<boolean | null>(null);
+  const [tokenStorePersistent, setTokenStorePersistent] = useState<boolean | null>(null);
+  const [serverless, setServerless] = useState(false);
   useEffect(() => {
     let alive = true;
     fetch("/api/shopify/status")
       .then((r) => r.json())
-      .then((d: { live: boolean }) => {
-        if (alive) setLiveMode(d.live);
+      .then((d: { live: boolean; persistent?: boolean; serverless?: boolean }) => {
+        if (!alive) return;
+        setLiveMode(d.live);
+        setTokenStorePersistent(d.persistent ?? null);
+        setServerless(Boolean(d.serverless));
       })
-      .catch(() => alive && setLiveMode(false));
+      .catch(() => {
+        if (!alive) return;
+        setLiveMode(false);
+        setTokenStorePersistent(null);
+      });
     return () => {
       alive = false;
     };
   }, []);
+
+  /* Garde-fou : mode réel en serverless (Vercel) SANS backend persistant →
+     les tokens ne tiendront pas. À signaler dans l'UI Connexions. */
+  const tokensWontPersist =
+    liveMode === true && tokenStorePersistent === false && serverless;
 
   const getConnection = useCallback(
     (marketId: string): ShopifyConnection | null => state.connections[marketId] ?? null,
@@ -187,6 +202,8 @@ export function useShopify() {
   return {
     connections: state.connections,
     liveMode,
+    tokenStorePersistent,
+    tokensWontPersist,
     getConnection,
     connectDemo,
     connectLive,

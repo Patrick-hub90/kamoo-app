@@ -1,4 +1,5 @@
 import { verifyWebhookHmac } from "@/lib/shopify/oauth";
+import { deleteToken } from "@/lib/shopify/token-store";
 
 /**
  * Réception des webhooks Shopify (PRODUCTION).
@@ -20,6 +21,17 @@ export async function POST(request: Request) {
   }
   const topic = request.headers.get("x-shopify-topic") ?? "inconnu";
   const shop = request.headers.get("x-shopify-shop-domain") ?? "inconnu";
+
+  // Cycle de vie : à la désinstallation, on révoque le token stocké (sécurité
+  // + cohérence). Pas d'archivage inbox pour ce topic.
+  if (topic === "app/uninstalled") {
+    try {
+      await deleteToken(shop);
+    } catch (e) {
+      console.error("[shopify webhook] échec de suppression du token (app/uninstalled)", e);
+    }
+    return new Response(null, { status: 200 });
+  }
 
   // Empile dans l'inbox partagée (consommée côté client au prochain poll)
   try {

@@ -37,7 +37,7 @@ export default function ConnexionsPage() {
 }
 
 function ConnexionsInner() {
-  const { liveMode, registerLiveConnection } = useShopify();
+  const { liveMode, tokensWontPersist, registerLiveConnection } = useShopify();
   const searchParams = useSearchParams();
 
   /* Retour du callback OAuth réel → enregistrer la connexion + nettoyer l'URL */
@@ -59,6 +59,16 @@ function ConnexionsInner() {
         oauthError ||
         liveMode === false) && (
         <div className="flex flex-col gap-2.5">
+          {tokensWontPersist && (
+            <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-[12.5px] leading-relaxed text-red-800">
+              <b className="font-medium">Mode réel actif, mais le stockage des tokens n&apos;est pas persistant.</b>{" "}
+              En production (serverless), une boutique connectée se déconnectera dès la
+              requête suivante. Configure Supabase (
+              <span className="font-mono-kamoo text-[11px]">NEXT_PUBLIC_SUPABASE_URL</span> +{" "}
+              <span className="font-mono-kamoo text-[11px]">SUPABASE_SERVICE_ROLE_KEY</span>) et exécute{" "}
+              <span className="font-mono-kamoo text-[11px]">supabase/schema.sql</span> avant de connecter une vraie boutique.
+            </div>
+          )}
           {liveMode !== null && (
             <div className="flex justify-end">
               <span
