@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
   Megaphone,
   Search,
   TrendingUp,
@@ -12,6 +11,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { StatCard } from "@/components/kamoo/stat-card";
+import { PageHeader } from "@/components/kamoo/page-header";
 import {
   DropdownItem,
   FilterDropdown,
@@ -202,29 +202,19 @@ export default function FinancesPubsPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 border-b border-line bg-white px-10 py-4">
-        <Link
-          href="/finances"
-          className="grid h-9 w-9 place-items-center rounded-lg bg-paper-2 text-ink-500 hover:text-ink-700"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            Finances · Campagnes pubs
-          </div>
-          <h1 className="mt-1 font-display text-2xl font-extrabold text-ink-900">
-            Vos campagnes Facebook Ads
-          </h1>
-        </div>
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-      </div>
+      <PageHeader
+        kicker="Finances · Campagnes pubs"
+        title="Vos campagnes Facebook Ads"
+        backHref="/finances"
+      />
 
       {/* STATS */}
       <div className="px-10 pt-5">
-        <div className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-          Performance · {dateFilterSubtitle(normalizedDateFilter)}
+        <div className="mb-2.5 flex items-center justify-between gap-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+            Performance · {dateFilterSubtitle(normalizedDateFilter)}
+          </div>
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
         </div>
         <div className="grid grid-cols-4 gap-3">
           <StatCard
@@ -307,7 +297,7 @@ export default function FinancesPubsPage() {
                 setStatus("all");
                 setDateFilter({ preset: "today" });
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 hover:bg-kamoo-orange-50"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-blue-700 hover:bg-kamoo-blue-50"
             >
               Effacer
             </button>

@@ -255,7 +255,6 @@ export default function BoutiquePage() {
     <div className="flex h-full flex-col bg-paper">
       {/* Header commun : période + CTA + cloche (même ordre partout) */}
       <PageHeader kicker="Mon activité" title="Catalogue">
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
         {shopifyConnected && (
           <button
             type="button"
@@ -392,7 +391,10 @@ export default function BoutiquePage() {
             )}
           </div>
 
-          {/* Période : dans le header commun (convention globale) */}
+          {/* Période — à droite de la barre de filtres. */}
+          <div className="ml-auto">
+            <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+          </div>
         </div>
 
         {/* CONTENU */}

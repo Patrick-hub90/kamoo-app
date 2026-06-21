@@ -272,7 +272,7 @@ export default function BienvenuePage() {
             {step < 4 ? (
               <button
                 onClick={() => setStep(step + 1)}
-                className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-2.5 text-[13.5px] font-bold text-white transition hover:bg-kamoo-orange-600"
+                className="inline-flex items-center gap-2 rounded-xl bg-kamoo-blue-900 px-5 py-2.5 text-[13.5px] font-bold text-white transition hover:bg-kamoo-blue-800"
               >
                 Continuer
                 <ArrowRight className="h-4 w-4" />
@@ -280,7 +280,7 @@ export default function BienvenuePage() {
             ) : (
               <button
                 onClick={finish}
-                className="inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-2.5 text-[13.5px] font-bold text-white transition hover:bg-kamoo-orange-600"
+                className="inline-flex items-center gap-2 rounded-xl bg-kamoo-blue-900 px-5 py-2.5 text-[13.5px] font-bold text-white transition hover:bg-kamoo-blue-800"
               >
                 <Rocket className="h-4 w-4" />
                 Entrer dans ma console

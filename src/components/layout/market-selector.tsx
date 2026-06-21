@@ -73,12 +73,12 @@ export function MarketSelector() {
             <Link
               href="/marches/nouveau"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-kamoo-orange-50"
+              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-kamoo-blue-50"
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-kamoo-orange-500 text-white">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-kamoo-blue-900 text-white">
                 <Plus className="h-4 w-4" />
               </span>
-              <span className="text-[13px] font-bold text-kamoo-orange-700">
+              <span className="text-[13px] font-bold text-kamoo-blue-700">
                 Ajouter un nouveau marché
               </span>
             </Link>

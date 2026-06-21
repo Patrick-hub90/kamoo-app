@@ -198,11 +198,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-full bg-paper">
       {/* Header commun (PageHeader) : période + cloche, même ordre partout. */}
-      <PageHeader kicker={todaySubtitle} title={`${greeting} ${MOCK_VENDOR.firstName}`}>
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-      </PageHeader>
+      <PageHeader kicker={todaySubtitle} title={`${greeting} ${MOCK_VENDOR.firstName}`} />
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-6 py-6">
+        {/* Période — déplacée hors du header, au-dessus du contenu. */}
+        <div className="flex items-center justify-end">
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+        </div>
         {/* Amorçage : aucune commande encore reçue → guider vers la connexion. */}
         {liveOrders.length === 0 && (
           <Link

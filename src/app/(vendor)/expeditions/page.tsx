@@ -156,7 +156,6 @@ export default function ExpeditionsListPage() {
     <div className="min-h-full bg-paper">
       {/* Header commun : période + CTA + cloche (même ordre partout) */}
       <PageHeader kicker="Mon activité" title="Expéditions">
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
         <Link
           href="/expeditions/nouvelle"
           className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
@@ -304,6 +303,7 @@ export default function ExpeditionsListPage() {
                 Effacer
               </button>
             )}
+            <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
           </div>
         </div>
 

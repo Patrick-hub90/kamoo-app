@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  ArrowLeft,
   Check,
   ImagePlus,
   Info,
@@ -14,6 +13,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { toStoredDataUrl } from "@/components/kamoo/product-image-manager";
 import { ShopifyLinkField } from "@/components/kamoo/shopify-link-field";
 import { useProductsState } from "@/lib/hooks/use-products-state";
@@ -266,30 +266,7 @@ export function ProductForm({
 
   return (
     <div className="flex min-h-full flex-col">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 border-b border-line bg-white px-10 py-5">
-        <Link
-          href={cancelHref}
-          className="grid h-9 w-9 place-items-center rounded-lg bg-paper-2 text-ink-500 hover:text-ink-700"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            {headerLabel}
-          </div>
-          <div className="mt-1 flex items-center gap-3">
-            <h1 className="font-display text-xl font-extrabold text-ink-900">
-              {name || titleFallback}
-            </h1>
-            {initial.skuLocked && (
-              <span className="font-mono-kamoo text-[12px] text-ink-500">
-                {initial.sku}
-              </span>
-            )}
-          </div>
-        </div>
-
+      <PageHeader kicker={headerLabel} title={name || titleFallback} backHref={cancelHref}>
         <Link
           href={cancelHref}
           className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 hover:bg-paper-2"
@@ -305,7 +282,7 @@ export function ProductForm({
             "inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-bold text-white transition",
             saved
               ? "bg-emerald-600"
-              : "bg-kamoo-orange-500 hover:bg-kamoo-orange-600",
+              : "bg-kamoo-blue-900 hover:bg-kamoo-blue-800",
             (!isValid || !dirty) && !saved && "cursor-not-allowed opacity-40",
           )}
         >
@@ -321,7 +298,7 @@ export function ProductForm({
             </>
           )}
         </button>
-      </div>
+      </PageHeader>
 
       {/* BODY */}
       <div className="grid flex-1 grid-cols-[1.5fr_1fr] gap-5 px-10 py-6">

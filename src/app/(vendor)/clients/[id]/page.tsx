@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { use, useState } from "react";
 import {
-  ArrowLeft,
   Calendar,
   ChevronRight,
   MapPin,
@@ -127,17 +127,11 @@ export default function ClientDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-full bg-paper">
+      <PageHeader kicker="Mon activité" title={client.name} backHref="/clients" />
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
         <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
-          {/* HEADER */}
+          {/* En-tête de la carte — le retour vit dans le PageHeader commun. */}
           <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-6 py-4">
-            <Link
-              href="/clients"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-paper-2 text-ink-500 transition hover:text-ink-700"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
             <span
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[13px] font-medium text-white"
               style={{ background: client.avatarBg }}

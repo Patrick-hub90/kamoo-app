@@ -71,7 +71,7 @@ export function AssignLivreurModal({
               </p>
               <Link
                 href="/marketplace/livreurs"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-4 py-2 text-[12.5px] font-bold text-white transition hover:bg-kamoo-orange-600"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 py-2 text-[12.5px] font-bold text-white transition hover:bg-kamoo-blue-800"
               >
                 Trouver un livreur
               </Link>

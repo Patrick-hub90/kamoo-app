@@ -140,7 +140,7 @@ export default function NouveauMarchePage() {
             className={cn(
               "inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-[13px] font-bold transition",
               (step === 1 ? canNext1 : canNext2)
-                ? "bg-kamoo-orange-500 text-white hover:bg-kamoo-orange-600 active:translate-y-px"
+                ? "bg-kamoo-blue-900 text-white hover:bg-kamoo-blue-800 active:translate-y-px"
                 : "bg-paper-2 text-ink-400",
             )}
           >

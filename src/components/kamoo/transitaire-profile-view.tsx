@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
-  ArrowLeft,
   BadgeCheck,
   CheckCircle2,
   Clock,
@@ -15,7 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { ModeAccordion } from "@/components/kamoo/mode-accordion";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { useDisputes } from "@/lib/hooks/use-disputes";
@@ -63,17 +61,7 @@ export function TransitaireProfileView({ transitaire: raw }: { transitaire: Tran
 
   return (
     <div className="min-h-full bg-paper">
-      {/* Retour */}
-      <div className="flex items-center justify-between border-b border-line bg-white px-6 py-2.5">
-        <Link
-          href="/marketplace/transitaires"
-          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-500 transition hover:text-ink-900"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Retour à la marketplace
-        </Link>
-        <NotificationsBell />
-      </div>
+      <PageHeader kicker="Découvrir" title={t.name} backHref="/marketplace/transitaires" />
 
       {/* COVER */}
       <div className="relative h-44 w-full overflow-hidden">
@@ -167,11 +155,11 @@ export function TransitaireProfileView({ transitaire: raw }: { transitaire: Tran
                     onClick={() => setTab(tb.id)}
                     className={cn(
                       "relative inline-flex shrink-0 items-center px-3 py-3 text-[13px] font-semibold transition",
-                      active ? "text-kamoo-orange-600" : "text-ink-500 hover:text-ink-900",
+                      active ? "text-kamoo-blue-900" : "text-ink-500 hover:text-ink-900",
                     )}
                   >
                     {tb.label}
-                    {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-t bg-kamoo-orange-500" />}
+                    {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-t bg-kamoo-blue-900" />}
                   </button>
                 );
               })}

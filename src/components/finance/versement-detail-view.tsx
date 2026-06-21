@@ -1,16 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
   Check,
   Copy,
   ImageOff,
   X,
 } from "lucide-react";
 import { RefuseVersementDialog } from "@/components/finance/refuse-versement-dialog";
+import { PageHeader } from "@/components/kamoo/page-header";
 import {
   Dialog,
   DialogContent,
@@ -96,28 +95,22 @@ export function VersementDetailView({
 
   return (
     <div className="flex h-full flex-col">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 border-b border-line bg-white px-10 py-4">
-        <Link
-          href={backHref}
-          className="grid h-9 w-9 place-items-center rounded-lg bg-paper-2 text-ink-500 hover:text-ink-700"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            {backLabel} · Versement
-          </div>
-          <h1 className="mt-1 font-display text-2xl font-extrabold text-ink-900">
-            Versement de {versement.versedBy.name}
-          </h1>
-        </div>
+      <PageHeader kicker={`${backLabel} · Versement`} title={`Versement de ${versement.versedBy.name}`} backHref={backHref}>
         <StatusBadge status={versement.status} />
-      </div>
+      </PageHeader>
 
       {/* CONTENT */}
       <div className="flex-1 overflow-auto px-10 py-6">
         <div className="mx-auto max-w-3xl space-y-5">
+          {/* Titre de l'entité — déplacé hors du header (convention globale). */}
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+              Versement
+            </div>
+            <h2 className="mt-1 font-display text-2xl font-extrabold text-ink-900">
+              Versement de {versement.versedBy.name}
+            </h2>
+          </div>
           {/* Carte récap */}
           <div className="rounded-2xl border border-line bg-white p-6">
             <div className="flex items-center gap-4">

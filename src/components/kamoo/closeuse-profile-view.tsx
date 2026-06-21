@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
-  ArrowLeft,
   BadgeCheck,
   Calendar,
   CheckCircle2,
@@ -16,7 +14,7 @@ import {
   Star,
 } from "lucide-react";
 import { useChat } from "@/components/kamoo/chat";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { PartnerCta } from "@/components/kamoo/partner-cta";
 import { useDisputes } from "@/lib/hooks/use-disputes";
 import { usePartners } from "@/lib/hooks/use-partners";
@@ -76,14 +74,7 @@ export function CloseuseProfileView({ closeuse: raw }: { closeuse: Closeuse }) {
 
   return (
     <div className="min-h-full bg-paper">
-      {/* Retour */}
-      <div className="flex items-center justify-between border-b border-line bg-white px-6 py-2.5">
-        <Link href="/marketplace/closeurs" className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-500 transition hover:text-ink-900">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Retour à la marketplace
-        </Link>
-        <NotificationsBell />
-      </div>
+      <PageHeader kicker="Découvrir" title={c.name} backHref="/marketplace/closeurs" />
 
       {/* HERO — bandeau navy de marque + portrait net (pas de fausse bannière) */}
       <section className="relative overflow-hidden bg-gradient-to-br from-kamoo-blue-900 to-kamoo-blue-800">
@@ -199,10 +190,10 @@ export function CloseuseProfileView({ closeuse: raw }: { closeuse: Closeuse }) {
                   <button
                     key={tb.id}
                     onClick={() => setTab(tb.id)}
-                    className={cn("relative inline-flex shrink-0 items-center px-3 py-3 text-[13px] font-semibold transition", active ? "text-kamoo-orange-600" : "text-ink-500 hover:text-ink-900")}
+                    className={cn("relative inline-flex shrink-0 items-center px-3 py-3 text-[13px] font-semibold transition", active ? "text-kamoo-blue-900" : "text-ink-500 hover:text-ink-900")}
                   >
                     {tb.label}
-                    {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-t bg-kamoo-orange-500" />}
+                    {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-t bg-kamoo-blue-900" />}
                   </button>
                 );
               })}

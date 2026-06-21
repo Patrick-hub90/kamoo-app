@@ -207,7 +207,7 @@ export default function NewExpeditionPage() {
           </p>
           <Link
             href="/marketplace/transitaires"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-kamoo-blue-900 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-blue-800"
           >
             {pending ? "Voir ma demande" : "Choisir un transitaire"}
             <ArrowRight className="h-4 w-4" />
@@ -404,7 +404,7 @@ function SummaryRail({
           onClick={step < 3 ? onNext : onSubmit}
           disabled={proceedDisabled}
           className={cn(
-            "mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600",
+            "mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-blue-900 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-blue-800",
             proceedDisabled && "cursor-not-allowed opacity-40",
           )}
         >
@@ -766,7 +766,7 @@ function PhotoSlot({
     <>
       <label
         htmlFor={inputId}
-        className="grid h-16 w-16 cursor-pointer place-items-center rounded-xl border-2 border-dashed border-line bg-paper-2 text-ink-500 transition hover:border-kamoo-orange-500 hover:text-kamoo-orange-500"
+        className="grid h-16 w-16 cursor-pointer place-items-center rounded-xl border-2 border-dashed border-line bg-paper-2 text-ink-500 transition hover:border-kamoo-blue-900 hover:text-kamoo-blue-900"
       >
         <div className="flex flex-col items-center gap-0.5">
           <Plus className="h-3.5 w-3.5" />
@@ -1149,7 +1149,7 @@ function ShippingMarkCard({
         onClick={handleCopy}
         className={cn(
           "mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition",
-          copied ? "bg-emerald-600" : "bg-kamoo-orange-500 hover:bg-kamoo-orange-600",
+          copied ? "bg-emerald-600" : "bg-kamoo-blue-900 hover:bg-kamoo-blue-800",
         )}
       >
         {copied ? (

@@ -12,7 +12,7 @@ import {
   UserCircle,
   Wallet,
 } from "lucide-react";
-import { NotificationsBell } from "@/components/kamoo/notifications-bell";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { cn } from "@/lib/utils";
 
 /**
@@ -99,18 +99,7 @@ export default function ParametresLayout({
 
       {/* ════ VOLET DÉTAIL ════ */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* En-tête détail */}
-        <header className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center gap-3 border-b border-line bg-white px-5">
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[16px] font-medium tracking-tight text-ink-900">
-              {activeTab?.label ?? "Paramètres"}
-            </div>
-            {activeTab?.description && (
-              <div className="truncate text-[12px] text-ink-400">{activeTab.description}</div>
-            )}
-          </div>
-          <NotificationsBell />
-        </header>
+        <PageHeader kicker="Paramètres" title={activeTab?.label ?? "Paramètres"} />
 
         {/* Puces de navigation — mobile / tablette (< lg) */}
         <div className="border-b border-line bg-white lg:hidden">

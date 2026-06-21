@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono, Poppins } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans, JetBrains_Mono, Hanken_Grotesk } from "next/font/google";
 import { BitdefenderHydrationFix } from "@/components/bitdefender-hydration-fix";
 import "./globals.css";
 
@@ -21,10 +21,10 @@ const jetBrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-// Police d'identité Kamoo (choix user) — appliquée globalement via les tokens
-// --font-sans / --font-display dans globals.css.
-const poppins = Poppins({
-  variable: "--font-poppins",
+// Police d'identité Kamoo — Hanken Grotesk (direction validée), appliquée
+// globalement via les tokens --font-sans / --font-display dans globals.css.
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${plusJakarta.variable} ${jetBrainsMono.variable} ${poppins.variable} h-full antialiased`}
+      className={`${inter.variable} ${plusJakarta.variable} ${jetBrainsMono.variable} ${hanken.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body

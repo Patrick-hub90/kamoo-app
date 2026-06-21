@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { StatCard } from "@/components/kamoo/stat-card";
+import { PageHeader } from "@/components/kamoo/page-header";
 import {
   DateRangeFilter,
   type DateFilterValue,
@@ -46,7 +47,6 @@ import { useVersementsState } from "@/lib/hooks/use-versements-state";
 import {
   bucketingForDateFilter,
   chartEndDateForFilter,
-  dateFilterSubtitle,
   filterByDate,
   normalizeDateFilter,
 } from "@/lib/utils/date-filter";
@@ -189,21 +189,13 @@ export default function FinancesOverviewPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-line bg-white px-10 py-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900">
-            Finances · Aperçu
-          </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            La photo financière de votre business ·{" "}
-            {dateFilterSubtitle(normalizedFilter)}
-          </p>
-        </div>
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-      </div>
+      <PageHeader kicker="Mon activité" title="Finances" />
 
       <div className="flex-1 overflow-auto px-10 py-6">
+        {/* Période — hors du header, au-dessus du contenu. */}
+        <div className="mb-4 flex items-center justify-end">
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+        </div>
         {/* ─── BLOC 1 — KPIs ─── */}
         <div className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
           Les chiffres qui comptent

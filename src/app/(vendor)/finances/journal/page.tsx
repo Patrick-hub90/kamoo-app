@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowUpRight,
   Check,
   Search,
@@ -14,6 +12,7 @@ import {
   DropdownItem,
   FilterDropdown,
 } from "@/components/kamoo/filter-dropdown";
+import { PageHeader } from "@/components/kamoo/page-header";
 import {
   DateRangeFilter,
   type DateFilterValue,
@@ -24,7 +23,6 @@ import { PLATFORM_LABELS } from "@/lib/types/ad-campaign";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { useVersementsState } from "@/lib/hooks/use-versements-state";
 import {
-  dateFilterSubtitle,
   filterByDate,
   normalizeDateFilter,
 } from "@/lib/utils/date-filter";
@@ -283,24 +281,7 @@ export default function FinancesJournalPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 border-b border-line bg-white px-10 py-4">
-        <Link
-          href="/finances"
-          className="grid h-9 w-9 place-items-center rounded-lg bg-paper-2 text-ink-500 hover:text-ink-700"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-            Finances · Journal
-          </div>
-          <h1 className="mt-1 font-display text-2xl font-extrabold text-ink-900">
-            Tous les mouvements
-          </h1>
-        </div>
-        <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-      </div>
+      <PageHeader kicker="Finances · Journal" title="Tous les mouvements" backHref="/finances" />
 
       {/* FILTRES */}
       <div className="border-b border-line bg-paper-2/60 px-10 py-3">
@@ -374,7 +355,7 @@ export default function FinancesJournalPage() {
                 setStatusFilter("all");
                 setDateFilter({ preset: "all" });
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-orange-600 hover:bg-kamoo-orange-50"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-bold text-kamoo-blue-700 hover:bg-kamoo-blue-50"
             >
               Effacer
             </button>
@@ -382,9 +363,9 @@ export default function FinancesJournalPage() {
 
           <div className="flex-1" />
           <div className="whitespace-nowrap text-[12px] font-semibold text-ink-500">
-            {filtered.length} sur {totalRows} ·{" "}
-            {dateFilterSubtitle(normalizedDateFilter)}
+            {filtered.length} sur {totalRows}
           </div>
+          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
         </div>
       </div>
 

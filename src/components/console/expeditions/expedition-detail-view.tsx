@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   Calendar,
   Check,
@@ -23,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { CopyButton } from "@/components/kamoo/copy-button";
+import { PageHeader } from "@/components/kamoo/page-header";
 import { useChat } from "@/components/kamoo/chat";
 import { OpenDisputeModal } from "@/components/kamoo/open-dispute-modal";
 import { STATUS_LABELS, TRANSPORT_MODE_LABELS } from "@/lib/types/expedition";
@@ -67,25 +67,20 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
 
   return (
     <div className="min-h-full bg-paper">
-      {/* HEADER — sobre : retour + titre */}
-      <header className="sticky top-0 z-20 border-b border-line bg-white">
-        <div className="mx-auto flex h-[68px] max-w-[1320px] items-center gap-4 px-6">
-          <Link
-            href="/expeditions"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-line bg-white text-ink-500 transition hover:bg-paper-2 hover:text-ink-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="truncate text-[18px] font-bold tracking-tight text-ink-900">
-              Expédition {exp.publicCode}
-            </h1>
-            <p className="mt-0.5 text-[12px] text-ink-500">Suivi complet, documents et actions</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader kicker="Mon activité" title={`Expédition ${exp.publicCode}`} backHref="/expeditions" />
 
-      <div className="mx-auto grid max-w-[1320px] grid-cols-[1.6fr_1fr] gap-5 px-6 py-6">
+      {/* Titre de l'entité — déplacé hors du header (convention globale). */}
+      <div className="mx-auto max-w-[1320px] px-6 pt-6">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+          Expédition
+        </div>
+        <h2 className="mt-1 font-display text-2xl font-extrabold text-ink-900">
+          Expédition {exp.publicCode}
+        </h2>
+        <p className="mt-0.5 text-[13px] text-ink-500">Suivi complet, documents et actions</p>
+      </div>
+
+      <div className="mx-auto grid max-w-[1320px] grid-cols-[1.6fr_1fr] gap-5 px-6 pb-6 pt-4">
         {/* ═══ GAUCHE ═══ */}
         <div className="flex flex-col gap-4">
           {/* Stepper */}
@@ -385,7 +380,7 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
                   <>
                     <button
                       onClick={() => setModal("pay")}
-                      className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-kamoo-orange-500 text-[14px] font-semibold text-white transition hover:bg-kamoo-orange-600"
+                      className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-kamoo-blue-900 text-[14px] font-semibold text-white transition hover:bg-kamoo-blue-800"
                     >
                       <Wallet className="h-4 w-4" />
                       Marquer comme payé
@@ -472,7 +467,7 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
             </button>
             <button
               onClick={() => setModal("proof")}
-              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-orange-500 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-orange-600"
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
             >
               J&apos;ai payé — envoyer la preuve
               <ArrowRight className="h-3.5 w-3.5" />

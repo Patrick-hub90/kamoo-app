@@ -129,7 +129,7 @@ export function CodeChip({ children, accent = false, className }: CodeChipProps)
       className={cn(
         "inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono-kamoo text-[11px] font-semibold",
         accent
-          ? "border-kamoo-orange-200 bg-kamoo-orange-50 text-kamoo-orange-700"
+          ? "border-kamoo-blue-200 bg-kamoo-blue-50 text-kamoo-blue-700"
           : "border-line bg-paper-2 text-ink-700",
         className,
       )}

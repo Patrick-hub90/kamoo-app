@@ -224,7 +224,7 @@ export default function MarketplaceTransitairesPage() {
             className={cn(
               "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-medium transition",
               certifiedOnly
-                ? "border-kamoo-orange-300 bg-kamoo-orange-50 text-kamoo-orange-700"
+                ? "border-kamoo-blue-200 bg-kamoo-blue-50 text-kamoo-blue-700"
                 : "border-line bg-white text-ink-700 hover:bg-paper-2",
             )}
           >
@@ -248,7 +248,7 @@ export default function MarketplaceTransitairesPage() {
                 <X className="h-3 w-3" />
               </button>
             ))}
-            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-orange-600 hover:underline">
+            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-blue-700 hover:underline">
               Tout effacer
             </button>
           </div>

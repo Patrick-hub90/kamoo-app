@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -87,11 +88,13 @@ export default function ClosingPage() {
   const router = useRouter();
   const closing = useClosingState();
   const { currentMarket } = useCurrentMarket();
-  const { currencyFor } = useShopify();
+  const { currencyFor, getConnection } = useShopify();
   const { partners } = usePartners();
   const hasCloseuse = partners.closeuse?.status === "active";
+  const shopifyConnected = getConnection(currentMarket.id)?.isConnected === true;
   const currency = currencyFor(currentMarket.id);
   const all = closing.all;
+  const isEmpty = all.length === 0;
   const stats = useMemo(() => computeClosingStats(all), [all]);
   const closeuse = MOCK_ACTIVE_CLOSEUSE;
 
@@ -175,6 +178,15 @@ export default function ClosingPage() {
       </PageHeader>
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
+        {isEmpty ? (
+          <EmptyClosing
+            shopifyConnected={shopifyConnected}
+            hasCloseuse={hasCloseuse}
+            closeuseName={closeuse.name}
+            onCreate={() => setCreateOpen(true)}
+          />
+        ) : (
+        <>
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -244,7 +256,14 @@ export default function ClosingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F4F5F6]">
-                    {shown.map((a) => {
+                    {shown.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-ink-400">
+                          Aucune commande ne correspond à votre recherche.
+                        </td>
+                      </tr>
+                    ) : (
+                    shown.map((a) => {
                       const st = STATUS_STYLE[a.status];
                       const StIcon = st.icon;
                       return (
@@ -316,7 +335,8 @@ export default function ClosingPage() {
                           </td>
                         </tr>
                       );
-                    })}
+                    })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -359,6 +379,8 @@ export default function ClosingPage() {
 
           {/* Plus de panneau lateral : cliquer une commande ouvre sa page de detail (/closing/[id]) ou vivent toutes les actions. */}
         </div>
+        </>
+        )}
       </div>
 
       {/* Modale Nouvelle commande */}
@@ -531,6 +553,63 @@ function CreateOrderModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── État vide (aucune commande) ──────────────────────────────── */
+function EmptyClosing({
+  shopifyConnected,
+  hasCloseuse,
+  closeuseName,
+  onCreate,
+}: {
+  shopifyConnected: boolean;
+  hasCloseuse: boolean;
+  closeuseName: string;
+  onCreate: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-line bg-white px-6 py-16 text-center shadow-kamoo-sm">
+      <div className="grid h-14 w-14 place-items-center rounded-xl bg-paper-2">
+        <Phone className="h-6 w-6 text-ink-400" />
+      </div>
+      <p className="mt-4 text-[15px] font-medium text-ink-900">Aucune commande à traiter</p>
+      <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-ink-500">
+        {shopifyConnected
+          ? "Les commandes de votre boutique arrivent ici automatiquement après la synchronisation. Vous pouvez aussi en créer une manuellement."
+          : "Connectez votre boutique Shopify pour importer vos commandes automatiquement, ou créez-en une à la main."}
+      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        {shopifyConnected ? (
+          <button
+            onClick={onCreate}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
+          >
+            <Plus className="h-4 w-4" /> Nouvelle commande
+          </button>
+        ) : (
+          <>
+            <Link
+              href="/parametres/connexions"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
+            >
+              Connecter Shopify
+            </Link>
+            <button
+              onClick={onCreate}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2"
+            >
+              <Plus className="h-4 w-4" /> Nouvelle commande
+            </button>
+          </>
+        )}
+      </div>
+      {hasCloseuse && (
+        <p className="mt-4 text-[12px] text-ink-400">
+          {closeuseName} appellera chaque commande dès qu&apos;elle arrive.
+        </p>
+      )}
     </div>
   );
 }

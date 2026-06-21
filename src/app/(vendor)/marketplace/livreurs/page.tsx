@@ -193,7 +193,7 @@ export default function MarketplaceLivreursPage() {
                 <X className="h-3 w-3" />
               </button>
             ))}
-            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-orange-600 hover:underline">
+            <button onClick={reset} className="text-[12px] font-semibold text-kamoo-blue-700 hover:underline">
               Tout effacer
             </button>
           </div>

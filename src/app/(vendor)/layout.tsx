@@ -11,7 +11,7 @@ import { TopbarSlotProvider } from "@/components/layout/topbar-slot";
 
 /** Routes déjà reprises à l'identité refonte (header propre intégré → pas de
  *  Topbar global). On étend cette liste au fur et à mesure. */
-const HIDE_GLOBAL_TOPBAR = ["/dashboard", "/boutique", "/expeditions", "/clients", "/closing", "/marketplace", "/livraisons", "/disputes", "/parametres"];
+const HIDE_GLOBAL_TOPBAR = ["/dashboard", "/boutique", "/expeditions", "/clients", "/closing", "/marketplace", "/livraisons", "/disputes", "/parametres", "/finances"];
 
 /**
  * Layout vendeur — englobe toutes les routes (vendor).

@@ -51,6 +51,9 @@
   /* ─── Couleurs Kamoo brand ───────────────────────────────── */
   --color-kamoo-blue-50: #EFF6FF;
   --color-kamoo-blue-100: #DBEAFE;
+  --color-kamoo-blue-200: #BFDBFE;
+  --color-kamoo-blue-300: #93C5FD;
+  --color-kamoo-blue-400: #60A5FA;
   --color-kamoo-blue-500: #3B82F6;
   --color-kamoo-blue-600: #2563EB;
   --color-kamoo-blue-700: #1E40AF;
@@ -87,21 +90,21 @@
   --color-status-cancelled: #6B7280;   /* gris — annulé */
   --color-status-error: #DC2626;       /* rouge — refusé/litige */
 
-  /* Typographies — Poppins en police d'identité (choix user) */
-  --font-sans: var(--font-poppins);
-  --font-display: var(--font-poppins);
+  /* Typographies — Hanken Grotesk en police d'identité (direction validée) */
+  --font-sans: var(--font-hanken);
+  --font-display: var(--font-hanken);
   --font-mono: var(--font-jetbrains-mono);
-  --font-heading: var(--font-poppins);
+  --font-heading: var(--font-hanken);
 
   /* Radius — échelle nette (coins discrets). Les pastilles/avatars utilisent
      rounded-full (9999px), non dérivé d'ici, donc ils restent ronds. */
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 10px;
-  --radius-4xl: 12px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 14px;
+  --radius-4xl: 16px;
 
   /* Ombres Kamoo */
   --shadow-kamoo-sm: 0 1px 1px rgba(16, 24, 40, 0.03);
@@ -116,7 +119,7 @@
    THÈME LIGHT (par défaut Kamoo)
    ────────────────────────────────────────────────────────── */
 :root {
-  --radius: 4px;
+  --radius: 8px;
 
   /* Fond canvas gris froid (identité) */
   --background: #F6F8FA;
@@ -129,17 +132,17 @@
   --popover: #FFFFFF;
   --popover-foreground: #0A0E1A;
 
-  /* Primaire Kamoo = orange (CTA principal) */
-  --primary: #F97316;
+  /* Primaire Kamoo = navy (action principale — direction validée) */
+  --primary: #0F2A52;
   --primary-foreground: #FFFFFF;
 
-  /* Secondaire Kamoo = bleu marine (CTA secondaire / nav) */
-  --secondary: #0F2A52;
-  --secondary-foreground: #FFFFFF;
+  /* Secondaire = surface neutre (boutons secondaires, texte sombre) */
+  --secondary: #EEF0F3;
+  --secondary-foreground: #1A1F2E;
 
-  /* Muted = paper-2 */
+  /* Muted = paper-2 (foreground légèrement assombri pour AA sur canvas gris) */
   --muted: #EEF0F3;
-  --muted-foreground: #6B7280;
+  --muted-foreground: #5B6573;
 
   /* Accent (hover discret) */
   --accent: #EEF0F3;
@@ -151,17 +154,17 @@
   /* Bordures (filets cool) */
   --border: #ECEEF1;
   --input: #E4E7EC;
-  --ring: #2563EB;
+  --ring: #163970;
 
   /* Sidebar Kamoo */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #2D3447;
   --sidebar-primary: #0F2A52;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FFF7ED;
-  --sidebar-accent-foreground: #C2410C;
+  --sidebar-accent: #EFF6FF;
+  --sidebar-accent-foreground: #163970;
   --sidebar-border: #ECEEF1;
-  --sidebar-ring: #F97316;
+  --sidebar-ring: #163970;
 
   /* Charts */
   --chart-1: #F97316;
@@ -184,7 +187,7 @@
   --popover: #1E3A6B;
   --popover-foreground: #FFFFFF;
 
-  --primary: #F97316;
+  --primary: #2563EB;
   --primary-foreground: #FFFFFF;
 
   --secondary: rgba(255, 255, 255, 0.08);

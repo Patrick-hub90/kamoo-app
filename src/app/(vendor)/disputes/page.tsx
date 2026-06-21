@@ -151,7 +151,7 @@ export default function DisputesPage() {
                         className={cn(
                           "inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[12.5px] font-bold transition",
                           canEscalate(d)
-                            ? "bg-kamoo-orange-500 text-white hover:bg-kamoo-orange-600"
+                            ? "bg-kamoo-blue-900 text-white hover:bg-kamoo-blue-800"
                             : "cursor-not-allowed border border-line bg-paper-2 text-ink-400",
                         )}
                       >

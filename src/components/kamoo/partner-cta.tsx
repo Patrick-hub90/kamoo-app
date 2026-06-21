@@ -233,7 +233,7 @@ export function PartnerCta({
           )}
           <button
             onClick={() => setChooseOpen(true)}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-orange-500 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-orange-600"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kamoo-blue-900 px-4 py-3 text-[14px] font-bold text-white transition hover:bg-kamoo-blue-800"
           >
             Choisir {verb}
           </button>
@@ -534,7 +534,7 @@ function ChooseModal({
             </button>
             <button
               onClick={() => onConfirm(serviceOfferings ? selected : undefined)}
-              className="flex-1 rounded-lg bg-kamoo-orange-500 py-2.5 text-[13px] font-bold text-white transition hover:bg-kamoo-orange-600"
+              className="flex-1 rounded-lg bg-kamoo-blue-900 py-2.5 text-[13px] font-bold text-white transition hover:bg-kamoo-blue-800"
             >
               Envoyer la demande
             </button>
