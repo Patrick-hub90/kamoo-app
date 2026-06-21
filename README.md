@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kamoo Console
 
-## Getting Started
+Console d'opérations **COD** (paiement à la livraison) pour e-commerçants
+ouest-africains. Le vendeur source ses produits (souvent de Chine), les vend
+(Shopify / pub), et Kamoo orchestre l'après-vente : **confirmation par appel
+(closing) → livraison → encaissement du cash → règlement des partenaires**.
 
-First, run the development server:
+➡️ Logique métier détaillée : [`docs/LOGIQUE-METIER.md`](docs/LOGIQUE-METIER.md)
+
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) · **React 19** · **TypeScript**
+- **Tailwind CSS v4** (tokens dans `src/app/globals.css`)
+- Données V1 : **mock côté client** (sessionStorage via stores synchronisés).
+  V2 cible : **Supabase** + server actions.
+
+## Démarrage local
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # build de production
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables d'environnement (`.env.local`, non commité)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Optionnelles — sans elles, l'app tourne en **mode démo** (Shopify simulé).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Rôle |
+|---|---|
+| `SHOPIFY_API_KEY` / `SHOPIFY_API_SECRET` | OAuth Admin API |
+| `SHOPIFY_SCOPES` | scopes (défaut fourni dans `config.ts`) |
+| `SHOPIFY_APP_URL` | URL publique (ex. `https://kamoo.me`) |
 
-## Learn More
+> ⚠️ En serverless (Vercel), le token store fichier (`.shopify-tokens.json`)
+> n'est **pas persistant** → Shopify « réel » nécessite la V2 (tokens en base).
+> Utiliser le mode démo en ligne.
 
-To learn more about Next.js, take a look at the following resources:
+## Déploiement
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Hébergé sur **Vercel**. Le repo est connecté : **chaque push sur `main`
+déclenche un déploiement de production** ; les autres branches génèrent des
+*preview deployments*.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Production : `kamoo.me` (DNS chez Namecheap → A `@`/`www` → `76.76.21.21`)
+- Build : `next build` (statique + routes serverless)
 
-## Deploy on Vercel
+## Architecture (repères)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `src/app/(vendor)/…` — la console (dashboard, closing, livraisons, catalogue,
+  expéditions, clients, marketplace, finances, paramètres).
+- `src/app/api/shopify/…` — OAuth, sync commandes, import/publication produits.
+- `src/components/…` — UI (composants Kamoo, console, finance).
+- `src/lib/…` — hooks d'état, types, données mock, helpers (format, Shopify).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> V1 — pas d'authentification (console publique si déployée telle quelle) et
+> mise en page **desktop-only** (`min-w 1100px`).
