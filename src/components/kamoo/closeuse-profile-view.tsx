@@ -74,7 +74,7 @@ export function CloseuseProfileView({ closeuse: raw }: { closeuse: Closeuse }) {
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader title={c.name} backHref="/closeurs" hideBell />
+      <PageHeader title={c.name} backHref="/closeurs" hideBell hideMarket />
 
       {/* HERO — bandeau navy de marque + portrait net (pas de fausse bannière) */}
       <section className="relative overflow-hidden bg-gradient-to-br from-kamoo-blue-900 to-kamoo-blue-800">

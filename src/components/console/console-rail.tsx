@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Check,
   ChevronDown,
   LayoutDashboard,
   ListOrdered,
@@ -24,8 +23,6 @@ import {
 } from "lucide-react";
 import { useDisputes } from "@/lib/hooks/use-disputes";
 import { cn } from "@/lib/utils";
-import { useCurrentMarket } from "@/lib/hooks/use-current-market";
-import { MARKET_STATUS_LABELS, MARKET_STATUS_TONE } from "@/lib/types/market";
 import { MOCK_EXPEDITIONS } from "@/lib/data/mock-expeditions";
 
 /**
@@ -321,9 +318,8 @@ export function ConsoleRail({
           ))}
         </nav>
 
-        {/* Bas de sidebar : widget marché + profil */}
+        {/* Bas de sidebar : profil (le marché vit désormais dans le header) */}
         <div className="space-y-1.5 border-t border-line p-2.5">
-          <MarketWidget />
           <div className="flex items-center gap-2.5 rounded-lg bg-paper-2 p-2">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-kamoo-blue-900 text-xs font-bold text-white">
               AD
@@ -343,118 +339,5 @@ export function ConsoleRail({
         </div>
       </div>
     </>
-  );
-}
-
-/* ─── Widget marché (bas de sidebar) ────────────────────────────────
-   Remplace le sélecteur de la topbar. Affiche le marché actif et ouvre
-   un menu (popover blanc, vers le haut) pour changer de marché. */
-function MarketWidget() {
-  const { markets, currentMarket, switchToMarket } = useCurrentMarket();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2.5 rounded-lg bg-paper-2 px-2.5 py-2 text-left transition hover:bg-ink-100"
-      >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-kamoo-blue-900 text-[11px] font-bold tracking-tight text-white">
-          {currentMarket.country.code}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[12px] font-semibold text-ink-900">
-            Marché {currentMarket.country.name}
-          </div>
-          <div className="truncate text-[10px] text-ink-500">
-            {currentMarket.country.warehouseCity}
-          </div>
-        </div>
-        <ChevronDown
-          className={cn(
-            "h-3.5 w-3.5 shrink-0 text-ink-400 transition-transform",
-            open && "rotate-180",
-          )}
-        />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-[calc(100%+8px)] left-1 z-50 w-[264px] rounded-xl border border-line bg-white p-1.5 shadow-[var(--shadow-kamoo-lg)]">
-            <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-400">
-              Vos marchés
-            </div>
-            {markets.map((m) => {
-              const selected = currentMarket.id === m.id;
-              const disabled = m.status === "inactive";
-              const tone = MARKET_STATUS_TONE[m.status];
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (!disabled) {
-                      switchToMarket(m.id);
-                      setOpen(false);
-                    }
-                  }}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition",
-                    disabled ? "cursor-not-allowed opacity-60" : "hover:bg-paper-2",
-                    selected && "bg-kamoo-blue-50",
-                  )}
-                >
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-paper-2 text-[10px] font-bold tracking-tight text-ink-700">
-                    {m.country.code}
-                  </span>
-                  <div className="flex-1 leading-tight">
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 text-[13px] font-semibold",
-                        selected ? "text-kamoo-blue-700" : "text-ink-900",
-                      )}
-                    >
-                      {m.country.name}
-                      {m.status !== "active" && (
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-full px-1.5 py-0.5 text-[9.5px] font-bold",
-                            tone.bg,
-                            tone.fg,
-                          )}
-                        >
-                          {MARKET_STATUS_LABELS[m.status]}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[10.5px] text-ink-500">
-                      {m.country.warehouseCity} · {m.stats.partnersCount} partenaires
-                    </div>
-                  </div>
-                  {selected && <Check className="h-4 w-4 text-kamoo-blue-700" />}
-                </button>
-              );
-            })}
-            <div className="my-1.5 h-px bg-line" />
-            <Link
-              href="/marches/nouveau"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-kamoo-blue-50"
-            >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-kamoo-blue-900 text-white">
-                <Plus className="h-4 w-4" />
-              </span>
-              <span className="text-[13px] font-bold text-kamoo-blue-700">
-                Ajouter un nouveau marché
-              </span>
-            </Link>
-          </div>
-        </>
-      )}
-    </div>
   );
 }

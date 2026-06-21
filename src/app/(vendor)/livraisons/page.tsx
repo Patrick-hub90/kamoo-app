@@ -128,37 +128,7 @@ export default function LivraisonsPage() {
   return (
     <div className="min-h-full bg-paper">
       {/* Header commun : actions + cloche (même ordre partout) */}
-      <PageHeader kicker="Mon activité" title="Livraisons">
-        <button
-          onClick={() => {
-            /* Export CSV des livraisons filtrées (réel) */
-            const rows = [
-              ["N°", "Produit", "Client", "Téléphone", "Zone", "Montant (F CFA)", "Statut", "Livreur"],
-              ...filtered.map((a) => [
-                a.id,
-                a.items.map((i) => `${i.productName} x${i.quantity}`).join(" + "),
-                a.client.name,
-                a.client.phone,
-                a.client.zone,
-                String(orderTotalXof(a)),
-                a.delivery ? STATUS[a.delivery.progress].label : "—",
-                a.delivery?.name ?? "—",
-              ]),
-            ];
-            const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(";")).join("\n");
-            const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "kamoo-livraisons.csv";
-            link.click();
-            URL.revokeObjectURL(url);
-          }}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"
-        >
-          <Download className="h-4 w-4 text-ink-400" /> Exporter
-        </button>
-      </PageHeader>
+      <PageHeader kicker="Mon activité" title="Livraisons" />
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
 
@@ -197,7 +167,38 @@ export default function LivraisonsPage() {
               <DropdownItem key={k} active={sortBy === k} onClick={() => { setSortBy(k); setSortOpen(false); }}>{SORT_LABELS[k]}</DropdownItem>
             ))}
           </Dropdown>
-          <div className="ml-auto text-[12px] font-medium text-ink-500">{filtered.length} livraison{filtered.length > 1 ? "s" : ""}</div>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-[12px] font-medium text-ink-500">{filtered.length} livraison{filtered.length > 1 ? "s" : ""}</span>
+            <button
+          onClick={() => {
+            /* Export CSV des livraisons filtrées (réel) */
+            const rows = [
+              ["N°", "Produit", "Client", "Téléphone", "Zone", "Montant (F CFA)", "Statut", "Livreur"],
+              ...filtered.map((a) => [
+                a.id,
+                a.items.map((i) => `${i.productName} x${i.quantity}`).join(" + "),
+                a.client.name,
+                a.client.phone,
+                a.client.zone,
+                String(orderTotalXof(a)),
+                a.delivery ? STATUS[a.delivery.progress].label : "—",
+                a.delivery?.name ?? "—",
+              ]),
+            ];
+            const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(";")).join("\n");
+            const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "kamoo-livraisons.csv";
+            link.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-700 transition hover:bg-paper-2"
+        >
+          <Download className="h-4 w-4 text-ink-400" /> Exporter
+        </button>
+          </div>
         </div>
 
         {/* TABLE (pleine largeur, groupée par statut) */}

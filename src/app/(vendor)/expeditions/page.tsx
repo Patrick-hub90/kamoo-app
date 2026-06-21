@@ -155,15 +155,7 @@ export default function ExpeditionsListPage() {
   return (
     <div className="min-h-full bg-paper">
       {/* Header commun : période + CTA + cloche (même ordre partout) */}
-      <PageHeader kicker="Mon activité" title="Expéditions">
-        <Link
-          href="/expeditions/nouvelle"
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-        >
-          <Plus className="h-4 w-4" />
-          Nouvelle expédition
-        </Link>
-      </PageHeader>
+      <PageHeader kicker="Mon activité" title="Expéditions" />
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
 
@@ -304,6 +296,13 @@ export default function ExpeditionsListPage() {
               </button>
             )}
             <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+            <Link
+              href="/expeditions/nouvelle"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+            >
+              <Plus className="h-4 w-4" />
+              Nouvelle expédition
+            </Link>
           </div>
         </div>
 

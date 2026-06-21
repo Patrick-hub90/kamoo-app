@@ -75,7 +75,7 @@ export function LivreurProfileView({ livreur: raw }: { livreur: Livreur }) {
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader title={l.name} backHref="/livreurs" hideBell />
+      <PageHeader title={l.name} backHref="/livreurs" hideBell hideMarket />
 
       {/* HERO navy + portrait / logo */}
       <section className="relative overflow-hidden bg-gradient-to-br from-kamoo-blue-900 to-kamoo-blue-800">

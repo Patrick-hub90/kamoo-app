@@ -67,7 +67,7 @@ export function ExpeditionDetailView({ exp }: { exp: ExpeditionDetail }) {
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader kicker="Mon activité" title={`Expédition ${exp.publicCode}`} backHref="/expeditions" />
+      <PageHeader kicker="Mon activité" title={`Expédition ${exp.publicCode}`} backHref="/expeditions" hideTitle />
 
       {/* Titre de l'entité — déplacé hors du header (convention globale). */}
       <div className="mx-auto max-w-[1320px] px-6 pt-6">

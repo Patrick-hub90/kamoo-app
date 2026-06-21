@@ -266,7 +266,10 @@ export function ProductForm({
 
   return (
     <div className="flex min-h-full flex-col">
-      <PageHeader kicker={headerLabel} title={name || titleFallback} backHref={cancelHref}>
+      <PageHeader kicker={headerLabel} title={name || titleFallback} backHref={cancelHref} />
+
+      {/* Barre d'actions du formulaire — descendue hors du header, sticky sous l'en-tête */}
+      <div className="sticky top-[60px] z-10 flex items-center justify-end gap-2.5 border-b border-line bg-white/95 px-10 py-3 backdrop-blur">
         <Link
           href={cancelHref}
           className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-semibold text-ink-900 hover:bg-paper-2"
@@ -298,7 +301,7 @@ export function ProductForm({
             </>
           )}
         </button>
-      </PageHeader>
+      </div>
 
       {/* BODY */}
       <div className="grid flex-1 grid-cols-[1.5fr_1fr] gap-5 px-10 py-6">

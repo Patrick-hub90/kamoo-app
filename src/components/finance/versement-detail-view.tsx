@@ -95,7 +95,7 @@ export function VersementDetailView({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader kicker={`${backLabel} · Versement`} title={`Versement de ${versement.versedBy.name}`} backHref={backHref}>
+      <PageHeader kicker={`${backLabel} · Versement`} title={`Versement de ${versement.versedBy.name}`} backHref={backHref} hideTitle>
         <StatusBadge status={versement.status} />
       </PageHeader>
 

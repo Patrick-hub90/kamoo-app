@@ -79,7 +79,7 @@ export function MovementDetailView({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader kicker={`${backLabel} · ${typeLabel}`} title={movement.description} backHref={backHref}>
+      <PageHeader kicker={`${backLabel} · ${typeLabel}`} title={movement.description} backHref={backHref} hideTitle>
         <PartnerConfirmationBadge
           requiresConfirmation={requiresConfirmation}
           confirmedAt={movement.partnerConfirmedAt}

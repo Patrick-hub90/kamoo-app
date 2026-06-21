@@ -127,7 +127,7 @@ export default function ClientDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader kicker="Mon activité" title={client.name} backHref="/clients" />
+      <PageHeader kicker="Mon activité" title={client.name} backHref="/clients" hideTitle />
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
         <div className="overflow-hidden rounded-xl border border-line bg-white shadow-kamoo-sm">
           {/* En-tête de la carte — le retour vit dans le PageHeader commun. */}
