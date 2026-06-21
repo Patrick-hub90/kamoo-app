@@ -28,13 +28,19 @@ Optionnelles — sans elles, l'app tourne en **mode démo** (Shopify simulé).
 
 | Variable | Rôle |
 |---|---|
-| `SHOPIFY_API_KEY` / `SHOPIFY_API_SECRET` | OAuth Admin API |
+| `SHOPIFY_API_KEY` / `SHOPIFY_API_SECRET` | OAuth Admin API (Client ID / secret) |
 | `SHOPIFY_SCOPES` | scopes (défaut fourni dans `config.ts`) |
 | `SHOPIFY_APP_URL` | URL publique (ex. `https://kamoo.me`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé anon Supabase (clients SSR / navigateur) |
+| `SUPABASE_SERVICE_ROLE_KEY` | clé service role (**secret serveur**) — stockage des tokens Shopify |
 
-> ⚠️ En serverless (Vercel), le token store fichier (`.shopify-tokens.json`)
-> n'est **pas persistant** → Shopify « réel » nécessite la V2 (tokens en base).
-> Utiliser le mode démo en ligne.
+> **Mode réel Shopify** : `isLiveMode()` s'active dès que `SHOPIFY_API_KEY` +
+> `SHOPIFY_API_SECRET` sont présents. Les access tokens OAuth sont persistés
+> dans **Supabase** (table `shopify_tokens`, cf. [`supabase/schema.sql`](supabase/schema.sql))
+> dès que `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` sont définis.
+> Sans Supabase, repli sur un fichier (`.shopify-tokens.json`) — OK en local
+> mais **non persistant en serverless** (Vercel).
 
 ## Déploiement
 
