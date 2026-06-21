@@ -17,7 +17,6 @@ import {
   Search,
   Settings,
   ShoppingBag,
-  Store,
   ShieldAlert,
   Truck,
   Users,
@@ -64,21 +63,6 @@ const SECTIONS: Section[] = [
     label: "Tableau de bord",
     items: [
       { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: "Découvrir",
-    items: [
-      {
-        href: "/marketplace",
-        label: "Marketplace",
-        icon: Store,
-        children: [
-          { href: "/marketplace/transitaires", label: "Transitaires", icon: Package },
-          { href: "/marketplace/closeurs", label: "Closeurs", icon: Phone },
-          { href: "/marketplace/livreurs", label: "Livreurs", icon: Truck },
-        ],
-      },
     ],
   },
   {
