@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ShoppingBag } from "lucide-react";
@@ -53,6 +53,14 @@ import {
  * source — c'est « afficher l'information selon notre logique ».
  */
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardPageInner />
+    </Suspense>
+  );
+}
+
+function DashboardPageInner() {
   const { currentMarket } = useCurrentMarket();
   const { currencyFor } = useShopify();
   const currency = currencyFor(currentMarket.id);

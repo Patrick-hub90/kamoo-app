@@ -133,14 +133,14 @@ export function RevenueExpenseChart({
           />
           <Tooltip
             cursor={{ fill: "rgba(16, 42, 82, 0.04)" }}
-            formatter={(value: number, name: string) => {
+            formatter={(value, name) => {
               const label =
                 name === "ca"
                   ? "CA"
                   : name === "depenses"
                     ? "Dépenses"
-                    : name;
-              return [`${formatXOF(value, false)} F`, label];
+                    : String(name);
+              return [`${formatXOF(Number(value), false)} F`, label];
             }}
             labelStyle={{ color: TITLE_COLOR, fontWeight: 700 }}
             contentStyle={{

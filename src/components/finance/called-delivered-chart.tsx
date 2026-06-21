@@ -125,7 +125,7 @@ export function CalledDeliveredChart({
           />
           <Tooltip
             cursor={{ fill: "rgba(16, 42, 82, 0.04)" }}
-            formatter={(value: number, name: string, item) => {
+            formatter={(value, name, item) => {
               if (name === "called") return [value, "Appelées"];
               if (name === "delivered") {
                 // Taux de livraison = livrées / appelées sur ce bucket précis

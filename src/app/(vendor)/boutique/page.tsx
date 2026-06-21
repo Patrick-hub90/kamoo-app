@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -116,6 +116,14 @@ function filterMovementsByPeriod(
 
 /* ════════════════════════════════════════════════════════════════════ */
 export default function BoutiquePage() {
+  return (
+    <Suspense fallback={null}>
+      <BoutiquePageInner />
+    </Suspense>
+  );
+}
+
+function BoutiquePageInner() {
   const { products: all, bulkSetActive, bulkSetArchived, removeProducts } = useProductsState();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [publishOpen, setPublishOpen] = useState(false);
