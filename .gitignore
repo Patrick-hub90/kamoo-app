@@ -45,3 +45,5 @@ next-env.d.ts
 .demo-state.json
 .shopify-tokens.json
 .env.local
+
+.vercel

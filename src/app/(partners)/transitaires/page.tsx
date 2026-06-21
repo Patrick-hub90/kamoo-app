@@ -19,7 +19,6 @@ import { usePartners } from "@/lib/hooks/use-partners";
 import { useSessionStorageState } from "@/lib/hooks/use-session-storage-state";
 import { TRANSPORT_MODE_LABELS, type TransportMode } from "@/lib/types/expedition";
 import type { Transitaire } from "@/lib/types/transitaire";
-import { PageHeader } from "@/components/kamoo/page-header";
 import { cn } from "@/lib/utils";
 
 type SortKey = "rating" | "reviews" | "price" | "orders";
@@ -137,7 +136,6 @@ export default function MarketplaceTransitairesPage() {
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader kicker="Découvrir" title="Marketplace · Transitaires" />
       {/* HERO */}
       <section className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}

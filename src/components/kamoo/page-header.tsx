@@ -17,6 +17,7 @@ export function PageHeader({
   title,
   backHref,
   children,
+  hideBell,
 }: {
   kicker?: string;
   title: React.ReactNode;
@@ -24,6 +25,8 @@ export function PageHeader({
   backHref?: string;
   /** Contrôles de page — rendus entre le kicker et la cloche. */
   children?: React.ReactNode;
+  /** Masque la cloche de notifications (contexte public Partenaires). */
+  hideBell?: boolean;
 }) {
   return (
     <header className="sticky top-0 z-20 shrink-0 border-b border-line bg-white">
@@ -46,7 +49,7 @@ export function PageHeader({
           )}
         </div>
         {children}
-        <NotificationsBell />
+        {!hideBell && <NotificationsBell />}
       </div>
     </header>
   );

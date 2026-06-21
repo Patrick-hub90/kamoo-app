@@ -129,7 +129,7 @@ export function CloseuseCard({ closeuse: c, selected = false, onToggle }: Props)
 
       {/* Action — le contact passe par le profil */}
       <Link
-        href={`/marketplace/closeurs/${c.slug}`}
+        href={`/closeurs/${c.slug}`}
         className="mt-auto flex w-full items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
       >
         Voir le profil

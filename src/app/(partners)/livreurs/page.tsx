@@ -20,7 +20,6 @@ import { LivreurCard } from "@/components/kamoo/livreur-card";
 import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { LIVREUR_SERVICE_SHORT, type Livreur, type LivreurService, type LivreurType } from "@/lib/types/livreur";
-import { PageHeader } from "@/components/kamoo/page-header";
 import { cn } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = { SN: "Sénégal", CI: "Côte d'Ivoire", CM: "Cameroun" };
@@ -111,7 +110,6 @@ export default function MarketplaceLivreursPage() {
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader kicker="Découvrir" title="Marketplace · Livreurs" />
       {/* HERO */}
       <section className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}

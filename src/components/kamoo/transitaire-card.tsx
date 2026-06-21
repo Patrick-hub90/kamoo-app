@@ -172,7 +172,7 @@ export function TransitaireCard({ transitaire: t, saved = false, onToggleSave }:
         {/* Footer */}
         <div className="mt-4 flex items-center gap-2">
           <Link
-            href={`/marketplace/transitaires/${t.slug}`}
+            href={`/transitaires/${t.slug}`}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
           >
             Voir le profil

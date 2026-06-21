@@ -61,7 +61,7 @@ export function TransitaireProfileView({ transitaire: raw }: { transitaire: Tran
 
   return (
     <div className="min-h-full bg-paper">
-      <PageHeader kicker="Découvrir" title={t.name} backHref="/marketplace/transitaires" />
+      <PageHeader title={t.name} backHref="/transitaires" hideBell />
 
       {/* COVER */}
       <div className="relative h-44 w-full overflow-hidden">

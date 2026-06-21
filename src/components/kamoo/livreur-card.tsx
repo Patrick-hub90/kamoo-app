@@ -123,7 +123,7 @@ export function LivreurCard({ livreur: l }: { livreur: Livreur }) {
 
       {/* Action — le contact passe par le profil */}
       <Link
-        href={`/marketplace/livreurs/${l.slug}`}
+        href={`/livreurs/${l.slug}`}
         className="mt-3 flex w-full items-center justify-center rounded-lg bg-kamoo-blue-900 px-3 py-2 text-[12.5px] font-semibold text-white transition hover:bg-kamoo-blue-800"
       >
         Voir le profil
