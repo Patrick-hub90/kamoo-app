@@ -149,33 +149,7 @@ export default function ClosingPage() {
   return (
     <div className="min-h-full bg-paper">
       {/* Header commun : chip closeuse (si partenariat actif) + CTA + cloche */}
-      <PageHeader kicker="Mon activité" title="Closing">
-        {hasCloseuse && (
-          <div className="hidden items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5 sm:flex">
-            <span
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
-              style={{ background: closeuse.avatarBg }}
-            >
-              {closeuse.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-            </span>
-            <div className="leading-tight">
-              <div className="text-[12px] font-semibold text-ink-900">{closeuse.name}</div>
-              <div className="flex items-center gap-1 text-[10px] text-ink-500">
-                Closeuse active
-                <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                {closeuse.rating}
-              </div>
-            </div>
-          </div>
-        )}
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-        >
-          <Plus className="h-4 w-4" />
-          Nouvelle commande
-        </button>
-      </PageHeader>
+      <PageHeader kicker="Mon activité" title="Closing" />
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
         {isEmpty ? (
@@ -187,6 +161,37 @@ export default function ClosingPage() {
           />
         ) : (
         <>
+
+        {/* Actions de page */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {hasCloseuse ? (
+            <div className="flex items-center gap-2.5 rounded-xl border border-line bg-white px-3 py-1.5">
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
+                style={{ background: closeuse.avatarBg }}
+              >
+                {closeuse.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+              </span>
+              <div className="leading-tight">
+                <div className="text-[12px] font-semibold text-ink-900">{closeuse.name}</div>
+                <div className="flex items-center gap-1 text-[10px] text-ink-500">
+                  Closeuse active
+                  <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                  {closeuse.rating}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <span />
+          )}
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+          >
+            <Plus className="h-4 w-4" />
+            Nouvelle commande
+          </button>
+        </div>
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

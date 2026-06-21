@@ -265,6 +265,27 @@ function BoutiquePageInner() {
       <PageHeader kicker="Mon activité" title="Catalogue" />
 
       <div className="mx-auto flex w-full min-h-0 max-w-[1320px] flex-1 flex-col gap-4 px-6 py-6">
+        {/* Actions de page */}
+        <div className="flex flex-wrap items-center justify-end gap-2.5">
+          {shopifyConnected && (
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-700 transition hover:bg-paper-2"
+            >
+              <ShoppingBag className="h-4 w-4 text-ink-400" />
+              Importer depuis Shopify
+            </button>
+          )}
+          <Link
+            href="/boutique/nouveau"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un produit
+          </Link>
+        </div>
+
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat label="Produits actifs" value={String(stats.actifs)} suffix={`/ ${stats.total}`} />
@@ -381,26 +402,9 @@ function BoutiquePageInner() {
             )}
           </div>
 
-          {/* Période + actions — à droite de la barre de filtres. */}
-          <div className="ml-auto flex flex-wrap items-center gap-2.5">
+          {/* Période — à droite de la barre de filtres. */}
+          <div className="ml-auto">
             <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-            {shopifyConnected && (
-              <button
-                type="button"
-                onClick={() => setImportOpen(true)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-700 transition hover:bg-paper-2"
-              >
-                <ShoppingBag className="h-4 w-4 text-ink-400" />
-                Importer depuis Shopify
-              </button>
-            )}
-            <Link
-              href="/boutique/nouveau"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-medium text-white transition hover:bg-kamoo-blue-800"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un produit
-            </Link>
           </div>
         </div>
 

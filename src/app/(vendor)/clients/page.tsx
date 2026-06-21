@@ -156,6 +156,17 @@ export default function ClientsPage() {
 
       <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-6 py-6">
 
+        {/* Actions de page */}
+        <div className="flex flex-wrap items-center justify-end gap-2.5">
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un client
+          </button>
+        </div>
+
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Kpi icon={Users} tone="blue" label="Clients actifs" value={String(stats.total)} sub="Base totale" />
@@ -239,17 +250,8 @@ export default function ClientsPage() {
                 ))}
               </Dropdown>
 
-              <div className="ml-auto flex items-center gap-3">
-                <span className="text-[12px] font-medium text-ink-500">
-                  {filtered.length} client{filtered.length > 1 ? "s" : ""}
-                </span>
-                <button
-                  onClick={() => setAddOpen(true)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-kamoo-blue-800"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter un client
-                </button>
+              <div className="ml-auto text-[12px] font-medium text-ink-500">
+                {filtered.length} client{filtered.length > 1 ? "s" : ""}
               </div>
             </div>
 
