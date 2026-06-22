@@ -1,5 +1,40 @@
 import { SHOPIFY_API_VERSION } from "@/lib/shopify/config";
-import { getToken } from "@/lib/shopify/token-store";
+import { getToken, saveToken } from "@/lib/shopify/token-store";
+import { refreshAccessToken } from "@/lib/shopify/oauth";
+
+/**
+ * Renvoie un access token VALIDE pour la boutique : rafraîchit automatiquement
+ * le token offline expirable s'il est expiré (ou expire dans < 60 s) via le
+ * refresh token. Renvoie null si la boutique n'est pas connectée.
+ */
+async function getValidAccessToken(shop: string): Promise<string | null> {
+  const entry = await getToken(shop);
+  if (!entry) return null;
+  const expMs = entry.expiresAt ? Date.parse(entry.expiresAt) : 0;
+  const expiringSoon = expMs > 0 && expMs < Date.now() + 60_000;
+  if (expiringSoon && entry.refreshToken) {
+    try {
+      const r = await refreshAccessToken(shop, entry.refreshToken);
+      await saveToken(shop, {
+        accessToken: r.accessToken,
+        scope: r.scope || entry.scope,
+        installedAt: entry.installedAt,
+        refreshToken: r.refreshToken ?? entry.refreshToken,
+        expiresAt: r.expiresIn
+          ? new Date(Date.now() + r.expiresIn * 1000).toISOString()
+          : undefined,
+        refreshTokenExpiresAt: r.refreshTokenExpiresIn
+          ? new Date(Date.now() + r.refreshTokenExpiresIn * 1000).toISOString()
+          : entry.refreshTokenExpiresAt,
+      });
+      return r.accessToken;
+    } catch {
+      // Échec du refresh → on tente le token courant (échouera proprement).
+      return entry.accessToken;
+    }
+  }
+  return entry.accessToken;
+}
 
 /**
  * Client Admin API Shopify (GraphQL) — côté serveur uniquement.
@@ -50,8 +85,8 @@ export async function shopifyGraphQL<T = unknown>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const token = await getToken(shop);
-  if (!token) {
+  const accessToken = await getValidAccessToken(shop);
+  if (!accessToken) {
     throw new ShopifyApiError(`Aucun token pour ${shop} — boutique non connectée`, 401);
   }
   const res = await fetch(
@@ -60,7 +95,7 @@ export async function shopifyGraphQL<T = unknown>(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": token.accessToken,
+        "X-Shopify-Access-Token": accessToken,
       },
       body: JSON.stringify({ query, variables }),
     },
@@ -92,8 +127,8 @@ export async function shopifyRest<T = unknown>(
   endpoint: string,
   init?: RequestInit,
 ): Promise<T> {
-  const token = await getToken(shop);
-  if (!token) {
+  const accessToken = await getValidAccessToken(shop);
+  if (!accessToken) {
     throw new ShopifyApiError(`Aucun token pour ${shop} — boutique non connectée`, 401);
   }
   const res = await fetch(
@@ -102,7 +137,7 @@ export async function shopifyRest<T = unknown>(
       ...init,
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": token.accessToken,
+        "X-Shopify-Access-Token": accessToken,
         ...(init?.headers ?? {}),
       },
     },

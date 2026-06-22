@@ -55,11 +55,46 @@ export function verifyWebhookHmac(rawBody: string, hmacHeader: string | null): b
   return safeEqual(digest, hmacHeader);
 }
 
-/** Échange le code d'autorisation contre un access token permanent. */
+/**
+ * Réponse token Shopify (offline EXPIRABLE).
+ * Shopify n'accepte plus les tokens offline non-expirants sur l'Admin API :
+ * on demande `expiring=1`, ce qui renvoie un access token court (≈1h) + un
+ * refresh token (≈90j) pour le renouveler.
+ */
+export type ShopifyTokenResponse = {
+  accessToken: string;
+  scope: string;
+  /** Durée de vie de l'access token en secondes (≈3600). */
+  expiresIn?: number;
+  /** Refresh token pour renouveler l'access token. */
+  refreshToken?: string;
+  /** Durée de vie du refresh token en secondes (≈7776000 = 90 j). */
+  refreshTokenExpiresIn?: number;
+};
+
+type RawTokenJson = {
+  access_token: string;
+  scope: string;
+  expires_in?: number;
+  refresh_token?: string;
+  refresh_token_expires_in?: number;
+};
+
+function mapTokenJson(json: RawTokenJson): ShopifyTokenResponse {
+  return {
+    accessToken: json.access_token,
+    scope: json.scope ?? "",
+    expiresIn: json.expires_in,
+    refreshToken: json.refresh_token,
+    refreshTokenExpiresIn: json.refresh_token_expires_in,
+  };
+}
+
+/** Échange le code d'autorisation contre un access token offline EXPIRABLE. */
 export async function exchangeCodeForToken(
   shop: string,
   code: string,
-): Promise<{ accessToken: string; scope: string }> {
+): Promise<ShopifyTokenResponse> {
   const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,13 +102,35 @@ export async function exchangeCodeForToken(
       client_id: SHOPIFY_API_KEY,
       client_secret: SHOPIFY_API_SECRET,
       code,
+      // Tokens offline expirables (les non-expirants sont refusés par l'API).
+      expiring: 1,
     }),
   });
   if (!res.ok) {
     throw new Error(`Échec de l'échange du token (${res.status})`);
   }
-  const json = (await res.json()) as { access_token: string; scope: string };
-  return { accessToken: json.access_token, scope: json.scope };
+  return mapTokenJson((await res.json()) as RawTokenJson);
+}
+
+/** Renouvelle un access token offline expiré via son refresh token. */
+export async function refreshAccessToken(
+  shop: string,
+  refreshToken: string,
+): Promise<ShopifyTokenResponse> {
+  const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: SHOPIFY_API_KEY,
+      client_secret: SHOPIFY_API_SECRET,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Échec du rafraîchissement du token (${res.status})`);
+  }
+  return mapTokenJson((await res.json()) as RawTokenJson);
 }
 
 /** Comparaison à temps constant (évite les attaques par timing). */

@@ -37,11 +37,19 @@ export async function GET(request: Request) {
   const market = (state ?? "").split(".")[1] ?? "";
 
   try {
-    const { accessToken, scope } = await exchangeCodeForToken(shop, code);
+    const token = await exchangeCodeForToken(shop, code);
+    const scope = token.scope;
     await saveToken(shop, {
-      accessToken,
-      scope,
+      accessToken: token.accessToken,
+      scope: token.scope,
       installedAt: new Date().toISOString(),
+      refreshToken: token.refreshToken,
+      expiresAt: token.expiresIn
+        ? new Date(Date.now() + token.expiresIn * 1000).toISOString()
+        : undefined,
+      refreshTokenExpiresAt: token.refreshTokenExpiresIn
+        ? new Date(Date.now() + token.refreshTokenExpiresIn * 1000).toISOString()
+        : undefined,
     });
     /* Auto-diagnostic : un token SANS scopes signifie que l'app n'a aucun
      * scope déclaré dans sa CONFIGURATION (Partner Dashboard) — l'URL OAuth

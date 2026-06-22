@@ -13,16 +13,9 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
  *  - **Fichier JSON** (`.shopify-tokens.json`, gitignoré) en repli pour le dev
  *    local quand Supabase n'est pas configuré. ⚠️ NON persistant en serverless.
  *
- * Schéma SQL attendu (à exécuter une fois dans Supabase) :
- *   create table if not exists public.shopify_tokens (
- *     shop         text primary key,
- *     access_token text not null,
- *     scope        text,
- *     installed_at timestamptz not null default now(),
- *     updated_at   timestamptz not null default now()
- *   );
- *   alter table public.shopify_tokens enable row level security;
- *   -- aucune policy → accès réservé à la clé service_role (serveur)
+ * Schéma SQL : cf. `supabase/schema.sql` (table verrouillée par RLS +
+ * colonnes refresh_token / expires_at / refresh_token_expires_at pour les
+ * tokens offline expirables).
  */
 
 const TABLE = "shopify_tokens";
@@ -32,6 +25,12 @@ export type TokenEntry = {
   accessToken: string;
   scope: string;
   installedAt: string;
+  /** Refresh token (tokens offline expirables). */
+  refreshToken?: string;
+  /** Expiration ISO de l'access token. */
+  expiresAt?: string;
+  /** Expiration ISO du refresh token. */
+  refreshTokenExpiresAt?: string;
 };
 
 type TokenFile = Record<string, TokenEntry>;
@@ -60,6 +59,9 @@ export async function saveToken(shop: string, entry: TokenEntry): Promise<void> 
       access_token: entry.accessToken,
       scope: entry.scope,
       installed_at: entry.installedAt,
+      refresh_token: entry.refreshToken ?? null,
+      expires_at: entry.expiresAt ?? null,
+      refresh_token_expires_at: entry.refreshTokenExpiresAt ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "shop" },
@@ -74,7 +76,7 @@ export async function getToken(shop: string): Promise<TokenEntry | null> {
   }
   const { data, error } = await sb
     .from(TABLE)
-    .select("access_token, scope, installed_at")
+    .select("access_token, scope, installed_at, refresh_token, expires_at, refresh_token_expires_at")
     .eq("shop", shop)
     .maybeSingle();
   if (error) throw new Error(`Supabase getToken: ${error.message}`);
@@ -83,6 +85,9 @@ export async function getToken(shop: string): Promise<TokenEntry | null> {
     accessToken: data.access_token as string,
     scope: (data.scope as string | null) ?? "",
     installedAt: data.installed_at as string,
+    refreshToken: (data.refresh_token as string | null) ?? undefined,
+    expiresAt: (data.expires_at as string | null) ?? undefined,
+    refreshTokenExpiresAt: (data.refresh_token_expires_at as string | null) ?? undefined,
   };
 }
 
