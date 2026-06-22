@@ -5,7 +5,7 @@ import { useShopify } from "@/lib/hooks/use-shopify";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { useClientsState } from "@/lib/hooks/use-clients-state";
 import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
-import type { ClosingAssignment } from "@/lib/types/closing";
+import type { ClosingAssignment, ClosingStatus } from "@/lib/types/closing";
 import type { Client } from "@/lib/types/client";
 
 /**
@@ -45,9 +45,35 @@ type LiveOrder = {
   name: string;
   createdAt: string;
   currencyCode?: string;
+  /** Statuts Shopify (mode live) — servent à refléter le bon statut Kamoo. */
+  fulfillmentStatus?: string;
+  financialStatus?: string;
+  cancelledAt?: string | null;
   customer: { name: string; phone: string; city: string; zone: string };
   items: { productName: string; quantity: number; unitPriceXof: number }[];
 };
+
+/**
+ * Mappe le statut Shopify (exécution + financier) vers le statut closing Kamoo.
+ * COD : FULFILLED = livré/encaissé. Annulé/remboursé = annulé. Sinon « nouvelle »
+ * (la commande entre dans le pipeline d'appels). Les commandes démo n'ont pas
+ * ces champs → « nouvelle » par défaut.
+ */
+function mapShopifyStatus(
+  fulfillment?: string | null,
+  financial?: string | null,
+  cancelledAt?: string | null,
+): ClosingStatus {
+  if (cancelledAt) return "annule";
+  const ful = (fulfillment ?? "").toUpperCase();
+  const fin = (financial ?? "").toUpperCase();
+  if (fin === "REFUNDED" || fin === "VOIDED") return "annule";
+  if (ful === "FULFILLED") return "livre";
+  if (["PARTIALLY_FULFILLED", "IN_PROGRESS", "ON_HOLD", "SCHEDULED"].includes(ful)) {
+    return "livraison_en_cours";
+  }
+  return "nouvelle";
+}
 
 export function useShopifySync() {
   const { getConnection, recordSync, liveMode } = useShopify();
@@ -83,18 +109,30 @@ export function useShopifySync() {
       }
       const fetched = orders.length;
 
-      // Dédup : ne pas réimporter une commande déjà présente (par shopifyOrderId)
-      const existingShopifyIds = new Set(
-        closing.all.map((a) => a.shopifyOrderId).filter(Boolean) as string[],
+      // Index des commandes déjà importées (par shopifyOrderId).
+      const existing = new Map(
+        closing.all
+          .filter((a) => a.shopifyOrderId)
+          .map((a) => [a.shopifyOrderId as string, a]),
       );
-      const fresh = orders.filter((o) => !existingShopifyIds.has(o.shopifyOrderId));
 
       let n = 0;
-      for (const o of fresh) {
-        const order = toClosingAssignment(o);
-        closing.addOrder(order);
-        upsertClient(o, clients);
-        n++;
+      for (const o of orders) {
+        const ex = existing.get(o.shopifyOrderId);
+        if (!ex) {
+          // Nouvelle commande → import avec le statut Shopify mappé.
+          closing.addOrder(toClosingAssignment(o));
+          upsertClient(o, clients);
+          n++;
+        } else {
+          // Déjà importée : on met à jour le statut UNIQUEMENT si la commande
+          // n'a pas encore été travaillée (encore « nouvelle ») et que Shopify
+          // a avancé. On ne réécrase JAMAIS le travail manuel de la closeuse.
+          const mapped = mapShopifyStatus(o.fulfillmentStatus, o.financialStatus, o.cancelledAt);
+          if (ex.status === "nouvelle" && mapped !== "nouvelle") {
+            closing.update(ex.id, { status: mapped });
+          }
+        }
       }
 
       // Devise détectée depuis les commandes réelles → stockée sur la connexion
@@ -157,7 +195,7 @@ function toClosingAssignment(o: LiveOrder): ClosingAssignment {
       zone: o.customer.zone,
       isReturning: false,
     },
-    status: "nouvelle",
+    status: mapShopifyStatus(o.fulfillmentStatus, o.financialStatus, o.cancelledAt),
     // createdAt = la VRAIE date de la commande Shopify (pas l'heure d'import)
     lastActivityAt: o.createdAt,
     createdAt: o.createdAt,

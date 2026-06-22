@@ -17,6 +17,12 @@ type NormalizedOrder = {
   name: string; // ex "#1042"
   createdAt: string;
   currencyCode: string; // devise réelle de la boutique (ex "USD")
+  /** Statut d'exécution Shopify : FULFILLED / UNFULFILLED / PARTIALLY_FULFILLED… */
+  fulfillmentStatus?: string;
+  /** Statut financier Shopify : PAID / PENDING / REFUNDED / VOIDED… */
+  financialStatus?: string;
+  /** Date d'annulation Shopify (si la commande est annulée). */
+  cancelledAt?: string | null;
   customer: { name: string; phone: string; city: string; zone: string };
   items: { productName: string; quantity: number; unitPriceXof: number }[];
 };
@@ -30,6 +36,9 @@ const ORDERS_QUERY = `
           name
           createdAt
           currencyCode
+          displayFulfillmentStatus
+          displayFinancialStatus
+          cancelledAt
           shippingAddress { city province address1 phone }
           customer { firstName lastName phone defaultAddress { city } }
           lineItems(first: 20) {
@@ -48,6 +57,9 @@ type GqlOrders = {
         name: string;
         createdAt: string;
         currencyCode?: string;
+        displayFulfillmentStatus?: string;
+        displayFinancialStatus?: string;
+        cancelledAt?: string | null;
         shippingAddress?: { city?: string; province?: string; address1?: string; phone?: string };
         customer?: { firstName?: string; lastName?: string; phone?: string; defaultAddress?: { city?: string } };
         lineItems: { edges: { node: { title: string; quantity: number; originalUnitPriceSet: { shopMoney: { amount: string; currencyCode?: string } } } }[] };
@@ -75,6 +87,9 @@ export async function POST(request: Request) {
       name: node.name,
       createdAt: node.createdAt,
       currencyCode: node.currencyCode ?? "XOF",
+      fulfillmentStatus: node.displayFulfillmentStatus,
+      financialStatus: node.displayFinancialStatus,
+      cancelledAt: node.cancelledAt ?? null,
       customer: {
         name: [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(" ") || "Client Shopify",
         phone: node.shippingAddress?.phone ?? node.customer?.phone ?? "",
