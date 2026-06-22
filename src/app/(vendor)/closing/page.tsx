@@ -138,7 +138,9 @@ export default function ClosingPage() {
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         case "recent":
         default:
-          return new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime();
+          // Tri sur la DATE DE COMMANDE (immuable) — l'ordre reste stable même
+          // après un changement de statut (qui, lui, bump `lastActivityAt`).
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
     return list;
