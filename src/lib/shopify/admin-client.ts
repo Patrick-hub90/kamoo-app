@@ -28,7 +28,19 @@ export class ShopifyApiError extends Error {
 export function classifyShopifyError(e: unknown): "donnees_client" | "scopes" | "autre" {
   if (!(e instanceof ShopifyApiError) || e.status !== 403) return "autre";
   const m = e.message.toLowerCase();
-  if (m.includes("protected") || m.includes("not approved to access")) return "donnees_client";
+  // Données client protégées : Shopify renvoie un 403 quand l'app n'a pas
+  // l'« approbation accès données client protégées » (lecture commandes /
+  // clients). Plusieurs formulations possibles selon l'endpoint.
+  if (
+    m.includes("protected") ||
+    m.includes("not approved to access") ||
+    m.includes("merchant approval") ||
+    m.includes("requires approval") ||
+    m.includes("customer data") ||
+    m.includes("read_orders")
+  ) {
+    return "donnees_client";
+  }
   return "scopes";
 }
 
@@ -54,7 +66,8 @@ export async function shopifyGraphQL<T = unknown>(
     },
   );
   if (!res.ok) {
-    throw new ShopifyApiError(`Shopify ${res.status}`, res.status, await res.text());
+    const body = await res.text();
+    throw new ShopifyApiError(`Shopify ${res.status}: ${body.slice(0, 400)}`, res.status, body);
   }
   const json = (await res.json()) as {
     data?: T;
@@ -95,7 +108,8 @@ export async function shopifyRest<T = unknown>(
     },
   );
   if (!res.ok) {
-    throw new ShopifyApiError(`Shopify ${res.status}`, res.status, await res.text());
+    const body = await res.text();
+    throw new ShopifyApiError(`Shopify ${res.status}: ${body.slice(0, 400)}`, res.status, body);
   }
   return (await res.json()) as T;
 }
