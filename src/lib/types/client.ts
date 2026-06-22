@@ -42,8 +42,10 @@ export type Client = {
   address?: string;
   /** Quartier / zone précise pour livraisons */
   zone?: string;
-  /** Pays — utile en multi-pays */
+  /** Marché de rattachement (pays d'opération Kamoo). */
   country: "SN" | "CI" | "CM";
+  /** Code pays ISO RÉEL du client (ex. "BJ") — issu de l'adresse Shopify. */
+  countryCode?: string;
 
   status: ClientStatus;
   acquisitionChannel: AcquisitionChannel;
@@ -137,6 +139,17 @@ export const CHANNEL_LABELS: Record<AcquisitionChannel, string> = {
   appel: "Appel direct",
   bouche_a_oreille: "Bouche à oreille",
 };
+
+/** Nom de pays lisible (fr) depuis un code ISO (ex. "BJ" → "Bénin").
+ *  Repli sur le code brut si l'API Intl n'est pas dispo. */
+export function countryLabel(code?: string): string | undefined {
+  if (!code) return undefined;
+  try {
+    return new Intl.DisplayNames(["fr"], { type: "region" }).of(code.toUpperCase()) ?? code;
+  } catch {
+    return code;
+  }
+}
 
 /** Initiales pour l'avatar (max 2 lettres) */
 export function getInitials(name: string): string {

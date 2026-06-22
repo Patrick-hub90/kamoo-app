@@ -45,6 +45,8 @@ export type ClosingClient = {
   zone: string;
   /** Adresse complète formatée (rue, ville, pays) — issue de Shopify */
   address?: string;
+  /** Code pays ISO réel (ex. "BJ", "SN") — issu de l'adresse Shopify */
+  countryCode?: string;
   /** Notes d'adresse (point de repère, étage, etc.) */
   deliveryNotes?: string;
   isReturning: boolean;

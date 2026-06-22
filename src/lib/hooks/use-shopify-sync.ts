@@ -55,7 +55,7 @@ type LiveOrder = {
   note?: string;
   tags?: string[];
   customAttributes?: Attribute[];
-  customer: { name: string; phone: string; email?: string; city: string; zone: string; address?: string };
+  customer: { name: string; phone: string; email?: string; city: string; zone: string; address?: string; countryCode?: string };
   items: { productName: string; quantity: number; unitPriceXof: number; customAttributes?: Attribute[] }[];
 };
 
@@ -196,6 +196,7 @@ function toClosingAssignment(o: LiveOrder): ClosingAssignment {
       city: o.customer.city,
       zone: o.customer.zone,
       address: o.customer.address,
+      countryCode: o.customer.countryCode,
       isReturning: false,
     },
     status: mapShopifyStatus(o.fulfillmentStatus, o.financialStatus, o.cancelledAt),
@@ -231,6 +232,7 @@ function upsertClient(o: LiveOrder, clients: ReturnType<typeof useClientsState>)
     zone: o.customer.zone,
     address: o.customer.address,
     country: "SN",
+    countryCode: o.customer.countryCode,
     status: "actif",
     acquisitionChannel: "boutique",
     firstOrderDate: today,

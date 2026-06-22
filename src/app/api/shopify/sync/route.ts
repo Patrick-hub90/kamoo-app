@@ -39,6 +39,8 @@ type NormalizedOrder = {
     zone: string;
     /** Adresse complète formatée (rue, ville, pays). */
     address?: string;
+    /** Code pays ISO réel (ex. "BJ", "SN") issu de l'adresse Shopify. */
+    countryCode?: string;
   };
   items: {
     productName: string;
@@ -65,7 +67,7 @@ const ORDERS_QUERY = `
           note
           tags
           customAttributes { key value }
-          shippingAddress { name address1 address2 city province zip country phone }
+          shippingAddress { name address1 address2 city province zip country countryCodeV2 phone }
           customer { firstName lastName phone email defaultAddress { city } }
           lineItems(first: 50) {
             edges {
@@ -107,6 +109,7 @@ type GqlOrders = {
           province?: string;
           zip?: string;
           country?: string;
+          countryCodeV2?: string;
           phone?: string;
         };
         customer?: { firstName?: string; lastName?: string; phone?: string; email?: string; defaultAddress?: { city?: string } };
@@ -165,6 +168,22 @@ function cleanAttrs(attrs?: GqlAttr[]): Attribute[] | undefined {
   return out.length ? out : undefined;
 }
 
+/** Cherche la valeur d'un attribut par clé (insensible à la casse). */
+function findAttr(attrs: GqlAttr[] | undefined, keys: string[]): string | undefined {
+  if (!attrs?.length) return undefined;
+  const wanted = new Set(keys.map((k) => k.toLowerCase()));
+  const hit = attrs.find(
+    (a) => a.key && wanted.has(a.key.toLowerCase().trim()) && a.value && a.value.trim(),
+  );
+  return hit?.value?.trim();
+}
+
+/** Nettoie un nom : retire la ponctuation/tirets parasites en début/fin. */
+function cleanName(s?: string): string | undefined {
+  const t = (s ?? "").replace(/^[\s\-–—.,]+/g, "").replace(/[\s\-–—.,]+$/g, "").trim();
+  return t || undefined;
+}
+
 export async function POST(request: Request) {
   if (!isLiveMode()) {
     return Response.json({ error: "mode_demo", orders: [] }, { status: 400 });
@@ -196,15 +215,29 @@ export async function POST(request: Request) {
         tags: node.tags && node.tags.length ? node.tags : undefined,
         customAttributes: cleanAttrs(node.customAttributes),
         customer: {
+          // Nom : on privilégie le champ « Name » du formulaire COD, sinon le
+          // nom de l'adresse (nettoyé), sinon prénom + nom du client Shopify.
           name:
-            addr?.name ||
-            [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(" ") ||
+            findAttr(node.customAttributes, [
+              "name",
+              "nom",
+              "full name",
+              "full_name",
+              "fullname",
+              "nom complet",
+              "customer name",
+              "client name",
+              "nom du client",
+            ]) ??
+            cleanName(addr?.name) ??
+            cleanName([node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(" ")) ??
             "Client Shopify",
           phone: addr?.phone ?? node.customer?.phone ?? "",
           email: node.email ?? node.customer?.email ?? undefined,
           city: addr?.city ?? node.customer?.defaultAddress?.city ?? "—",
           zone: addr?.address1 ?? addr?.city ?? "—",
           address: fullAddress || undefined,
+          countryCode: addr?.countryCodeV2 ?? undefined,
         },
         // Montant fidèle (on NE round PAS : USD/EUR ont des décimales).
         items: node.lineItems.edges.map((e) => ({

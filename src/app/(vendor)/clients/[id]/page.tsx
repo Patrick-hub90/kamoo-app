@@ -19,6 +19,7 @@ import { useClientsState } from "@/lib/hooks/use-clients-state";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import {
   CHANNEL_LABELS,
+  countryLabel,
   daysSinceLastOrder,
   deliveryRate,
   getClientSegment,
@@ -283,7 +284,7 @@ export default function ClientDetailPage({ params }: PageProps) {
                             )}
                           </>
                         )}
-                        <div className="text-[11px] text-ink-400">{COUNTRY_NAME[client.country]}</div>
+                        <div className="text-[11px] text-ink-400">{countryLabel(client.countryCode) ?? COUNTRY_NAME[client.country]}</div>
                       </div>
                     </Row>
                   </div>
