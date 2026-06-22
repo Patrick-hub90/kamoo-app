@@ -6,7 +6,9 @@ import {
   AlertTriangle,
   ArrowLeft,
   Bike,
+  Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   MessageCircle,
@@ -118,6 +120,76 @@ function StatusPill({ label, bg, text, dot }: Pill) {
   );
 }
 
+/* ─── Sélecteur de statut (changement manuel → synchro Shopify réversible) ─ */
+
+function StatusSelect({
+  a,
+  closing,
+}: {
+  a: ClosingAssignment;
+  closing: ReturnType<typeof useClosingState>;
+}) {
+  const [open, setOpen] = useState(false);
+  const STATUSES: ClosingStatus[] = [
+    "nouvelle",
+    "rappele",
+    "livraison_en_cours",
+    "livre",
+    "injoignable",
+    "annule",
+  ];
+  const current = statusPill(a.status);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 text-[13px] font-medium text-ink-900 transition hover:bg-paper-2"
+      >
+        <span className={cn("h-1.5 w-1.5 rounded-full", current.dot)} />
+        Statut · {current.label}
+        <ChevronDown className="h-3.5 w-3.5 text-ink-400" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-[calc(100%+4px)] z-20 w-64 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-kamoo-lg)]">
+            <div className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-400">
+              Changer le statut
+            </div>
+            {STATUSES.map((s) => {
+              const p = statusPill(s);
+              const active = a.status === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => {
+                    if (!active) closing.update(a.id, { status: s });
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[12.5px] transition hover:bg-paper-2",
+                    active ? "font-medium text-ink-900" : "text-ink-700",
+                  )}
+                >
+                  <span className={cn("h-1.5 w-1.5 rounded-full", p.dot)} />
+                  <span className="flex-1">{p.label}</span>
+                  {active && <Check className="h-3.5 w-3.5 text-kamoo-blue-700" />}
+                </button>
+              );
+            })}
+            <div className="border-t border-line px-2.5 pb-1 pt-1.5 text-[10.5px] leading-snug text-ink-400">
+              « Livré » honore la commande sur Shopify ; un autre statut la
+              dé-honore (réversible).
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── Entête commande ────────────────────────────────────────────────── */
 
 function OrderHeader({
@@ -155,6 +227,7 @@ function OrderHeader({
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
+        {closing && <StatusSelect a={a} closing={closing} />}
         {a.status === "livraison_en_cours" && a.delivery && closing && (
           <button
             onClick={() => closing.markDelivered(a.id)}
