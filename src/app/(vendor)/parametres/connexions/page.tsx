@@ -107,7 +107,11 @@ function ConnexionsInner() {
                   (motif « App functionality ») + champs Nom, Téléphone, Adresse
                 </li>
                 <li>
-                  Enregistre, puis reviens ici et clique{" "}
+                  Enregistre, <b className="font-medium">puis publie la nouvelle version</b> (bouton/bannière
+                  « Release » — indispensable pour une app distribuée, sinon les scopes restent inactifs).
+                </li>
+                <li>
+                  Reviens ici et clique{" "}
                   <b className="font-medium">« Mettre à jour les autorisations »</b> sur la boutique.
                 </li>
               </ol>
@@ -389,7 +393,7 @@ function ShopifyRow({ market }: { market: Market }) {
               <b className="font-medium">partners.shopify.com</b> → ton app → <b className="font-medium">Configuration</b> → coche les
               scopes{" "}
               <span className="font-mono-kamoo text-[11px]">read_orders, write_orders, read_products, write_products, read_customers, write_merchant_managed_fulfillment_orders</span>{" "}
-              → Save → reviens ici → <b className="font-medium">« Mettre à jour les autorisations »</b>.
+              → Save → <b className="font-medium">publie la version (Release)</b> → reviens ici → <b className="font-medium">« Mettre à jour les autorisations »</b>.
             </div>
           </div>
         )}
