@@ -125,12 +125,42 @@ type GqlOrders = {
   };
 };
 
+/** Clés techniques injectées par les apps/checkout, sans intérêt métier. */
+const NOISE_KEYS = new Set([
+  "shopify-cart-token",
+  "cart-token",
+  "cart_token",
+  "full_url",
+  "fullurl",
+  "url",
+  "ip address",
+  "ip_address",
+  "ipaddress",
+  "user-agent",
+  "user_agent",
+  "useragent",
+  "referrer",
+  "referer",
+  "landing_page",
+  "landing-page",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+]);
+
 /** Nettoie une liste d'attributs : valeurs non vides, on retire les clés
- *  techniques masquées (convention Shopify : préfixe "_"). */
+ *  techniques masquées (préfixe "_") et les métadonnées sans intérêt métier. */
 function cleanAttrs(attrs?: GqlAttr[]): Attribute[] | undefined {
   if (!attrs?.length) return undefined;
   const out = attrs
-    .filter((a) => a.key && !a.key.startsWith("_") && a.value && a.value.trim() !== "")
+    .filter(
+      (a) =>
+        a.key &&
+        !a.key.startsWith("_") &&
+        !NOISE_KEYS.has(a.key.toLowerCase().trim()) &&
+        a.value &&
+        a.value.trim() !== "",
+    )
     .map((a) => ({ key: a.key as string, value: a.value as string }));
   return out.length ? out : undefined;
 }
