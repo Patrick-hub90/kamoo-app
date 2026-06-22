@@ -152,6 +152,24 @@ export function useClosingState() {
     closingStore.set((s) => ({ ...s, extraOrders: [order, ...s.extraOrders] }));
   }, []);
 
+  /**
+   * Insère OU met à jour (par `shopifyOrderId`) une commande importée. Utilisé
+   * par la sync pour rafraîchir les faits Shopify (statut mappé, note, champs
+   * du formulaire, client, articles) à chaque passage — les overrides (travail
+   * manuel de la closeuse) restant appliqués par-dessus via `applyOverride`.
+   */
+  const upsertOrder = useCallback((order: ClosingAssignment) => {
+    closingStore.set((s) => {
+      const idx = order.shopifyOrderId
+        ? s.extraOrders.findIndex((o) => o.shopifyOrderId === order.shopifyOrderId)
+        : s.extraOrders.findIndex((o) => o.id === order.id);
+      if (idx === -1) return { ...s, extraOrders: [order, ...s.extraOrders] };
+      const next = [...s.extraOrders];
+      next[idx] = order;
+      return { ...s, extraOrders: next };
+    });
+  }, []);
+
   const getById = useCallback(
     (id: string) => all.find((a) => a.id === id),
     [all],
@@ -214,6 +232,7 @@ export function useClosingState() {
     all,
     getById,
     addOrder,
+    upsertOrder,
     update,
     confirm,
     postpone,

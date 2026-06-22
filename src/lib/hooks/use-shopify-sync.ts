@@ -115,29 +115,23 @@ export function useShopifySync() {
       }
       const fetched = orders.length;
 
-      // Index des commandes déjà importées (par shopifyOrderId).
-      const existing = new Map(
-        closing.all
-          .filter((a) => a.shopifyOrderId)
-          .map((a) => [a.shopifyOrderId as string, a]),
+      // Commandes déjà présentes (par shopifyOrderId) → pour distinguer
+      // nouvelles vs mises à jour, et n'upserter le client que pour les nouvelles.
+      const existing = new Set(
+        closing.all.map((a) => a.shopifyOrderId).filter(Boolean) as string[],
       );
 
       let n = 0;
       for (const o of orders) {
-        const ex = existing.get(o.shopifyOrderId);
-        if (!ex) {
-          // Nouvelle commande → import avec le statut Shopify mappé.
-          closing.addOrder(toClosingAssignment(o));
+        const isNew = !existing.has(o.shopifyOrderId);
+        // Upsert : on (ré)injecte les faits Shopify (statut mappé, note, champs
+        // du formulaire, client, articles). Les overrides — le travail manuel
+        // de la closeuse (statut confirmé, commentaire, livreur…) — restent
+        // appliqués par-dessus, donc rien n'est écrasé.
+        closing.upsertOrder(toClosingAssignment(o));
+        if (isNew) {
           upsertClient(o, clients);
           n++;
-        } else {
-          // Déjà importée : on met à jour le statut UNIQUEMENT si la commande
-          // n'a pas encore été travaillée (encore « nouvelle ») et que Shopify
-          // a avancé. On ne réécrase JAMAIS le travail manuel de la closeuse.
-          const mapped = mapShopifyStatus(o.fulfillmentStatus, o.financialStatus, o.cancelledAt);
-          if (ex.status === "nouvelle" && mapped !== "nouvelle") {
-            closing.update(ex.id, { status: mapped });
-          }
         }
       }
 
