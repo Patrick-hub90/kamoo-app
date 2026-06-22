@@ -87,6 +87,37 @@ const closingStore = createSyncedStore<ClosingSyncedState>("closing", {
   overrides: {},
 });
 
+/** Retrouve une commande (base, sans override) par id. */
+function findOrder(id: string): ClosingAssignment | undefined {
+  return [...closingStore.get().extraOrders, ...MOCK_CLOSING_ASSIGNMENTS].find((x) => x.id === id);
+}
+
+/**
+ * Synchronise l'état « honoré » d'une commande vers Shopify, RÉVERSIBLE :
+ *  - `fulfilled = true`  (statut Kamoo « Livré ») → fulfillment créé (FULFILLED)
+ *  - `fulfilled = false` (tout autre statut)      → fulfillment annulé (UNFULFILLED)
+ *
+ * Ne s'applique qu'aux commandes issues d'une boutique RÉELLE connectée.
+ * Best-effort : un échec réseau/API ne bloque jamais le flux COD côté Kamoo.
+ */
+function pushShopifyFulfillment(id: string, fulfilled: boolean) {
+  const order = findOrder(id);
+  if (!order?.shopifyOrderId || order.shopifyOrderId.includes("/demo-")) return;
+  const live = Object.values(getShopifyConnectionsSnapshot()).find(
+    (c) => c.isConnected && c.mode === "live",
+  );
+  if (!live) return;
+  fetch("/api/shopify/fulfill", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      shop: live.domain,
+      shopifyOrderId: order.shopifyOrderId,
+      fulfilled,
+    }),
+  }).catch(() => {});
+}
+
 export function useClosingState() {
   const { extraOrders, overrides } = closingStore.use();
 
@@ -110,6 +141,11 @@ export function useClosingState() {
         },
       },
     }));
+    // Synchro Shopify (réversible) : tout changement de statut se répercute.
+    // « Livré » → honoré (FULFILLED) ; tout autre statut → dé-honoré.
+    if (patch.status !== undefined) {
+      pushShopifyFulfillment(id, patch.status === "livre");
+    }
   }, []);
 
   const addOrder = useCallback((order: ClosingAssignment) => {
@@ -159,30 +195,13 @@ export function useClosingState() {
   );
 
   const markDelivered = useCallback(
-    (id: string) => {
+    // Le push Shopify (fulfillment) est géré par `update` via le statut « livre ».
+    (id: string) =>
       update(id, {
         status: "livre",
         deliveryProgress: "effectue",
         deliveredAt: new Date().toISOString(),
-      });
-      /* Push de statut Shopify (automatique) : si la commande vient de la
-       * boutique et qu'une connexion RÉELLE existe, on la marque honorée
-       * côté Shopify. Best-effort : un échec ne bloque jamais le flux COD. */
-      const a = [...closingStore.get().extraOrders, ...MOCK_CLOSING_ASSIGNMENTS].find(
-        (x) => x.id === id,
-      );
-      if (a?.shopifyOrderId && !a.shopifyOrderId.includes("/demo-")) {
-        const conns = Object.values(getShopifyConnectionsSnapshot());
-        const live = conns.find((c) => c.isConnected && c.mode === "live");
-        if (live) {
-          fetch("/api/shopify/fulfill", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ shop: live.domain, shopifyOrderId: a.shopifyOrderId }),
-          }).catch(() => {});
-        }
-      }
-    },
+      }),
     [update],
   );
 
