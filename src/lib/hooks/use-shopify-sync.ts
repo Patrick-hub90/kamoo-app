@@ -40,6 +40,8 @@ const AVATARS = [
   "linear-gradient(135deg,#EC4899,#DB2777)",
 ];
 
+type Attribute = { key: string; value: string };
+
 type LiveOrder = {
   shopifyOrderId: string;
   name: string;
@@ -49,8 +51,12 @@ type LiveOrder = {
   fulfillmentStatus?: string;
   financialStatus?: string;
   cancelledAt?: string | null;
-  customer: { name: string; phone: string; city: string; zone: string };
-  items: { productName: string; quantity: number; unitPriceXof: number }[];
+  /** Note de commande + champs personnalisés (formulaire COD) + tags. */
+  note?: string;
+  tags?: string[];
+  customAttributes?: Attribute[];
+  customer: { name: string; phone: string; email?: string; city: string; zone: string; address?: string };
+  items: { productName: string; quantity: number; unitPriceXof: number; customAttributes?: Attribute[] }[];
 };
 
 /**
@@ -185,14 +191,17 @@ function toClosingAssignment(o: LiveOrder): ClosingAssignment {
         productBg: p?.bg ?? "linear-gradient(135deg,#E2E8F0,#94A3B8)",
         quantity: it.quantity,
         unitPriceXof: it.unitPriceXof,
+        customAttributes: it.customAttributes,
       };
     }),
     client: {
       id: clientIdFor(o.customer.name),
       name: o.customer.name,
       phone: o.customer.phone,
+      email: o.customer.email,
       city: o.customer.city,
       zone: o.customer.zone,
+      address: o.customer.address,
       isReturning: false,
     },
     status: mapShopifyStatus(o.fulfillmentStatus, o.financialStatus, o.cancelledAt),
@@ -201,6 +210,9 @@ function toClosingAssignment(o: LiveOrder): ClosingAssignment {
     createdAt: o.createdAt,
     callAttempts: 0,
     source: "Shopify",
+    /** Note + champs personnalisés du formulaire COD (toutes les infos Shopify). */
+    note: o.note,
+    customAttributes: o.customAttributes,
     /** Lien vers la commande Shopify (pour le push de statut + dédup) */
     shopifyOrderId: o.shopifyOrderId,
     shopifyName: o.name,
@@ -220,8 +232,10 @@ function upsertClient(o: LiveOrder, clients: ReturnType<typeof useClientsState>)
     id,
     name: o.customer.name,
     phone: o.customer.phone,
+    email: o.customer.email,
     city: o.customer.city,
     zone: o.customer.zone,
+    address: o.customer.address,
     country: "SN",
     status: "actif",
     acquisitionChannel: "boutique",

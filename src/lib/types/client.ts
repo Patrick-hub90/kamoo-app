@@ -33,9 +33,13 @@ export type Client = {
   id: string;
   name: string;
   phone: string;
+  /** Email (souvent renseigné par le formulaire COD / Shopify) */
+  email?: string;
   /** Si différent du téléphone de commande (ex: ligne pro) */
   whatsapp?: string;
   city: string;
+  /** Adresse complète formatée (rue, ville, pays) — issue de Shopify */
+  address?: string;
   /** Quartier / zone précise pour livraisons */
   zone?: string;
   /** Pays — utile en multi-pays */

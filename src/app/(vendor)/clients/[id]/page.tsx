@@ -6,6 +6,7 @@ import { use, useState } from "react";
 import {
   Calendar,
   ChevronRight,
+  Mail,
   MapPin,
   MessageCircle,
   Package,
@@ -262,10 +263,26 @@ export default function ClientDetailPage({ params }: PageProps) {
                         <span className="font-mono-kamoo">{client.whatsapp}</span>
                       </Row>
                     )}
+                    {client.email && (
+                      <Row label="Email" icon={<Mail className="h-3.5 w-3.5" />}>
+                        <span className="flex items-center gap-1.5">
+                          <span className="break-all">{client.email}</span>
+                          <CopyButton value={client.email} />
+                        </span>
+                      </Row>
+                    )}
                     <Row label="Adresse" icon={<MapPin className="h-3.5 w-3.5" />}>
                       <div className="text-right">
-                        <div className="text-ink-900">{client.city}</div>
-                        {client.zone && <div className="text-[11.5px] text-ink-500">{client.zone}</div>}
+                        {client.address ? (
+                          <div className="text-ink-900">{client.address}</div>
+                        ) : (
+                          <>
+                            <div className="text-ink-900">{client.city}</div>
+                            {client.zone && (
+                              <div className="text-[11.5px] text-ink-500">{client.zone}</div>
+                            )}
+                          </>
+                        )}
                         <div className="text-[11px] text-ink-400">{COUNTRY_NAME[client.country]}</div>
                       </div>
                     </Row>

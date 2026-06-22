@@ -389,6 +389,14 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
 
   const isLivreurAlert = a.delivery?.progress === "alerte";
 
+  // Toutes les infos du formulaire COD Shopify : attributs de commande +
+  // propriétés de ligne + note. Affichées telles quelles dans Kamoo.
+  const lineItemAttrs = a.items.flatMap((it) =>
+    (it.customAttributes ?? []).map((attr) => ({ ...attr, product: it.productName })),
+  );
+  const hasFormInfo =
+    (a.customAttributes?.length ?? 0) > 0 || !!a.note || lineItemAttrs.length > 0;
+
   const isOpenStatus = ["nouvelle", "rappele", "injoignable"].includes(a.status);
   const isConfirmed = a.status === "livraison_en_cours";
   const isClosed = a.status === "livre" || a.status === "annule";
@@ -513,6 +521,23 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
             <div className={cn("gap-5", fullWidth ? "flex flex-col" : "grid grid-cols-1 items-start lg:grid-cols-[1.55fr_1fr]")}>
               {/* ── COLONNE GAUCHE : Articles + Activité ── */}
               <div className="flex flex-col gap-5">
+                {hasFormInfo && (
+                  <Card title="Informations du formulaire" icon={<MessageSquare className="h-3.5 w-3.5" />}>
+                    <div className="flex flex-col gap-2.5">
+                      {a.customAttributes?.map((attr, i) => (
+                        <AttrRow key={`o-${i}`} label={attr.key} value={attr.value} />
+                      ))}
+                      {lineItemAttrs.map((attr, i) => (
+                        <AttrRow key={`l-${i}`} label={`${attr.product} · ${attr.key}`} value={attr.value} />
+                      ))}
+                      {a.note && (
+                        <div className="rounded-lg bg-paper-2/60 px-3 py-2 text-[12.5px] italic leading-relaxed text-ink-700">
+                          « {a.note} »
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
                 <Card title="Articles commandés">
                   <div className="flex flex-col gap-2">
                     {a.items.map((item, idx) => {
@@ -679,8 +704,13 @@ export function OrderDetailView({ a, backHref, fullWidth = false, closing }: Pro
                         <span className="text-ink-400">Non renseigné</span>
                       )}
                     </Field>
+                    {a.client.email && (
+                      <Field label="Email">
+                        <span className="break-all">{a.client.email}</span>
+                      </Field>
+                    )}
                     <Field label="Adresse">
-                      {a.client.zone}, {a.client.city}
+                      {a.client.address ?? `${a.client.zone}, ${a.client.city}`}
                     </Field>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -851,6 +881,17 @@ function FinRow({
       >
         {value}
       </span>
+    </div>
+  );
+}
+
+function AttrRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-line/60 pb-2 last:border-0 last:pb-0">
+      <span className="text-[11.5px] font-medium uppercase tracking-[0.04em] text-ink-400">
+        {label}
+      </span>
+      <span className="text-right text-[13.5px] text-ink-900">{value}</span>
     </div>
   );
 }

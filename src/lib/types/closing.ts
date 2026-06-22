@@ -18,6 +18,9 @@ export type CancellationReason =
   | "negotiation_failed"
   | "other";
 
+/** Champ personnalisé clé/valeur (issu d'un formulaire COD Shopify, etc.). */
+export type CustomAttribute = { key: string; value: string };
+
 export type LineItem = {
   productId?: string; // ref vers catalogue, optionnel pour les "manuelles"
   productName: string;
@@ -25,6 +28,8 @@ export type LineItem = {
   productBg: string;
   quantity: number;
   unitPriceXof: number;
+  /** Propriétés de ligne (line item properties du formulaire Shopify). */
+  customAttributes?: CustomAttribute[];
 };
 
 export type ClosingClient = {
@@ -32,10 +37,14 @@ export type ClosingClient = {
   name: string;
   phone: string;
   whatsapp?: string;
+  /** Email (souvent renseigné par le formulaire COD / Shopify) */
+  email?: string;
   /** Ville (Dakar, Abidjan, Douala, …) */
   city: string;
   /** Quartier / zone de livraison */
   zone: string;
+  /** Adresse complète formatée (rue, ville, pays) — issue de Shopify */
+  address?: string;
   /** Notes d'adresse (point de repère, étage, etc.) */
   deliveryNotes?: string;
   isReturning: boolean;
@@ -113,6 +122,10 @@ export type ClosingAssignment = {
   cancellationReason?: CancellationReason;
   /** Commentaire libre laissé par la closeuse */
   comment?: string;
+  /** Note de commande Shopify (texte libre côté boutique). */
+  note?: string;
+  /** Champs personnalisés de la commande (formulaire COD / note_attributes). */
+  customAttributes?: CustomAttribute[];
   /** Livreur assigné (optionnel — sera rempli quand module Livraisons sera là) */
   delivery?: AssignedDelivery;
   /** Date dernière activité */

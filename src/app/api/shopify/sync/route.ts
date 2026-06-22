@@ -5,12 +5,14 @@ import { shopifyGraphQL, ShopifyApiError, classifyShopifyError } from "@/lib/sho
  * Pull RÉEL des commandes récentes d'une boutique (mode live).
  * POST { shop } → { orders: NormalizedOrder[] }
  *
- * On privilégie le polling à l'abonnement webhook : sur localhost, Shopify ne
- * peut pas joindre la machine. En production (URL publique), on basculera sur
- * les webhooks orders/create + customers/create.
+ * On rapatrie TOUTES les infos utiles de la commande, y compris les champs
+ * personnalisés des apps de formulaire COD (note_attributes = customAttributes),
+ * la note, l'email, l'adresse complète et les propriétés de ligne.
  *
  * Le mode DÉMO ne passe pas par cette route (généré côté client).
  */
+
+type Attribute = { key: string; value: string };
 
 type NormalizedOrder = {
   shopifyOrderId: string;
@@ -23,8 +25,28 @@ type NormalizedOrder = {
   financialStatus?: string;
   /** Date d'annulation Shopify (si la commande est annulée). */
   cancelledAt?: string | null;
-  customer: { name: string; phone: string; city: string; zone: string };
-  items: { productName: string; quantity: number; unitPriceXof: number }[];
+  /** Note de commande Shopify. */
+  note?: string;
+  /** Tags Shopify. */
+  tags?: string[];
+  /** Champs personnalisés (formulaire COD = note_attributes / customAttributes). */
+  customAttributes?: Attribute[];
+  customer: {
+    name: string;
+    phone: string;
+    email?: string;
+    city: string;
+    zone: string;
+    /** Adresse complète formatée (rue, ville, pays). */
+    address?: string;
+  };
+  items: {
+    productName: string;
+    quantity: number;
+    unitPriceXof: number;
+    /** Propriétés de ligne (line item properties du formulaire). */
+    customAttributes?: Attribute[];
+  }[];
 };
 
 const ORDERS_QUERY = `
@@ -39,15 +61,28 @@ const ORDERS_QUERY = `
           displayFulfillmentStatus
           displayFinancialStatus
           cancelledAt
-          shippingAddress { city province address1 phone }
-          customer { firstName lastName phone defaultAddress { city } }
-          lineItems(first: 20) {
-            edges { node { title quantity originalUnitPriceSet { shopMoney { amount currencyCode } } } }
+          email
+          note
+          tags
+          customAttributes { key value }
+          shippingAddress { name address1 address2 city province zip country phone }
+          customer { firstName lastName phone email defaultAddress { city } }
+          lineItems(first: 50) {
+            edges {
+              node {
+                title
+                quantity
+                customAttributes { key value }
+                originalUnitPriceSet { shopMoney { amount currencyCode } }
+              }
+            }
           }
         }
       }
     }
   }`;
+
+type GqlAttr = { key?: string; value?: string };
 
 type GqlOrders = {
   orders: {
@@ -60,13 +95,45 @@ type GqlOrders = {
         displayFulfillmentStatus?: string;
         displayFinancialStatus?: string;
         cancelledAt?: string | null;
-        shippingAddress?: { city?: string; province?: string; address1?: string; phone?: string };
-        customer?: { firstName?: string; lastName?: string; phone?: string; defaultAddress?: { city?: string } };
-        lineItems: { edges: { node: { title: string; quantity: number; originalUnitPriceSet: { shopMoney: { amount: string; currencyCode?: string } } } }[] };
+        email?: string | null;
+        note?: string | null;
+        tags?: string[];
+        customAttributes?: GqlAttr[];
+        shippingAddress?: {
+          name?: string;
+          address1?: string;
+          address2?: string;
+          city?: string;
+          province?: string;
+          zip?: string;
+          country?: string;
+          phone?: string;
+        };
+        customer?: { firstName?: string; lastName?: string; phone?: string; email?: string; defaultAddress?: { city?: string } };
+        lineItems: {
+          edges: {
+            node: {
+              title: string;
+              quantity: number;
+              customAttributes?: GqlAttr[];
+              originalUnitPriceSet: { shopMoney: { amount: string; currencyCode?: string } };
+            };
+          }[];
+        };
       };
     }[];
   };
 };
+
+/** Nettoie une liste d'attributs : valeurs non vides, on retire les clés
+ *  techniques masquées (convention Shopify : préfixe "_"). */
+function cleanAttrs(attrs?: GqlAttr[]): Attribute[] | undefined {
+  if (!attrs?.length) return undefined;
+  const out = attrs
+    .filter((a) => a.key && !a.key.startsWith("_") && a.value && a.value.trim() !== "")
+    .map((a) => ({ key: a.key as string, value: a.value as string }));
+  return out.length ? out : undefined;
+}
 
 export async function POST(request: Request) {
   if (!isLiveMode()) {
@@ -82,27 +149,42 @@ export async function POST(request: Request) {
 
   try {
     const data = await shopifyGraphQL<GqlOrders>(shop, ORDERS_QUERY);
-    const orders: NormalizedOrder[] = data.orders.edges.map(({ node }) => ({
-      shopifyOrderId: node.id,
-      name: node.name,
-      createdAt: node.createdAt,
-      currencyCode: node.currencyCode ?? "XOF",
-      fulfillmentStatus: node.displayFulfillmentStatus,
-      financialStatus: node.displayFinancialStatus,
-      cancelledAt: node.cancelledAt ?? null,
-      customer: {
-        name: [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(" ") || "Client Shopify",
-        phone: node.shippingAddress?.phone ?? node.customer?.phone ?? "",
-        city: node.shippingAddress?.city ?? node.customer?.defaultAddress?.city ?? "—",
-        zone: node.shippingAddress?.address1 ?? node.shippingAddress?.city ?? "—",
-      },
-      // Montant fidèle (on NE round PAS : USD/EUR ont des décimales).
-      items: node.lineItems.edges.map((e) => ({
-        productName: e.node.title,
-        quantity: e.node.quantity,
-        unitPriceXof: parseFloat(e.node.originalUnitPriceSet.shopMoney.amount) || 0,
-      })),
-    }));
+    const orders: NormalizedOrder[] = data.orders.edges.map(({ node }) => {
+      const addr = node.shippingAddress;
+      const fullAddress = [addr?.address1, addr?.address2, addr?.city, addr?.zip, addr?.country]
+        .filter(Boolean)
+        .join(", ");
+      return {
+        shopifyOrderId: node.id,
+        name: node.name,
+        createdAt: node.createdAt,
+        currencyCode: node.currencyCode ?? "XOF",
+        fulfillmentStatus: node.displayFulfillmentStatus,
+        financialStatus: node.displayFinancialStatus,
+        cancelledAt: node.cancelledAt ?? null,
+        note: node.note?.trim() || undefined,
+        tags: node.tags && node.tags.length ? node.tags : undefined,
+        customAttributes: cleanAttrs(node.customAttributes),
+        customer: {
+          name:
+            addr?.name ||
+            [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(" ") ||
+            "Client Shopify",
+          phone: addr?.phone ?? node.customer?.phone ?? "",
+          email: node.email ?? node.customer?.email ?? undefined,
+          city: addr?.city ?? node.customer?.defaultAddress?.city ?? "—",
+          zone: addr?.address1 ?? addr?.city ?? "—",
+          address: fullAddress || undefined,
+        },
+        // Montant fidèle (on NE round PAS : USD/EUR ont des décimales).
+        items: node.lineItems.edges.map((e) => ({
+          productName: e.node.title,
+          quantity: e.node.quantity,
+          unitPriceXof: parseFloat(e.node.originalUnitPriceSet.shopMoney.amount) || 0,
+          customAttributes: cleanAttrs(e.node.customAttributes),
+        })),
+      };
+    });
     return Response.json({ orders, fetched: orders.length });
   } catch (e) {
     const cls = classifyShopifyError(e);
