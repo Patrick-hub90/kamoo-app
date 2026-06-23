@@ -154,19 +154,19 @@ function DashboardPageInner() {
       const t = new Date(iso).getTime();
       return bounds.findIndex((b) => t >= b.start && t < b.end);
     };
-    // Encaissements = mouvements finance (fixtures dérivées + historique 12 mois)
-    for (const m of MOCK_FINANCE_MOVEMENTS) {
-      if (m.type !== "vente_encaissee") continue;
-      const idx = findBucket(m.date);
-      if (idx >= 0) buckets[idx].in += m.amountXof;
+    // Encaissements = commandes RÉELLEMENT livrées (cash COD), par date de livraison.
+    for (const a of liveOrders) {
+      if (a.status !== "livre") continue;
+      const idx = findBucket(a.delivery?.deliveredAt ?? a.createdAt);
+      if (idx >= 0) buckets[idx].in += orderTotalXof(a);
     }
     return buckets;
-  }, [bucketing, chartEndDate]);
+  }, [bucketing, chartEndDate, liveOrders]);
 
   /* ─── Compute principal ─── */
   const computed = useMemo(
-    () => computeDashboardData({ normalizedFilter, assignments: liveOrders, currency }),
-    [normalizedFilter, liveOrders, currency],
+    () => computeDashboardData({ normalizedFilter, assignments: liveOrders, currency, now: today }),
+    [normalizedFilter, liveOrders, currency, today],
   );
   void currentMarket.country.code;
 
@@ -204,7 +204,7 @@ function DashboardPageInner() {
   const funnel: FunnelData = computed.funnel;
 
   const greeting = getGreeting();
-  const todaySubtitle = formatTodayLabel(MOCK_TODAY);
+  const todaySubtitle = formatTodayLabel(today);
 
   return (
     <div className="min-h-full bg-paper">
@@ -270,7 +270,7 @@ function getGreeting(): string {
 
 function formatLastActivity(iso: string): string {
   const t = new Date(iso).getTime();
-  const now = MOCK_TODAY.getTime();
+  const now = Date.now();
   const diffMin = Math.max(0, Math.round((now - t) / 60_000));
   if (diffMin < 1) return "à l'instant";
   if (diffMin < 60) return `${diffMin} min`;
@@ -338,10 +338,12 @@ function computeDashboardData(args: {
   assignments: ClosingAssignment[];
   /** Devise d affichage du marche */
   currency: string;
+  /** Date réelle (ancre de période). */
+  now: Date;
 }): DashboardData {
-  const { normalizedFilter, assignments, currency } = args;
+  const { normalizedFilter, assignments, currency, now } = args;
 
-  const range = dateFilterRange(normalizedFilter, MOCK_TODAY);
+  const range = dateFilterRange(normalizedFilter, now);
   const inRange = (iso: string | undefined): boolean => {
     if (!iso) return false;
     if (!range) return true;
@@ -349,24 +351,23 @@ function computeDashboardData(args: {
     return t >= range.fromMs && t < range.toMs;
   };
 
-  /* KPIs */
-  const caPeriod = MOCK_FINANCE_MOVEMENTS.filter(
-    (m) => m.type === "vente_encaissee" && inRange(m.date),
-  ).reduce((s, m) => s + m.amountXof, 0);
+  /* CA encaissé + marge = commandes RÉELLEMENT livrées dans la période (cash
+     COD). Marge = CA − coût marchandise (COGS) connu du catalogue. */
+  const cogsOf = (a: ClosingAssignment): number =>
+    a.items.reduce(
+      (s, it) => s + (MOCK_PRODUITS.find((p) => p.id === it.productId)?.costPriceXof ?? 0) * it.quantity,
+      0,
+    );
+  const livreDate = (a: ClosingAssignment): string => a.delivery?.deliveredAt ?? a.createdAt;
+  const livreInPeriod = assignments.filter(
+    (a) => a.status === "livre" && inRange(livreDate(a)),
+  );
+  const caPeriod = livreInPeriod.reduce((s, a) => s + orderTotalXof(a), 0);
+  const nbLivre = livreInPeriod.length;
+  const margeNette = caPeriod - livreInPeriod.reduce((s, a) => s + cogsOf(a), 0);
 
-  const movementsPeriod = MOCK_FINANCE_MOVEMENTS.filter((m) => inRange(m.date));
-  const sumByType = (type: string) =>
-    movementsPeriod.filter((m) => m.type === type).reduce((s, m) => s + m.amountXof, 0);
-
-  const coutMarch = sumByType("cout_marchandise");
-  const commCloseuse = sumByType("commission_closeuse");
-  const fraisLivreur = sumByType("frais_livreur");
-  const fraisTransit = sumByType("frais_transit");
-  const coutPub = sumByType("depense_pub");
-
-  const margeBrute = caPeriod - coutMarch - commCloseuse - fraisLivreur - fraisTransit;
-  const margeNette = margeBrute - coutPub;
-
+  /* À encaisser / à régler (versements partenaires) — restent issus du module
+     finance (démo) tant que le règlement partenaires réel n'est pas branché. */
   const aRecevoirMvts = MOCK_FINANCE_MOVEMENTS.filter(
     (m) => m.type === "vente_encaissee" && m.status === "a_recevoir",
   );
@@ -383,12 +384,7 @@ function computeDashboardData(args: {
     aPayerMvts.map((m) => m.partner?.ref ?? m.partner?.name).filter((x): x is string => !!x),
   ).size;
 
-  // 1 vente encaissée = 1 commande livrée (fixtures dérivées + historique)
-  const nbLivre = MOCK_FINANCE_MOVEMENTS.filter(
-    (m) => m.type === "vente_encaissee" && inRange(m.date),
-  ).length;
-
-  /* Période précédente → deltas */
+  /* Période précédente → deltas (sur les vraies commandes livrées) */
   let caEncaissePrev = 0;
   let margeNettePrev = 0;
   let nbLivrePrev = 0;
@@ -396,27 +392,14 @@ function computeDashboardData(args: {
     const periodLength = range.toMs - range.fromMs;
     const prevFromMs = range.fromMs - periodLength;
     const prevToMs = range.fromMs;
-    const inPrev = (iso: string | undefined): boolean => {
-      if (!iso) return false;
-      const t = new Date(iso).getTime();
+    const livrePrev = assignments.filter((a) => {
+      if (a.status !== "livre") return false;
+      const t = new Date(livreDate(a)).getTime();
       return t >= prevFromMs && t < prevToMs;
-    };
-    const movPrev = MOCK_FINANCE_MOVEMENTS.filter((m) => inPrev(m.date));
-    caEncaissePrev = movPrev
-      .filter((m) => m.type === "vente_encaissee")
-      .reduce((s, m) => s + m.amountXof, 0);
-    const sumPrev = (type: string) =>
-      movPrev.filter((m) => m.type === type).reduce((s, m) => s + m.amountXof, 0);
-    const margeBrutePrev =
-      caEncaissePrev -
-      sumPrev("cout_marchandise") -
-      sumPrev("commission_closeuse") -
-      sumPrev("frais_livreur") -
-      sumPrev("frais_transit");
-    margeNettePrev = margeBrutePrev - sumPrev("depense_pub");
-    nbLivrePrev = MOCK_FINANCE_MOVEMENTS.filter(
-      (m) => m.type === "vente_encaissee" && inPrev(m.date),
-    ).length;
+    });
+    caEncaissePrev = livrePrev.reduce((s, a) => s + orderTotalXof(a), 0);
+    margeNettePrev = caEncaissePrev - livrePrev.reduce((s, a) => s + cogsOf(a), 0);
+    nbLivrePrev = livrePrev.length;
   }
 
   const computePct = (cur: number, prev: number): number | null => {
@@ -428,11 +411,9 @@ function computeDashboardData(args: {
   const margeNetteDeltaPct = computePct(margeNette, margeNettePrev);
   const nbLivreDeltaPct = computePct(nbLivre, nbLivrePrev);
 
-  /* Top products (période) */
+  /* Top produits (période) — sur les commandes RÉELLEMENT livrées */
   const salesByProductPeriod = new Map<string, { sales: number; ca: number }>();
-  for (const a of assignments) {
-    if (a.delivery?.progress !== "effectue") continue;
-    if (!inRange(a.delivery.deliveredAt)) continue;
+  for (const a of livreInPeriod) {
     for (const item of a.items) {
       if (!item.productId) continue;
       const cur = salesByProductPeriod.get(item.productId) ?? { sales: 0, ca: 0 };
@@ -440,21 +421,6 @@ function computeDashboardData(args: {
       cur.ca += item.quantity * item.unitPriceXof;
       salesByProductPeriod.set(item.productId, cur);
     }
-  }
-  // + ventes issues du livre de comptes (historique mensuel lissé + ventes
-  // récentes). Les fixtures (orderId "ORD-…") sont déjà comptées via les
-  // assignments ci-dessus → exclues pour éviter le double comptage. La
-  // quantité est estimée depuis le prix unitaire du produit.
-  for (const m of MOCK_FINANCE_MOVEMENTS) {
-    if (m.type !== "vente_encaissee" || !m.productId) continue;
-    if (m.orderId?.startsWith("ORD-")) continue;
-    if (!inRange(m.date)) continue;
-    const price = MOCK_PRODUITS.find((p) => p.id === m.productId)?.priceXof;
-    const qty = price ? Math.max(1, Math.round(m.amountXof / price)) : 1;
-    const cur = salesByProductPeriod.get(m.productId) ?? { sales: 0, ca: 0 };
-    cur.sales += qty;
-    cur.ca += m.amountXof;
-    salesByProductPeriod.set(m.productId, cur);
   }
 
   /* Recent ops */
