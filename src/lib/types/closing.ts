@@ -161,6 +161,18 @@ export function orderTotalQty(a: ClosingAssignment): number {
   return a.items.reduce((sum, i) => sum + i.quantity, 0);
 }
 
+/**
+ * Progression de livraison effective d'une commande :
+ *  - si un livreur est assigné → sa progression (en_attente / effectue / alerte)
+ *  - sinon, dérivée du statut commande : « livré » → effectué, autrement en
+ *    attente (à assigner). Permet d'afficher dans Livraisons toutes les
+ *    commandes au stade livraison, même sans livreur encore assigné.
+ */
+export function deliveryProgressOf(a: ClosingAssignment): DeliveryProgress {
+  if (a.delivery) return a.delivery.progress;
+  return a.status === "livre" ? "effectue" : "en_attente";
+}
+
 export const CLOSING_STATUS_LABELS: Record<ClosingStatus, string> = {
   nouvelle: "Nouvelle",
   rappele: "Rappelé",

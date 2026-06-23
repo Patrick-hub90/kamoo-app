@@ -66,6 +66,9 @@ function DashboardPageInner() {
   const currency = currencyFor(currentMarket.id);
   /* Commandes LIVE : la machine d'etats closing (synchronisee app closeuse) */
   const liveOrders = useClosingState().all;
+  /* « Aujourd'hui » RÉEL : les commandes Shopify ont de vraies dates, la
+   * période doit s'ancrer dessus (pas sur une date mock figée). */
+  const today = useMemo(() => new Date(), []);
   const searchParams = useSearchParams();
   void searchParams; // réservé (deep-link période à venir)
   const router = useRouter();
@@ -93,7 +96,7 @@ function DashboardPageInner() {
     [normalizedFilter],
   );
   const chartEndDate = useMemo(() => {
-    const base = chartEndDateForFilter(normalizedFilter, MOCK_TODAY);
+    const base = chartEndDateForFilter(normalizedFilter, today);
     if (bucketing.granularity === "hour") {
       const d = new Date(base);
       d.setUTCHours(23, 0, 0, 0);

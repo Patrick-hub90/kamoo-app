@@ -20,6 +20,7 @@ import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
 import {
+  deliveryProgressOf,
   displayOrderNo,
   orderTotalXof,
   type ClosingAssignment,
@@ -65,9 +66,7 @@ export default function LivraisonsPage() {
   const all = useMemo(
     () =>
       closing.all.filter(
-        (a) =>
-          a.delivery !== undefined &&
-          (a.status === "livraison_en_cours" || a.status === "livre"),
+        (a) => a.status === "livraison_en_cours" || a.status === "livre",
       ),
     [closing.all],
   );
@@ -92,7 +91,7 @@ export default function LivraisonsPage() {
 
   const filtered = useMemo(() => {
     const list = all.filter((a) => {
-      if (view !== "all" && a.delivery?.progress !== view) return false;
+      if (view !== "all" && deliveryProgressOf(a) !== view) return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         if (
@@ -116,7 +115,7 @@ export default function LivraisonsPage() {
           return new Date(relevantDate(b)).getTime() - new Date(relevantDate(a)).getTime();
         case "urgent":
         default:
-          return (rank[a.delivery!.progress] - rank[b.delivery!.progress]) || (new Date(relevantDate(a)).getTime() - new Date(relevantDate(b)).getTime());
+          return (rank[deliveryProgressOf(a)] - rank[deliveryProgressOf(b)]) || (new Date(relevantDate(a)).getTime() - new Date(relevantDate(b)).getTime());
       }
     });
   }, [all, view, search, sortBy]);
@@ -181,8 +180,8 @@ export default function LivraisonsPage() {
                 a.client.phone,
                 a.client.zone,
                 String(orderTotalXof(a)),
-                a.delivery ? STATUS[a.delivery.progress].label : "—",
-                a.delivery?.name ?? "—",
+                STATUS[deliveryProgressOf(a)].label,
+                a.delivery?.name ?? "À assigner",
               ]),
             ];
             const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(";")).join("\n");
@@ -233,7 +232,7 @@ export default function LivraisonsPage() {
                     <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-ink-400">Aucune livraison ne correspond.</td>
                   </tr>
                 ) : (
-                  shown.map((a) => <Row key={a.id} a={a} currency={currency} onClick={() => router.push(`/livraisons/${a.id}`)} />)
+                  shown.map((a) => <Row key={a.id} a={a} currency={currency} onClick={() => router.push(a.delivery ? `/livraisons/${a.id}` : `/closing/${a.id}`)} />)
                 )}
               </tbody>
             </table>
@@ -276,11 +275,15 @@ export default function LivraisonsPage() {
 
 /* ─── Ligne de livraison ───────────────────────────────── */
 function Row({ a, onClick, currency }: { a: ClosingAssignment; onClick: () => void; currency: string }) {
-  const progress = a.delivery!.progress;
+  const progress = deliveryProgressOf(a);
+  const unassigned = !a.delivery;
   const st = STATUS[progress];
-  const d = a.delivery!;
   const isAlerte = progress === "alerte";
-  const note = d.livreurNote ?? a.comment ?? null;
+  const note = a.delivery?.livreurNote ?? a.comment ?? null;
+  // Commande au stade livraison mais sans livreur encore assigné → « À assigner ».
+  const pillLabel = unassigned && progress === "en_attente" ? "À assigner" : st.label;
+  const pillClass =
+    unassigned && progress === "en_attente" ? "bg-amber-50 text-amber-700" : st.pill;
   return (
     <tr
       onClick={onClick}
@@ -303,9 +306,9 @@ function Row({ a, onClick, currency }: { a: ClosingAssignment; onClick: () => vo
       <td className="px-3 py-2.5 text-[12px] text-ink-700">{a.client.zone}</td>
       <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatMoney(orderTotalXof(a), currency)}</td>
       <td className="px-3 py-2.5">
-        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", st.pill)}>
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", pillClass)}>
           {isAlerte && <AlertTriangle className="h-3 w-3" />}
-          {st.label}
+          {pillLabel}
         </span>
       </td>
       <td className="px-4 py-2.5 text-[11.5px]">

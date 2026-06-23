@@ -1,5 +1,6 @@
 import {
   CANCELLATION_REASON_LABELS,
+  deliveryProgressOf,
   orderTotalXof,
   type ActiveCloseuse,
   type ClosingAssignment,
@@ -695,13 +696,14 @@ export function computeDeliveryStats(items: ClosingAssignment[]) {
   let revenueExpected = 0;
 
   for (const a of items) {
-    if (!a.delivery) continue;
-    counts[a.delivery.progress]++;
-    if (a.delivery.progress === "effectue" && a.delivery.amountCollected) {
-      revenueCollected += a.delivery.amountCollected;
-    }
-    // CA en attente = livraisons pas encore conclues (en_attente + alerte)
-    if (a.delivery.progress !== "effectue") {
+    // Progression effective (livreur si assigné, sinon dérivée du statut) →
+    // on compte AUSSI les commandes au stade livraison sans livreur encore assigné.
+    const progress = deliveryProgressOf(a);
+    counts[progress]++;
+    if (progress === "effectue") {
+      revenueCollected += a.delivery?.amountCollected ?? orderTotalXof(a);
+    } else {
+      // CA en attente = livraisons pas encore conclues (en_attente + alerte)
       revenueExpected += orderTotalXof(a);
     }
   }
