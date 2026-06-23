@@ -48,6 +48,12 @@ type NormalizedOrder = {
     unitPriceXof: number;
     /** Propriétés de ligne (line item properties du formulaire). */
     customAttributes?: Attribute[];
+    /** gid du produit Shopify de la ligne — clé de réconciliation catalogue. */
+    shopifyProductId?: string;
+    /** SKU de la variante (clé de réconciliation secondaire). */
+    sku?: string;
+    /** Image produit (sert de couverture au brouillon auto-créé). */
+    imageUrl?: string;
   }[];
 };
 
@@ -74,8 +80,10 @@ const ORDERS_QUERY = `
               node {
                 title
                 quantity
+                sku
                 customAttributes { key value }
                 originalUnitPriceSet { shopMoney { amount currencyCode } }
+                product { id featuredImage { url } }
               }
             }
           }
@@ -118,8 +126,10 @@ type GqlOrders = {
             node: {
               title: string;
               quantity: number;
+              sku?: string | null;
               customAttributes?: GqlAttr[];
               originalUnitPriceSet: { shopMoney: { amount: string; currencyCode?: string } };
+              product?: { id?: string; featuredImage?: { url?: string } | null } | null;
             };
           }[];
         };
@@ -245,6 +255,9 @@ export async function POST(request: Request) {
           quantity: e.node.quantity,
           unitPriceXof: parseFloat(e.node.originalUnitPriceSet.shopMoney.amount) || 0,
           customAttributes: cleanAttrs(e.node.customAttributes),
+          shopifyProductId: e.node.product?.id ?? undefined,
+          sku: e.node.sku ?? undefined,
+          imageUrl: e.node.product?.featuredImage?.url ?? undefined,
         })),
       };
     });

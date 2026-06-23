@@ -2,6 +2,16 @@
  * Types pour le Module Boutique (catalogue produits du vendeur).
  */
 
+/**
+ * Provenance d'un produit du catalogue — sert à la réconciliation Shopify :
+ *  - "manual"         : créé à la main par le vendeur.
+ *  - "shopify_import" : tiré depuis la boutique via la modale d'import.
+ *  - "shopify_order"  : créé AUTOMATIQUEMENT depuis une commande dont le
+ *                       produit n'était pas encore au catalogue (brouillon à
+ *                       compléter : prix d'achat manquant → marge non calculée).
+ */
+export type ProductOrigin = "manual" | "shopify_import" | "shopify_order";
+
 export type Produit = {
   /** Identifiant utilisé dans les commandes (ex: "p_creme"). */
   id: string;
@@ -39,6 +49,8 @@ export type Produit = {
   isActive: boolean;
   /** Produit archivé : masqué des vues actives, conservé pour l'historique */
   archived?: boolean;
+  /** Provenance (réconciliation Shopify). Défaut implicite : "manual". */
+  origin?: ProductOrigin;
 
   /** Performance — calculée depuis les commandes en V1, mock pour la démo */
   soldThisMonth: number;
@@ -118,6 +130,16 @@ export function averageAcquisitionCost(
     0,
   );
   return Math.round(totalCost / totalQty);
+}
+
+/**
+ * Produit « à compléter » : créé automatiquement depuis une commande Shopify
+ * et dont le prix d'achat n'a pas encore été renseigné. Tant qu'il manque, la
+ * marge de ce produit ne peut pas être calculée → on relance le vendeur dans
+ * le catalogue (bandeau de réconciliation).
+ */
+export function needsCompletion(p: Produit): boolean {
+  return p.origin === "shopify_order" && p.costPriceXof === undefined;
 }
 
 /** Statut visuel du stock — dérivé de stock + lowStockThreshold */

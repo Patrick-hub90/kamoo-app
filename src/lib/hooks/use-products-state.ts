@@ -141,6 +141,18 @@ function applyOverride(p: Produit, o: ProductOverride | undefined): Produit {
   };
 }
 
+/**
+ * Lit le catalogue courant HORS React (même composition que le hook). Sert aux
+ * traitements impératifs (ex. réconciliation Shopify) qui doivent voir les
+ * écritures les plus récentes sans dépendre du cycle de rendu React.
+ */
+export function getProductsSnapshot(): Produit[] {
+  hydrateOnce();
+  return [...store.extra, ...MOCK_PRODUITS]
+    .filter((p) => !store.deleted.includes(p.id))
+    .map((p) => applyOverride(p, store.overrides[p.id]));
+}
+
 export function useProductsState() {
   const { overrides, extra, deleted } = useSyncExternalStore(
     subscribe,

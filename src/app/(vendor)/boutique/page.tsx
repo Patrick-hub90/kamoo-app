@@ -39,7 +39,8 @@ import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
 import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
 import { ShopifyImportModal } from "@/components/kamoo/shopify-import-modal";
-import { getStockLevel, type Produit } from "@/lib/types/produit";
+import { CatalogueReconBanner } from "@/components/kamoo/catalogue-recon-banner";
+import { getStockLevel, needsCompletion, type Produit } from "@/lib/types/produit";
 import { dateFilterFromSearchParams } from "@/lib/utils/date-filter-url";
 import { formatXOF } from "@/lib/format";
 import { PageHeader } from "@/components/kamoo/page-header";
@@ -53,7 +54,14 @@ import { cn } from "@/lib/utils";
  * stats rentabilité, période, tri, filtres, photos de couverture, campagnes.
  */
 
-type StatusView = "all" | "active" | "inactive" | "low_stock" | "out_of_stock" | "archived";
+type StatusView =
+  | "all"
+  | "active"
+  | "inactive"
+  | "low_stock"
+  | "out_of_stock"
+  | "incomplete"
+  | "archived";
 type SortKey = "best_seller" | "recent" | "stock_asc" | "name";
 
 const VIEW_TABS: { id: StatusView; label: string }[] = [
@@ -62,6 +70,7 @@ const VIEW_TABS: { id: StatusView; label: string }[] = [
   { id: "inactive", label: "Inactif" },
   { id: "low_stock", label: "Stock bas" },
   { id: "out_of_stock", label: "Rupture" },
+  { id: "incomplete", label: "À compléter" },
   { id: "archived", label: "Archivé" },
 ];
 
@@ -77,6 +86,7 @@ function matchesView(p: Produit, view: StatusView): boolean {
   if (view === "archived") return !!p.archived;
   if (p.archived) return false;
   if (view === "all") return true;
+  if (view === "incomplete") return needsCompletion(p);
   if (view === "active") return p.isActive;
   if (view === "inactive") return !p.isActive;
   if (!p.isActive) return false;
@@ -206,6 +216,7 @@ function BoutiquePageInner() {
       inactive: 0,
       low_stock: 0,
       out_of_stock: 0,
+      incomplete: 0,
       archived: 0,
     };
     for (const p of all) {
@@ -214,6 +225,7 @@ function BoutiquePageInner() {
         continue; // les archivés ne comptent pas dans les autres vues
       }
       counts.all++;
+      if (needsCompletion(p)) counts.incomplete++;
       if (p.isActive) counts.active++;
       else counts.inactive++;
       if (p.isActive) {
@@ -232,7 +244,10 @@ function BoutiquePageInner() {
         const q = search.toLowerCase().trim();
         if (!p.name.toLowerCase().includes(q) && !p.sku.toLowerCase().includes(q)) return false;
       }
-      if (periodSales) {
+      // Le filtre période s'applique aux vues basées sur les VENTES, pas aux
+      // vues d'état catalogue (« À compléter », « Archivé ») — sinon le bandeau
+      // « N à compléter » mènerait à une liste vide dès qu'une période est active.
+      if (periodSales && view !== "incomplete" && view !== "archived") {
         const ps = periodSales.get(p.id);
         if (!ps || ps.soldQty === 0) return false;
       }
@@ -285,6 +300,13 @@ function BoutiquePageInner() {
             Ajouter un produit
           </Link>
         </div>
+
+        {/* Réconciliation produits ↔ Shopify (à compléter / à importer) */}
+        <CatalogueReconBanner
+          marketId={currentMarket.id}
+          onImport={() => setImportOpen(true)}
+          onShowIncomplete={() => setView("incomplete")}
+        />
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

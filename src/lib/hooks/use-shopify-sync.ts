@@ -4,12 +4,14 @@ import { useCallback } from "react";
 import { useShopify } from "@/lib/hooks/use-shopify";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
 import { useClientsState } from "@/lib/hooks/use-clients-state";
-import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
+import { useProductsState, getProductsSnapshot } from "@/lib/hooks/use-products-state";
+import { useShopifyPublish, getPublishSnapshot } from "@/lib/hooks/use-shopify-publish";
 import type { ClosingAssignment, ClosingStatus } from "@/lib/types/closing";
 import type { Client } from "@/lib/types/client";
+import type { Produit } from "@/lib/types/produit";
 
 /**
- * Synchronisation Shopify → Kamoo (commandes + clients), AUTOMATIQUE.
+ * Synchronisation Shopify → Kamoo (commandes + clients + PRODUITS), AUTOMATIQUE.
  *
  *  - Mode DÉMO : génère 1-3 nouvelles commandes Shopify plausibles → elles
  *    tombent dans Closing (statut « nouvelle », source « Shopify ») et créent
@@ -20,6 +22,14 @@ import type { Client } from "@/lib/types/client";
  *
  * C'est la boucle « comme DSers » côté commandes : aucune action manuelle, la
  * commande de la boutique arrive directement dans le pipeline d'appels.
+ *
+ * Réconciliation produits : chaque ligne de commande est rattachée à un produit
+ * du catalogue (par gid Shopify → SKU → nom). Si le produit n'existe pas encore
+ * côté Kamoo, on crée AUTOMATIQUEMENT un brouillon (origin "shopify_order",
+ * prix d'achat vide) — le catalogue se remplit tout seul et la marge devient
+ * calculable dès que le vendeur renseigne le prix d'achat (cf. bandeau de
+ * réconciliation au catalogue). Opération idempotente : un produit déjà présent
+ * (lien gid / SKU / nom) n'est jamais recréé.
  */
 
 /* Personas pour les commandes de démo (clients finaux ouest-africains). */
@@ -32,6 +42,14 @@ const DEMO_CUSTOMERS = [
   { name: "Alioune Ndour", phone: "+221 78 442 09 67", city: "Dakar", zone: "Ouakam" },
 ];
 
+/* Produits de repli pour la démo quand le catalogue est encore vide. */
+const DEMO_FALLBACK_PRODUCTS: { name: string; priceXof: number }[] = [
+  { name: "Crème éclaircissante naturelle", priceXof: 18000 },
+  { name: "Power Bank 10 000mAh", priceXof: 12000 },
+  { name: "Montre connectée sport", priceXof: 22000 },
+  { name: "Lunettes solaires aviateur", priceXof: 11000 },
+];
+
 const AVATARS = [
   "linear-gradient(135deg,#0EA5E9,#0284C7)",
   "linear-gradient(135deg,#22C55E,#16A34A)",
@@ -39,6 +57,17 @@ const AVATARS = [
   "linear-gradient(135deg,#F59E0B,#B45309)",
   "linear-gradient(135deg,#EC4899,#DB2777)",
 ];
+
+/* Dégradés de couverture pour les brouillons auto-créés (sans image Shopify). */
+const IMPORT_BG = [
+  "linear-gradient(135deg,#FCE7F3,#F472B6)",
+  "linear-gradient(135deg,#DBEAFE,#3B82F6)",
+  "linear-gradient(135deg,#DCFCE7,#22C55E)",
+  "linear-gradient(135deg,#FEF3C7,#F59E0B)",
+  "linear-gradient(135deg,#E9D5FF,#A78BFA)",
+  "linear-gradient(135deg,#FED7AA,#F97316)",
+];
+const FALLBACK_BG = "linear-gradient(135deg,#E2E8F0,#94A3B8)";
 
 type Attribute = { key: string; value: string };
 
@@ -56,8 +85,22 @@ type LiveOrder = {
   tags?: string[];
   customAttributes?: Attribute[];
   customer: { name: string; phone: string; email?: string; city: string; zone: string; address?: string; countryCode?: string };
-  items: { productName: string; quantity: number; unitPriceXof: number; customAttributes?: Attribute[] }[];
+  items: {
+    productName: string;
+    quantity: number;
+    unitPriceXof: number;
+    customAttributes?: Attribute[];
+    /** Clés de réconciliation catalogue (mode live). */
+    shopifyProductId?: string;
+    sku?: string;
+    imageUrl?: string;
+  }[];
 };
+
+type LiveLineItem = LiveOrder["items"][number];
+
+/** Ce qu'un résolveur renvoie pour une ligne : produit catalogue + visuel. */
+type ResolvedLine = { productId: string; emoji: string; bg: string };
 
 /**
  * Mappe le statut Shopify (exécution + financier) vers le statut closing Kamoo.
@@ -85,6 +128,12 @@ export function useShopifySync() {
   const { getConnection, recordSync, liveMode } = useShopify();
   const closing = useClosingState();
   const clients = useClientsState();
+  // Actions stables seulement : la LECTURE du catalogue/des liens se fait via
+  // snapshot impératif au moment de la synchro (cf. getProductsSnapshot /
+  // getPublishSnapshot), pour voir les écritures les plus récentes — y compris
+  // celles d'un marché précédent dans la même passe multi-boutiques.
+  const { addProduct } = useProductsState();
+  const { link } = useShopifyPublish();
 
   /**
    * Lance une synchro pour un marché. Retourne le nombre de commandes
@@ -111,7 +160,7 @@ export function useShopifySync() {
           return { imported: 0, fetched: 0, error: "reseau" };
         }
       } else {
-        orders = generateDemoOrders();
+        orders = generateDemoOrders(getProductsSnapshot().filter((p) => p.isActive));
       }
       const fetched = orders.length;
 
@@ -121,6 +170,93 @@ export function useShopifySync() {
         closing.all.map((a) => a.shopifyOrderId).filter(Boolean) as string[],
       );
 
+      // ── Résolveur de produit (réconciliation catalogue) ──
+      // Snapshots LIVE lus au moment de la synchro (pas de closure figée) : un
+      // brouillon créé par un marché précédent du même tick est visible ici.
+      const catalog = getProductsSnapshot();
+      const publishAll = getPublishSnapshot();
+      // Index des liens Shopify→Kamoo + cache des brouillons créés dans cet appel
+      // (le state React n'est pas re-render pendant la boucle, on évite ainsi les
+      // doublons quand 2 lignes citent le même produit absent).
+      const linkByGid = new Map<string, string>();
+      for (const [kamooId, v] of Object.entries(publishAll)) {
+        if (v.shopifyProductId) linkByGid.set(v.shopifyProductId, kamooId);
+      }
+      const createdThisTick = new Map<string, ResolvedLine>();
+      let createdCount = 0;
+
+      const resolveLine = (line: LiveLineItem): ResolvedLine => {
+        const gidKey = line.shopifyProductId ? `gid:${line.shopifyProductId}` : null;
+        const sku = line.sku?.toLowerCase().trim();
+        const skuKey = sku ? `sku:${sku}` : null;
+        const name = line.productName.toLowerCase().trim();
+        const nameKey = `name:${name}`;
+
+        // Déjà créé/résolu dans cet appel ? On respecte la précédence d'identité
+        // gid > sku > nom : une clé faible (nom) ne doit jamais court-circuiter
+        // un gid distinct (sinon deux produits homonymes fusionnent à tort).
+        if (gidKey && createdThisTick.has(gidKey)) return createdThisTick.get(gidKey)!;
+        if (skuKey && createdThisTick.has(skuKey)) return createdThisTick.get(skuKey)!;
+        if (!gidKey && !skuKey && createdThisTick.has(nameKey)) return createdThisTick.get(nameKey)!;
+
+        // 1. gid Shopify → lien existant
+        if (line.shopifyProductId) {
+          const id = linkByGid.get(line.shopifyProductId);
+          if (id) {
+            const p = catalog.find((x) => x.id === id);
+            return { productId: id, emoji: p?.emoji ?? "🛍️", bg: p?.bg ?? FALLBACK_BG };
+          }
+        }
+        // 2. SKU
+        if (sku) {
+          const p = catalog.find((x) => x.sku && x.sku.toLowerCase().trim() === sku);
+          if (p) return { productId: p.id, emoji: p.emoji, bg: p.bg };
+        }
+        // 3. nom exact — UNIQUEMENT sans gid : un gid non lié = nouveau produit
+        // Shopify, pas un homonyme du catalogue à réutiliser.
+        if (!line.shopifyProductId) {
+          const byName = catalog.find((x) => x.name.toLowerCase().trim() === name);
+          if (byName) return { productId: byName.id, emoji: byName.emoji, bg: byName.bg };
+        }
+
+        // → introuvable : brouillon auto (origin shopify_order, prix achat vide)
+        const bg = IMPORT_BG[createdCount % IMPORT_BG.length];
+        const id = `p_auto_${slugify(line.productName)}_${createdCount}_${Date.now().toString(36)}`;
+        const draft: Produit = {
+          id,
+          sku:
+            line.sku ||
+            `SH-${(line.shopifyProductId ?? "").replace(/\D/g, "").slice(-6) ||
+              slugify(line.productName).slice(0, 6).toUpperCase()}`,
+          name: line.productName,
+          emoji: "🛍️",
+          bg,
+          description: "",
+          priceXof: Math.round(line.unitPriceXof),
+          stock: 0,
+          lowStockThreshold: 5,
+          isActive: true,
+          soldThisMonth: 0,
+          soldTotal: 0,
+          revenueThisMonthXof: 0,
+          revenueTotalXof: 0,
+          createdAt: new Date().toISOString(),
+          origin: "shopify_order",
+        };
+        addProduct(draft);
+        if (line.shopifyProductId) link(id, line.shopifyProductId, "imported");
+        if (line.imageUrl) saveCover(id, line.imageUrl);
+
+        const out: ResolvedLine = { productId: id, emoji: "🛍️", bg };
+        if (gidKey) createdThisTick.set(gidKey, out);
+        if (skuKey) createdThisTick.set(skuKey, out);
+        // La clé nom ne sert de pont QUE pour les lignes sans identité forte ;
+        // sinon elle ferait fusionner deux gids distincts mais homonymes.
+        if (!gidKey && !skuKey) createdThisTick.set(nameKey, out);
+        createdCount++;
+        return out;
+      };
+
       let n = 0;
       for (const o of orders) {
         const isNew = !existing.has(o.shopifyOrderId);
@@ -128,7 +264,7 @@ export function useShopifySync() {
         // du formulaire, client, articles). Les overrides — le travail manuel
         // de la closeuse (statut confirmé, commentaire, livreur…) — restent
         // appliqués par-dessus, donc rien n'est écrasé.
-        closing.upsertOrder(toClosingAssignment(o));
+        closing.upsertOrder(toClosingAssignment(o, resolveLine));
         if (isNew) {
           upsertClient(o, clients);
           n++;
@@ -140,7 +276,7 @@ export function useShopifySync() {
       recordSync(marketId, n, detectedCurrency);
       return { imported: n, fetched };
     },
-    [getConnection, recordSync, closing, clients],
+    [getConnection, recordSync, closing, clients, addProduct, link],
   );
 
   return { syncNow, liveMode };
@@ -148,13 +284,16 @@ export function useShopifySync() {
 
 /* ─── Génération démo ─────────────────────────────────────────────── */
 
-function generateDemoOrders(): LiveOrder[] {
+function generateDemoOrders(activeProducts: Produit[]): LiveOrder[] {
   const count = 1 + Math.floor(Math.random() * 3); // 1..3
   const out: LiveOrder[] = [];
-  const activeProducts = MOCK_PRODUITS.filter((p) => p.isActive);
+  // Tire dans le catalogue actif ; à défaut (catalogue encore vide), repli.
+  const pool: { name: string; priceXof: number }[] = activeProducts.length
+    ? activeProducts.map((p) => ({ name: p.name, priceXof: p.priceXof }))
+    : DEMO_FALLBACK_PRODUCTS;
   for (let i = 0; i < count; i++) {
     const cust = DEMO_CUSTOMERS[Math.floor(Math.random() * DEMO_CUSTOMERS.length)];
-    const prod = activeProducts[Math.floor(Math.random() * activeProducts.length)];
+    const prod = pool[Math.floor(Math.random() * pool.length)];
     const qty = 1 + Math.floor(Math.random() * 2);
     const num = 1000 + Math.floor(Math.random() * 9000);
     out.push({
@@ -170,19 +309,22 @@ function generateDemoOrders(): LiveOrder[] {
 
 /* ─── Mapping Shopify → Kamoo ──────────────────────────────────────── */
 
-function toClosingAssignment(o: LiveOrder): ClosingAssignment {
+function toClosingAssignment(
+  o: LiveOrder,
+  resolve: (line: LiveLineItem) => ResolvedLine,
+): ClosingAssignment {
   // Le numéro Kamoo MIROIR du numéro Shopify : id URL-safe dérivé du nom
   // (« #1002 » → « SH-1002 »), affichage = le nom Shopify exact (#1002).
   const safeId = `SH-${o.name.replace(/[^0-9A-Za-z]/g, "")}`;
   return {
     id: safeId,
     items: o.items.map((it) => {
-      const p = MOCK_PRODUITS.find((x) => x.name === it.productName);
+      const r = resolve(it);
       return {
-        productId: p?.id,
+        productId: r.productId,
         productName: it.productName,
-        productEmoji: p?.emoji ?? "🛍️",
-        productBg: p?.bg ?? "linear-gradient(135deg,#E2E8F0,#94A3B8)",
+        productEmoji: r.emoji,
+        productBg: r.bg,
         quantity: it.quantity,
         unitPriceXof: it.unitPriceXof,
         customAttributes: it.customAttributes,
@@ -213,6 +355,32 @@ function toClosingAssignment(o: LiveOrder): ClosingAssignment {
     shopifyName: o.name,
     currencyCode: o.currencyCode,
   };
+}
+
+/* ─── Helpers ──────────────────────────────────────────────────────── */
+
+function slugify(s: string): string {
+  return (
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "") // retire les diacritiques combinants
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 24) || "produit"
+  );
+}
+
+/** Enregistre l'image Shopify comme couverture du produit (même canal que
+ *  l'import manuel) puis notifie les vues qui affichent les couvertures. */
+function saveCover(productId: string, url: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`boutique.photos.${productId}`, JSON.stringify([url]));
+    window.dispatchEvent(new Event("storage"));
+  } catch {
+    /* stockage plein — non bloquant */
+  }
 }
 
 function clientIdFor(name: string): string {

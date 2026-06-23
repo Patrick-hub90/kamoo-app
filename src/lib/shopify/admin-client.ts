@@ -116,7 +116,10 @@ export async function shopifyGraphQL<T = unknown>(
     if (codes.includes("ACCESS_DENIED")) {
       throw new ShopifyApiError(`ACCESS_DENIED: ${messages}`, 403, json.errors);
     }
-    throw new ShopifyApiError(`Erreur GraphQL Shopify: ${messages}`, 200, json.errors);
+    // Erreur GraphQL non bloquante (throttling, champ indisponible…) : on
+    // remonte un vrai code d'échec (502) — surtout pas 200, qui masquait
+    // l'erreur côté appelant (res.ok restait true).
+    throw new ShopifyApiError(`Erreur GraphQL Shopify: ${messages}`, 502, json.errors);
   }
   return json.data as T;
 }

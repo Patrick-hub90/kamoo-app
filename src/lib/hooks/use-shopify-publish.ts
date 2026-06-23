@@ -38,6 +38,14 @@ type PublishState = { products: Record<string, ProductPublish> };
 
 const store = createSyncedStore<PublishState>("shopifyProducts", { products: {} });
 
+/**
+ * Lit les liens de publication HORS React (gid Shopify ↔ produit Kamoo). Sert
+ * à la réconciliation impérative côté synchro.
+ */
+export function getPublishSnapshot(): Record<string, ProductPublish> {
+  return store.get().products;
+}
+
 export function useShopifyPublish() {
   const state = store.use();
 

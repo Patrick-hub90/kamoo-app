@@ -29,8 +29,9 @@ import {
   MOCK_FINANCE_MOVEMENTS,
   MOCK_TODAY,
 } from "@/lib/data/mock-finances";
-import { MOCK_PRODUITS } from "@/lib/data/mock-produits";
 import { useClosingState } from "@/lib/hooks/use-closing-state";
+import { useProductsState } from "@/lib/hooks/use-products-state";
+import type { Produit } from "@/lib/types/produit";
 import { MOCK_VENDOR } from "@/lib/data/mock-vendor";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { useShopify } from "@/lib/hooks/use-shopify";
@@ -66,9 +67,31 @@ function DashboardPageInner() {
   const currency = currencyFor(currentMarket.id);
   /* Commandes LIVE : la machine d'etats closing (synchronisee app closeuse) */
   const liveOrders = useClosingState().all;
+  /* Catalogue LIVE : pour le coût d'achat (COGS) → marge réelle. Le catalogue
+   * se remplit des produits importés + des brouillons auto-créés depuis les
+   * commandes ; lire MOCK_PRODUITS (vide) donnait une marge = CA. */
+  const catalog = useProductsState().products;
+  const productsById = useMemo(
+    () => new Map<string, Produit>(catalog.map((p) => [p.id, p])),
+    [catalog],
+  );
   /* « Aujourd'hui » RÉEL : les commandes Shopify ont de vraies dates, la
-   * période doit s'ancrer dessus (pas sur une date mock figée). */
-  const today = useMemo(() => new Date(), []);
+   * période doit s'ancrer dessus (pas sur une date mock figée). On réancre au
+   * retour d'onglet + toutes les heures pour qu'un dashboard laissé ouvert ne
+   * fige pas la fenêtre « 30 derniers jours » sur l'heure d'ouverture. */
+  const [today, setToday] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const tick = () => setToday(new Date());
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    const id = setInterval(tick, 60 * 60 * 1000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      clearInterval(id);
+    };
+  }, []);
   const searchParams = useSearchParams();
   void searchParams; // réservé (deep-link période à venir)
   const router = useRouter();
@@ -165,8 +188,8 @@ function DashboardPageInner() {
 
   /* ─── Compute principal ─── */
   const computed = useMemo(
-    () => computeDashboardData({ normalizedFilter, assignments: liveOrders, currency, now: today }),
-    [normalizedFilter, liveOrders, currency, today],
+    () => computeDashboardData({ normalizedFilter, assignments: liveOrders, currency, now: today, productsById }),
+    [normalizedFilter, liveOrders, currency, today, productsById],
   );
   void currentMarket.country.code;
 
@@ -327,8 +350,9 @@ type DashboardData = {
     called: number;
     tauxLivPct: number;
     caXof: number;
-    beneficeXof: number;
-    beneficePct: number;
+    /** null quand le coût d'achat du produit est inconnu (marge non calculée). */
+    beneficeXof: number | null;
+    beneficePct: number | null;
   }[];
 };
 
@@ -340,8 +364,10 @@ function computeDashboardData(args: {
   currency: string;
   /** Date réelle (ancre de période). */
   now: Date;
+  /** Catalogue live indexé par id — pour le coût d'achat (COGS). */
+  productsById: Map<string, Produit>;
 }): DashboardData {
-  const { normalizedFilter, assignments, currency, now } = args;
+  const { normalizedFilter, assignments, currency, now, productsById } = args;
 
   const range = dateFilterRange(normalizedFilter, now);
   const inRange = (iso: string | undefined): boolean => {
@@ -352,19 +378,21 @@ function computeDashboardData(args: {
   };
 
   /* CA encaissé + marge = commandes RÉELLEMENT livrées dans la période (cash
-     COD). Marge = CA − coût marchandise (COGS) connu du catalogue. */
-  const cogsOf = (a: ClosingAssignment): number =>
-    a.items.reduce(
-      (s, it) => s + (MOCK_PRODUITS.find((p) => p.id === it.productId)?.costPriceXof ?? 0) * it.quantity,
-      0,
-    );
+     COD). La marge n'additionne QUE les lignes au coût d'achat CONNU : un
+     produit non chiffré (brouillon auto à compléter) n'est pas compté à 100 %
+     de marge, ce qui gonflerait artificiellement la marge nette. */
+  const marginOf = (a: ClosingAssignment): number =>
+    a.items.reduce((s, it) => {
+      const cost = productsById.get(it.productId ?? "")?.costPriceXof;
+      return cost == null ? s : s + (it.unitPriceXof - cost) * it.quantity;
+    }, 0);
   const livreDate = (a: ClosingAssignment): string => a.delivery?.deliveredAt ?? a.createdAt;
   const livreInPeriod = assignments.filter(
     (a) => a.status === "livre" && inRange(livreDate(a)),
   );
   const caPeriod = livreInPeriod.reduce((s, a) => s + orderTotalXof(a), 0);
   const nbLivre = livreInPeriod.length;
-  const margeNette = caPeriod - livreInPeriod.reduce((s, a) => s + cogsOf(a), 0);
+  const margeNette = livreInPeriod.reduce((s, a) => s + marginOf(a), 0);
 
   /* À encaisser / à régler (versements partenaires) — restent issus du module
      finance (démo) tant que le règlement partenaires réel n'est pas branché. */
@@ -398,7 +426,7 @@ function computeDashboardData(args: {
       return t >= prevFromMs && t < prevToMs;
     });
     caEncaissePrev = livrePrev.reduce((s, a) => s + orderTotalXof(a), 0);
-    margeNettePrev = caEncaissePrev - livrePrev.reduce((s, a) => s + cogsOf(a), 0);
+    margeNettePrev = livrePrev.reduce((s, a) => s + marginOf(a), 0);
     nbLivrePrev = livrePrev.length;
   }
 
@@ -411,12 +439,23 @@ function computeDashboardData(args: {
   const margeNetteDeltaPct = computePct(margeNette, margeNettePrev);
   const nbLivreDeltaPct = computePct(nbLivre, nbLivrePrev);
 
-  /* Top produits (période) — sur les commandes RÉELLEMENT livrées */
-  const salesByProductPeriod = new Map<string, { sales: number; ca: number }>();
+  /* Top produits (période) — sur les commandes RÉELLEMENT livrées. On mémorise
+     aussi le visuel de la ligne pour rester lisible même si le produit n'est
+     pas (encore) au catalogue. */
+  const salesByProductPeriod = new Map<
+    string,
+    { sales: number; ca: number; name: string; emoji: string; bg: string }
+  >();
   for (const a of livreInPeriod) {
     for (const item of a.items) {
       if (!item.productId) continue;
-      const cur = salesByProductPeriod.get(item.productId) ?? { sales: 0, ca: 0 };
+      const cur = salesByProductPeriod.get(item.productId) ?? {
+        sales: 0,
+        ca: 0,
+        name: item.productName,
+        emoji: item.productEmoji,
+        bg: item.productBg,
+      };
       cur.sales += item.quantity;
       cur.ca += item.quantity * item.unitPriceXof;
       salesByProductPeriod.set(item.productId, cur);
@@ -536,33 +575,38 @@ function computeDashboardData(args: {
 
   /* Top products rows */
   const topProducts = Array.from(salesByProductPeriod.entries())
-    .map(([productId, { sales, ca }]) => {
-      const product = MOCK_PRODUITS.find((p) => p.id === productId);
-      if (!product) return null;
+    .map(([productId, v]) => {
+      const product = productsById.get(productId);
+      const hasProduct = (a: ClosingAssignment) =>
+        a.items.some((it) => it.productId === productId);
+      // Taux de livraison homogène : commandes LIVRÉES / commandes APPELÉES du
+      // produit, même base (createdAt) → toujours ≤ 100 %.
       const called = assignments.filter(
-        (a) =>
-          a.status !== "nouvelle" &&
-          inRange(a.createdAt) &&
-          a.items.some((it) => it.productId === productId),
+        (a) => a.status !== "nouvelle" && inRange(a.createdAt) && hasProduct(a),
       ).length;
-      const tauxLivPct = called > 0 ? Math.round((sales / called) * 100) : 0;
-      const cost = (product.costPriceXof ?? 0) * sales;
-      const beneficeXof = ca - cost;
-      const beneficePct = ca > 0 ? Math.round((beneficeXof / ca) * 100) : 0;
+      const deliveredOrders = assignments.filter(
+        (a) => a.status === "livre" && inRange(a.createdAt) && hasProduct(a),
+      ).length;
+      const tauxLivPct = called > 0 ? Math.round((deliveredOrders / called) * 100) : 0;
+      // Bénéfice null si le coût d'achat est inconnu (produit à compléter) :
+      // afficher « — » plutôt qu'une fausse marge de 100 %.
+      const costKnown = product?.costPriceXof != null;
+      const beneficeXof = costKnown ? v.ca - product!.costPriceXof! * v.sales : null;
+      const beneficePct =
+        beneficeXof != null && v.ca > 0 ? Math.round((beneficeXof / v.ca) * 100) : null;
       return {
-        emoji: product.emoji,
-        bg: product.bg,
-        name: product.name,
-        sales,
+        emoji: product?.emoji ?? v.emoji,
+        bg: product?.bg ?? v.bg,
+        name: product?.name ?? v.name,
+        sales: v.sales,
         called,
         tauxLivPct,
-        caXof: ca,
+        caXof: v.ca,
         beneficeXof,
         beneficePct,
       };
     })
-    .filter((x): x is NonNullable<typeof x> => x !== null)
-    .sort((a, b) => b.beneficeXof - a.beneficeXof)
+    .sort((a, b) => (b.beneficeXof ?? -Infinity) - (a.beneficeXof ?? -Infinity))
     .slice(0, 5);
 
   const buckets: Bucket[] = [

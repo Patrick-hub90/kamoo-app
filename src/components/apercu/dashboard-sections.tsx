@@ -358,8 +358,9 @@ export type ProductPerfRow = {
   cover?: string | null;
   ventes: number;
   ca: number;
-  benefice: number;
-  margePct: number;
+  /** null quand le coût d'achat est inconnu (produit à compléter). */
+  benefice: number | null;
+  margePct: number | null;
   /** Taux de livraison (livrées / appelées) % */
   tauxLiv: number;
 };
@@ -409,11 +410,17 @@ export function ProductPerformance({
                 </td>
                 <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{r.ventes}</td>
                 <td className="px-3 py-2.5 text-right text-[12.5px] tabular-nums text-ink-700">{formatXOF(r.ca, false)}</td>
-                <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">{formatXOF(r.benefice, false)}</td>
+                <td className="px-3 py-2.5 text-right text-[12.5px] font-semibold tabular-nums text-ink-900">
+                  {r.benefice == null ? <span className="text-ink-400">—</span> : formatXOF(r.benefice, false)}
+                </td>
                 <td className="px-3 py-2.5 text-right">
-                  <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-700">
-                    {r.margePct}%
-                  </span>
+                  {r.margePct == null ? (
+                    <span className="text-[11px] text-ink-400" title="Prix d'achat manquant">—</span>
+                  ) : (
+                    <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-700">
+                      {r.margePct}%
+                    </span>
+                  )}
                 </td>
                 <td className="px-5 py-2.5 text-right">
                   <span
