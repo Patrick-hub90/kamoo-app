@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bike, UserPlus, X } from "lucide-react";
+import { Bike, X } from "lucide-react";
 import { MOCK_LIVREURS } from "@/lib/data/mock-livreurs";
 import { useCurrentMarket } from "@/lib/hooks/use-current-market";
 import { usePartners } from "@/lib/hooks/use-partners";
@@ -9,31 +9,9 @@ import type { AssignedDelivery } from "@/lib/types/closing";
 
 /**
  * Modale « Assigner un livreur » — partagée entre la liste Closing et la
- * page détail commande. Ne propose que VOS livreurs RECONNUS du marché courant :
- *  - livreurs recrutés sur la marketplace (partenariat actif), ET
- *  - livreurs invités directement (membres actifs, cf. Paramètres → Partenaires).
- * Le choix crée l'AssignedDelivery (en_attente, +3 h).
+ * page détail commande. Ne propose que VOS livreurs partenaires (actifs)
+ * du marché courant ; le choix crée l'AssignedDelivery (en_attente, +3 h).
  */
-
-type Pick = {
-  key: string;
-  name: string;
-  avatarBg: string;
-  photoUrl?: string;
-  initials: string;
-  meta: string;
-  build: () => AssignedDelivery;
-};
-
-function initialsOf(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 export function AssignLivreurModal({
   onClose,
   onAssign,
@@ -42,63 +20,32 @@ export function AssignLivreurModal({
   onAssign: (d: AssignedDelivery) => void;
 }) {
   const { currentMarket } = useCurrentMarket();
-  const { partners, getActiveMembers } = usePartners();
-
-  const eta = () => {
-    const d = new Date();
-    d.setHours(d.getHours() + 3, 0, 0, 0);
-    return d.toISOString();
-  };
-
-  /* Livreurs marketplace avec partenariat actif, sur le marché courant. */
+  const { partners } = usePartners();
+  /* Seulement MES livreurs (partenariat actif) — pas toute la marketplace. */
   const activeSlugs = partners.livreurs
     .filter((p) => p.status === "active")
     .map((p) => p.slug);
-  const marketplacePicks: Pick[] = MOCK_LIVREURS.filter(
+  const livreurs = MOCK_LIVREURS.filter(
     (l) => l.countryCode === currentMarket.country.code && activeSlugs.includes(l.slug),
-  ).map((l) => ({
-    key: `mk_${l.slug}`,
-    name: l.name,
-    avatarBg: l.avatarBg,
-    photoUrl: l.photoUrl,
-    initials: l.initials,
-    meta: `★ ${l.rating} · ${l.kpi.deliverySuccessRate}% réussite · ${l.zones.length} zones`,
-    build: () => ({
+  );
+
+  function pick(slug: string) {
+    const l = livreurs.find((x) => x.slug === slug);
+    if (!l) return;
+    const eta = new Date();
+    eta.setHours(eta.getHours() + 3, 0, 0, 0);
+    onAssign({
       id: `lv_${l.slug}`,
       name: l.name,
       phone: "", // jamais affiché : contact via chat in-app uniquement
       avatarBg: l.avatarBg,
       rating: l.rating,
       progress: "en_attente",
-      scheduledAt: eta(),
+      scheduledAt: eta.toISOString(),
       pickedUpAt: new Date().toISOString(),
       deliveriesCount: l.kpi.deliveriesHandled,
-    }),
-  }));
-
-  /* Livreurs invités directement (membres actifs du réseau). */
-  const memberPicks: Pick[] = getActiveMembers("livreur").map((m) => ({
-    key: `pm_${m.id}`,
-    name: m.name,
-    avatarBg: m.avatarBg,
-    initials: initialsOf(m.name),
-    meta:
-      [m.city, m.zones && m.zones.length ? `${m.zones.length} zone${m.zones.length > 1 ? "s" : ""}` : null]
-        .filter(Boolean)
-        .join(" · ") || "Livreur partenaire",
-    build: () => ({
-      id: `lv_m_${m.id}`,
-      name: m.name,
-      phone: m.phone,
-      avatarBg: m.avatarBg,
-      rating: 5,
-      progress: "en_attente",
-      scheduledAt: eta(),
-      pickedUpAt: new Date().toISOString(),
-    }),
-  }));
-
-  const picks = [...memberPicks, ...marketplacePicks];
+    });
+  }
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-kamoo-blue-900/30 p-4 backdrop-blur-[2px]" onClick={onClose}>
@@ -110,44 +57,45 @@ export function AssignLivreurModal({
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-3">
-          {picks.length === 0 && (
+          {livreurs.length === 0 && (
             <div className="px-4 py-8 text-center">
               <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-kamoo-blue-50 text-kamoo-blue-700">
                 <Bike className="h-5 w-5" />
               </div>
               <p className="mt-3 text-[13.5px] font-semibold text-ink-900">
-                Aucun livreur reconnu
+                Aucun livreur partenaire
               </p>
               <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
-                Invitez votre livreur depuis Paramètres → Partenaires, ou recrutez-en un
-                sur la marketplace. Une fois actif, vous pourrez lui assigner vos livraisons.
+                Connectez-vous d&apos;abord à un livreur dans la marketplace —
+                vous pourrez ensuite lui assigner vos livraisons.
               </p>
               <Link
-                href="/parametres/partenaires"
+                href="/marketplace/livreurs"
                 className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-kamoo-blue-900 px-4 py-2 text-[12.5px] font-bold text-white transition hover:bg-kamoo-blue-800"
               >
-                <UserPlus className="h-3.5 w-3.5" />
-                Inviter un livreur
+                Trouver un livreur
               </Link>
             </div>
           )}
-          {picks.map((p) => (
+          {livreurs.map((l) => (
             <button
-              key={p.key}
-              onClick={() => onAssign(p.build())}
+              key={l.slug}
+              onClick={() => pick(l.slug)}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-paper-2"
             >
-              {p.photoUrl ? (
+              {l.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+                <img src={l.photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
               ) : (
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: p.avatarBg }}>
-                  {p.initials}
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: l.avatarBg }}>
+                  {l.initials}
                 </span>
               )}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold text-ink-900">{p.name}</span>
-                <span className="block truncate text-[11px] text-ink-500">{p.meta}</span>
+                <span className="block truncate text-[13px] font-semibold text-ink-900">{l.name}</span>
+                <span className="block text-[11px] text-ink-500">
+                  ★ {l.rating} · {l.kpi.deliverySuccessRate}% réussite · {l.zones.length} zones
+                </span>
               </span>
               <span className="shrink-0 text-[11.5px] font-semibold text-kamoo-blue-700">Choisir</span>
             </button>

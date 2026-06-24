@@ -28,48 +28,6 @@ export type PartnerRole = "closeuse" | "transitaire" | "livreur";
 
 export type PartnershipStatus = "pending" | "active";
 
-/**
- * Membre du RÉSEAU du vendeur — partenaire enrôlé DIRECTEMENT par le vendeur
- * (invitation par nom + téléphone), par opposition aux partenariats recrutés
- * depuis la marketplace (`Partnership`, par slug de profil public).
- *
- * Cycle : « invité » (code à transmettre) → « actif » (reconnu : assignable
- * partout dans Kamoo) → éventuellement « suspendu ». L'état vit dans le store
- * partagé `partners` → reconnu aussi bien côté console que côté espace
- * partenaires (même source de vérité, cross-app).
- */
-export type PartnerMemberStatus = "invite" | "actif" | "suspendu";
-
-export type PartnerMember = {
-  id: string;
-  role: PartnerRole;
-  name: string;
-  phone: string;
-  city?: string;
-  /** Zones desservies (livreur) */
-  zones?: string[];
-  /** Services souscrits (livreur — livraison incluse par défaut) */
-  services?: LivreurService[];
-  /** Code court à transmettre au partenaire pour rejoindre l'espace partenaires. */
-  inviteCode: string;
-  status: PartnerMemberStatus;
-  createdAt: string;
-  activatedAt?: string;
-  avatarBg: string;
-};
-
-export const PARTNER_MEMBER_STATUS_LABELS: Record<PartnerMemberStatus, string> = {
-  invite: "Invité",
-  actif: "Actif",
-  suspendu: "Suspendu",
-};
-
-export const PARTNER_ROLE_LABELS: Record<PartnerRole, string> = {
-  closeuse: "Closeuse",
-  transitaire: "Transitaire",
-  livreur: "Livreur",
-};
-
 export type Partnership = {
   slug: string;
   status: PartnershipStatus;
@@ -93,8 +51,6 @@ export type PartnersState = {
   transitaires: Partnership[];
   livreurs: Partnership[];
   reviews: ReviewsMap;
-  /** Partenaires enrôlés directement par le vendeur (invitation). */
-  members: PartnerMember[];
 };
 
 export const END_REASONS = [
@@ -116,26 +72,7 @@ const DEFAULT_STATE: PartnersState = {
   transitaires: [],
   livreurs: [],
   reviews: {},
-  members: [],
 };
-
-/* Dégradés d'avatar pour les membres invités (à défaut de photo). */
-const MEMBER_AVATARS = [
-  "linear-gradient(135deg,#0EA5E9,#0284C7)",
-  "linear-gradient(135deg,#22C55E,#16A34A)",
-  "linear-gradient(135deg,#A855F7,#7E22CE)",
-  "linear-gradient(135deg,#F59E0B,#B45309)",
-  "linear-gradient(135deg,#EC4899,#DB2777)",
-  "linear-gradient(135deg,#14B8A6,#0D9488)",
-];
-
-/** Code d'invitation court, lisible (sans caractères ambigus 0/O/1/I). */
-function generateInviteCode(): string {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
 
 const store = createSyncedStore<PartnersState>("partners", DEFAULT_STATE);
 
@@ -270,85 +207,8 @@ export function usePartners() {
 
   const getReview = useCallback((slug: string) => state.reviews[slug] ?? null, [state]);
 
-  /* ─── Membres invités (réseau enrôlé par le vendeur) ─── */
-
-  /** Crée une invitation → membre « invité » (code à transmettre). */
-  const inviteMember = useCallback(
-    (input: {
-      role: PartnerRole;
-      name: string;
-      phone: string;
-      city?: string;
-      zones?: string[];
-      services?: LivreurService[];
-    }): PartnerMember => {
-      const name = input.name.trim();
-      const member: PartnerMember = {
-        id: `pm_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-        role: input.role,
-        name,
-        phone: input.phone.trim(),
-        city: input.city?.trim() || undefined,
-        zones:
-          input.role === "livreur"
-            ? input.zones?.map((z) => z.trim()).filter(Boolean)
-            : undefined,
-        services:
-          input.role === "livreur"
-            ? input.services && input.services.length
-              ? input.services
-              : ["livraison"]
-            : undefined,
-        inviteCode: generateInviteCode(),
-        status: "invite",
-        createdAt: new Date().toISOString(),
-        avatarBg: MEMBER_AVATARS[name.length % MEMBER_AVATARS.length],
-      };
-      store.set((s) => ({ ...s, members: [member, ...(s.members ?? [])] }));
-      return member;
-    },
-    [],
-  );
-
-  /** Change le statut d'un membre (activer = reconnu / assignable). */
-  const setMemberStatus = useCallback((id: string, status: PartnerMemberStatus) => {
-    store.set((s) => ({
-      ...s,
-      members: (s.members ?? []).map((m) =>
-        m.id === id
-          ? {
-              ...m,
-              status,
-              ...(status === "actif" && !m.activatedAt
-                ? { activatedAt: new Date().toISOString() }
-                : {}),
-            }
-          : m,
-      ),
-    }));
-  }, []);
-
-  /** Retire définitivement un membre du réseau. */
-  const removeMember = useCallback((id: string) => {
-    store.set((s) => ({ ...s, members: (s.members ?? []).filter((m) => m.id !== id) }));
-  }, []);
-
-  /** Membres d'un rôle (tous statuts), triés actifs d'abord. */
-  const getMembers = useCallback(
-    (role?: PartnerRole): PartnerMember[] =>
-      (state.members ?? []).filter((m) => !role || m.role === role),
-    [state.members],
-  );
-
-  /** Membres ACTIFS (reconnus) d'un rôle — pour les listes d'assignation. */
-  const getActiveMembers = useCallback(
-    (role: PartnerRole): PartnerMember[] =>
-      (state.members ?? []).filter((m) => m.role === role && m.status === "actif"),
-    [state.members],
-  );
-
   return {
-    /** État brut : closeuse (mono), transitaires[], livreurs[], reviews, members. */
+    /** État brut : closeuse (mono), transitaires[], livreurs[], reviews. */
     partners: state,
     getPartnership,
     request,
@@ -357,11 +217,5 @@ export function usePartners() {
     saveReview,
     setServices,
     getReview,
-    /* Réseau enrôlé */
-    inviteMember,
-    setMemberStatus,
-    removeMember,
-    getMembers,
-    getActiveMembers,
   };
 }

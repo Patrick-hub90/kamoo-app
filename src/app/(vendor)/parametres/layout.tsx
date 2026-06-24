@@ -42,7 +42,7 @@ const GROUPS: { title: string; items: Tab[] }[] = [
     title: "Mon activité",
     items: [
       { href: "/parametres/marches", label: "Marchés", description: "Pays & devises", icon: Store },
-      { href: "/parametres/partenaires", label: "Partenaires", description: "Livreurs, closeuses, transitaires", icon: Users },
+      { href: "/partenaires", label: "Partenaires", description: "Recruter sur la plateforme Kamoo", icon: Users },
       { href: "/parametres/connexions", label: "Connexions", description: "Shopify & intégrations", icon: Plug },
     ],
   },
