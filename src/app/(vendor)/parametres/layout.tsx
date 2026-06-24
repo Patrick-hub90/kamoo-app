@@ -10,6 +10,7 @@ import {
   Search,
   Store,
   UserCircle,
+  Users,
   Wallet,
 } from "lucide-react";
 import { PageHeader } from "@/components/kamoo/page-header";
@@ -41,6 +42,7 @@ const GROUPS: { title: string; items: Tab[] }[] = [
     title: "Mon activité",
     items: [
       { href: "/parametres/marches", label: "Marchés", description: "Pays & devises", icon: Store },
+      { href: "/parametres/partenaires", label: "Partenaires", description: "Livreurs, closeuses, transitaires", icon: Users },
       { href: "/parametres/connexions", label: "Connexions", description: "Shopify & intégrations", icon: Plug },
     ],
   },
