@@ -307,3 +307,80 @@
     transform: translateY(0);
   }
 }
+
+/* ─── Chargement (squelettes + marque) ───────────────────────────────
+   Langage d'attente Kamoo : un balayage clair discret sur fond paper-2,
+   plus une « respiration » du logo de marque pour les écrans pleins. */
+
+/* Squelette : fond neutre + reflet qui balaie de gauche à droite. */
+.kamoo-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-paper-2);
+}
+.kamoo-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
+  animation: kamooShimmer 1.5s ease-in-out infinite;
+}
+@keyframes kamooShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Respiration du logo (écran de chargement plein). */
+@keyframes kamooBreathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.965);
+  }
+}
+.kamoo-breathe {
+  animation: kamooBreathe 1.7s ease-in-out infinite;
+}
+
+/* Barre de progression indéterminée (fin liseré sous le logo). */
+@keyframes kamooSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+.kamoo-progress-track {
+  position: relative;
+  overflow: hidden;
+}
+.kamoo-progress-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  border-radius: inherit;
+  background: var(--color-kamoo-blue-900);
+  animation: kamooSlide 1.25s ease-in-out infinite;
+}
+
+/* Respect des préférences d'accessibilité : pas d'animation si réduit. */
+@media (prefers-reduced-motion: reduce) {
+  .kamoo-skeleton::after,
+  .kamoo-breathe,
+  .kamoo-progress-track::after {
+    animation: none;
+  }
+}

@@ -40,6 +40,7 @@ import { useShopify } from "@/lib/hooks/use-shopify";
 import { useShopifyPublish } from "@/lib/hooks/use-shopify-publish";
 import { ShopifyImportModal } from "@/components/kamoo/shopify-import-modal";
 import { CatalogueReconBanner } from "@/components/kamoo/catalogue-recon-banner";
+import { ConsolePageSkeleton } from "@/components/kamoo/loading";
 import { getStockLevel, needsCompletion, type Produit } from "@/lib/types/produit";
 import { dateFilterFromSearchParams } from "@/lib/utils/date-filter-url";
 import { formatXOF } from "@/lib/format";
@@ -127,7 +128,7 @@ function filterMovementsByPeriod(
 /* ════════════════════════════════════════════════════════════════════ */
 export default function BoutiquePage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ConsolePageSkeleton />}>
       <BoutiquePageInner />
     </Suspense>
   );

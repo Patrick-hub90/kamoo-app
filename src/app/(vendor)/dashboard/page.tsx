@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/kamoo/page-header";
+import { ConsolePageSkeleton } from "@/components/kamoo/loading";
 import {
   KpiRow,
   CaChart,
@@ -55,7 +56,7 @@ import {
  */
 export default function DashboardPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ConsolePageSkeleton />}>
       <DashboardPageInner />
     </Suspense>
   );

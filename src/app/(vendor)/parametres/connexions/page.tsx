@@ -21,6 +21,7 @@ import {
   FieldLabel,
 } from "@/components/parametres/settings-ui";
 import { cn } from "@/lib/utils";
+import { ConsolePageSkeleton } from "@/components/kamoo/loading";
 
 /**
  * Connexions — intégrations externes. Cœur : les boutiques Shopify (1 par
@@ -30,7 +31,7 @@ import { cn } from "@/lib/utils";
  */
 export default function ConnexionsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ConsolePageSkeleton variant="list" showKpi={false} />}>
       <ConnexionsInner />
     </Suspense>
   );
